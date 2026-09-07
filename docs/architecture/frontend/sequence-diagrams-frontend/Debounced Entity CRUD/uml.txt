@@ -1,0 +1,15 @@
+sequenceDiagram
+    actor Editor
+    participant UI as TaskDetailsDialogComponent
+    participant RxJS as Debounce Subject
+    participant Store as BoardStoreService
+    participant API as Spring Boot Backend
+
+    Editor->>UI: Type Description / Add Tags
+    UI->>RxJS: Emit Field Update
+    Note over UI,RxJS: .pipe(debounceTime(300))
+    RxJS->>Store: Commit Update Payload
+    Store->>API: PATCH /api/tasks/{taskId}/metadata
+    API->>API: Validate @taskSecurity.canEditCard
+    API-->>Store: HTTP 200 OK
+    Store-->>UI: Sync Reactivity

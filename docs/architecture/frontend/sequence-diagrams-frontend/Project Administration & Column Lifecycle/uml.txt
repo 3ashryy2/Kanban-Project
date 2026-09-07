@@ -1,0 +1,18 @@
+sequenceDiagram
+    actor Admin_PM as Admin / PM
+    participant UI as BoardContainer / ColumnHeader
+    participant Store as BoardStoreService
+    participant API as Spring Boot Backend
+
+    Admin_PM->>UI: Create Board (F1) or Add Column (F11)
+    UI->>Store: Dispatch Creation Event
+    Store->>API: POST /api/workspaces/{id}/boards
+    API->>API: @PreAuthorize validation
+    API-->>Store: HTTP 201 Created
+    Store-->>UI: Update Navigation & Board Canvas
+    
+    Admin_PM->>UI: Delete Column containing active tasks (F11)
+    UI->>Store: Dispatch Delete Intent
+    Store->>API: DELETE /api/columns/{id}
+    API-->>Store: HTTP 409 Conflict (Database RESTRICT constraint)
+    Store->>UI: Trigger PrimeNG Toast (Clear tasks first)

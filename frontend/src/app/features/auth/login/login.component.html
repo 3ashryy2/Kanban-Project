@@ -1,0 +1,144 @@
+<div class="login-wrapper">
+  <p-toast></p-toast>
+  <div class="login-card-container">
+    <div class="logo-area">
+      <i class="pi pi-clone logo-icon"></i>
+      <h1>Valeo Kanban</h1>
+      <p>Driving Assistance Perception Platform</p>
+    </div>
+
+    <!-- Sign In Mode -->
+    <p-card header="Account Sign-In" *ngIf="!isRegisterMode">
+      <form #loginForm="ngForm" (ngSubmit)="onSubmit()" class="form-container">
+        <div class="field-group">
+          <label for="email">Corporate Email</label>
+          <input 
+            id="email" 
+            type="email" 
+            pInputText 
+            name="email" 
+            [(ngModel)]="credentials.email" 
+            required 
+            #emailInput="ngModel"
+            placeholder="e.g. dev@valeo.com"
+            class="w-full"
+          />
+        </div>
+        
+        <div class="field-group">
+          <label for="password">Security Password</label>
+          <p-password 
+            id="password" 
+            name="password" 
+            [(ngModel)]="credentials.password" 
+            [feedback]="false" 
+            [toggleMask]="true"
+            required
+            styleClass="w-full"
+            inputStyleClass="w-full"
+            placeholder="••••••••"
+          ></p-password>
+        </div>
+
+        <p-button 
+          type="submit" 
+          label="Authenticate" 
+          icon="pi pi-sign-in" 
+          [loading]="loading"
+          [disabled]="loginForm.invalid"
+          styleClass="w-full mt-3 p-button-primary"
+        ></p-button>
+
+        <div class="toggle-mode-text">
+          Don't have an account? <a href="javascript:void(0)" (click)="toggleMode()">Create an account</a>
+        </div>
+      </form>
+    </p-card>
+
+    <!-- Register Mode -->
+    <p-card header="Register New Account" *ngIf="isRegisterMode">
+      <form #registerForm="ngForm" (ngSubmit)="onRegister()" class="form-container">
+        <div style="display: flex; gap: 12px; margin-bottom: 0;">
+          <div class="field-group" style="flex: 1;">
+            <label for="firstName">First Name</label>
+            <input 
+              id="firstName" 
+              type="text" 
+              pInputText 
+              name="firstName" 
+              [(ngModel)]="signupDetails.firstName" 
+              required 
+              placeholder="Mohanad"
+              class="w-full"
+            />
+          </div>
+          <div class="field-group" style="flex: 1;">
+            <label for="lastName">Last Name</label>
+            <input 
+              id="lastName" 
+              type="text" 
+              pInputText 
+              name="lastName" 
+              [(ngModel)]="signupDetails.lastName" 
+              required 
+              placeholder="Emad"
+              class="w-full"
+            />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="regEmail">Corporate Email</label>
+          <input 
+            id="regEmail" 
+            type="email" 
+            pInputText 
+            name="regEmail" 
+            [(ngModel)]="signupDetails.email" 
+            required 
+            #regEmailInput="ngModel"
+            placeholder="e.g. dev@valeo.com"
+            class="w-full"
+          />
+        </div>
+        
+        <div class="field-group">
+          <label for="regPassword">Security Password</label>
+          <p-password 
+            id="regPassword" 
+            name="regPassword" 
+            [(ngModel)]="signupDetails.password" 
+            [feedback]="true" 
+            [toggleMask]="true"
+            required
+            styleClass="w-full"
+            inputStyleClass="w-full"
+            placeholder="Min 6 characters"
+          ></p-password>
+        </div>
+
+        <p-button 
+          type="submit" 
+          label="Create Account" 
+          icon="pi pi-user-plus" 
+          [loading]="loading"
+          [disabled]="registerForm.invalid || signupDetails.password.length < 6"
+          styleClass="w-full mt-3 p-button-success"
+        ></p-button>
+
+        <div class="toggle-mode-text">
+          Already have an account? <a href="javascript:void(0)" (click)="toggleMode()">Sign-In instead</a>
+        </div>
+      </form>
+    </p-card>
+
+    <div class="credentials-hint">
+      <p><strong>Demo Roles Seeded:</strong></p>
+      <ul>
+        <li>Admin: <code>admin&#64;valeo.com</code> / <code>password123</code></li>
+        <li>Project Manager: <code>pm&#64;valeo.com</code> / <code>password123</code></li>
+        <li>Developer: <code>dev&#64;valeo.com</code> / <code>password123</code></li>
+      </ul>
+    </div>
+  </div>
+</div>

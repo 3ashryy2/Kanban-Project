@@ -1,0 +1,1889 @@
+{
+  "info": {
+    "_postman_id": "75317765-ccfe-4c6c-9be2-595ff9e6e44b",
+    "name": "Kanban Board API - PM-tool",
+    "description": "A comprehensive Postman Collection to test all endpoints of the Valeo Kanban application, structured into logical role-based workflows (Admin, PM, Developer, QA) to test endpoints sequentially with proper permissions, dynamic variable capture, and status assertion tests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Admin Workspace & Board Management",
+      "item": [
+        {
+          "name": "Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.token) {",
+                  "    pm.collectionVariables.set(\"token\", jsonData.token);",
+                  "    console.log(\"Auth Token set successfully (Admin)\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@valeo.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Log in as the admin user. Automatically sets the `token` variable on the collection."
+          },
+          "response": []
+        },
+        {
+          "name": "Register Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK or 409 Conflict\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 409]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Testing\",\n  \"lastName\": \"User\",\n  \"email\": \"testing_user@valeo.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Exposes the new user registration API, verifying that users can register custom corporate credentials."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Workspace",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.id) {",
+                  "    pm.collectionVariables.set(\"tempWorkspaceId\", jsonData.id.toString());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Temporary Testing Workspace\",\n  \"slug\": \"temp-test-ws\",\n  \"description\": \"Used for end-to-end API testing\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces"
+              ]
+            },
+            "description": "Create a new workspace. Available to global System Admins only (ROLE_ADMIN)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Workspace by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "1"
+              ]
+            },
+            "description": "Retrieve detailed metadata for the seeded workspace. Accessible to members of the workspace."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Workspace Boards",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/1/boards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "1",
+                "boards"
+              ]
+            },
+            "description": "Retrieve the list of boards belonging to Workspace 1, verifying the sidebar backend-frontend alignment fix."
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Workspaces",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces"
+              ]
+            },
+            "description": "Get all workspaces where the current authenticated user has active membership."
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Workspace Member (Pre-cleanup)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204 No Content or 404 Not Found\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([204, 404]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/1/members/4",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "1",
+                "members",
+                "4"
+              ]
+            },
+            "description": "Removes User 4 from Workspace 1 to ensure a clean state before executing membership tests."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Workspace Member to Seeded Workspace",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 4,\n  \"role\": \"ROLE_QA_TESTER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/1/members",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "1",
+                "members"
+              ]
+            },
+            "description": "Adds a user to the workspace with a specific security role. Requires Workspace Admin."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Workspace Member Role",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().role).to.equal(\"ROLE_DEVELOPER\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"ROLE_DEVELOPER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/1/members/4",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "1",
+                "members",
+                "4"
+              ]
+            },
+            "description": "Updates the workspace role of User 4 to Developer. Verifies the PUT endpoint is live and working."
+          },
+          "response": []
+        },
+        {
+          "name": "Restore Workspace Member Role",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().role).to.equal(\"ROLE_QA_TESTER\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"ROLE_QA_TESTER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/1/members/4",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "1",
+                "members",
+                "4"
+              ]
+            },
+            "description": "Restores User 4's role back to QA_TESTER to preserve integration environment properties for gated approval flows."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Workspace Members",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/1/members",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "1",
+                "members"
+              ]
+            },
+            "description": "Retrieve the membership roster including system roles inside the workspace."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Board in Seeded Workspace",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.id) {",
+                  "    pm.collectionVariables.set(\"tempBoardId\", jsonData.id.toString());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Temporary Integration Board\",\n  \"description\": \"Used for board-level testing\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/1/boards",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "1",
+                "boards"
+              ]
+            },
+            "description": "Create a Kanban Board inside the specified workspace. Requires Workspace Admin or Project Manager role."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Global Audit Logs (Workspace-Specific)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/audit-logs?workspaceId=1&page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "audit-logs"
+              ],
+              "query": [
+                {
+                  "key": "workspaceId",
+                  "value": "1"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get paginated audit logs filtered by workspace 1. Requires Admin role."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Global Compliance Audit Logs (Omniscient Compliance)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/audit-logs?actionType=GATE_REJECTED&page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "audit-logs"
+              ],
+              "query": [
+                {
+                  "key": "actionType",
+                  "value": "GATE_REJECTED"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get global omniscient compliance logs across ALL workspaces. Workspace ID is omitted as per specification, verifying global ROLE_ADMIN routing fix."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Project Manager Layout Management",
+      "item": [
+        {
+          "name": "Login (Project Manager)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.token) {",
+                  "    pm.collectionVariables.set(\"token\", jsonData.token);",
+                  "    console.log(\"Auth Token set successfully (PM)\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"pm@valeo.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Log in as a Project Manager. Automatically sets the `token` variable on the collection."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Seeded Board",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Core Platform Roadmap - Sprint 4\",\n  \"description\": \"Updated target sprint parameters\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/boards/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boards",
+                "1"
+              ]
+            },
+            "description": "Update metadata of the seeded Board 1. Requires Workspace Admin or Project Manager role."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Temporary Column",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.id) {",
+                  "    pm.collectionVariables.set(\"tempColumnId\", jsonData.id.toString());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Temporary Test Column\",\n  \"position\": 3500.0,\n  \"isGated\": false,\n  \"wipLimit\": 6\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/boards/1/columns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boards",
+                "1",
+                "columns"
+              ]
+            },
+            "description": "Creates a new column on Board 1. Requires Workspace Admin or Project Manager role."
+          },
+          "response": []
+        },
+        {
+          "name": "Reorder Column",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"columnId\": 3,\n  \"newPosition\": 2500.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/boards/1/columns/reorder",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boards",
+                "1",
+                "columns",
+                "reorder"
+              ]
+            },
+            "description": "Reorders columns layout dynamically. Returns the updated columns array. Requires PM role."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Column (without position)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Code Review & Quality Check\",\n  \"isGated\": false,\n  \"wipLimit\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/columns/3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "columns",
+                "3"
+              ]
+            },
+            "description": "Update column 3. Tested with the actual specification payload (no mandatory position field) verifying the clean DTO separation fix."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Workflow Transitions Matrix",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/boards/1/transitions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boards",
+                "1",
+                "transitions"
+              ]
+            },
+            "description": "Get transition permissions matrix for columns of Board 1."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Workflow Transitions Matrix",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"fromColumnId\": 1,\n    \"toColumnId\": 2,\n    \"fallbackColumnId\": null,\n    \"requiresApproval\": false\n  },\n  {\n    \"fromColumnId\": 2,\n    \"toColumnId\": 3,\n    \"fallbackColumnId\": null,\n    \"requiresApproval\": false\n  },\n  {\n    \"fromColumnId\": 3,\n    \"toColumnId\": 4,\n    \"fallbackColumnId\": 2,\n    \"requiresApproval\": true\n  },\n  {\n    \"fromColumnId\": 4,\n    \"toColumnId\": 5,\n    \"fallbackColumnId\": 2,\n    \"requiresApproval\": true\n  },\n  {\n    \"fromColumnId\": 4,\n    \"toColumnId\": 2,\n    \"fallbackColumnId\": null,\n    \"requiresApproval\": false\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/boards/1/transitions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boards",
+                "1",
+                "transitions"
+              ]
+            },
+            "description": "Overwrite transitions matrix mapping for Board 1. Requires PM role."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Developer Card Execution",
+      "item": [
+        {
+          "name": "Login (Developer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.token) {",
+                  "    pm.collectionVariables.set(\"token\", jsonData.token);",
+                  "    console.log(\"Auth Token set successfully (Developer)\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"dev@valeo.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Log in as a Developer. Automatically sets the `token` variable on the collection."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Board Aggregate (Two-Query)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/boards/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boards",
+                "1"
+              ]
+            },
+            "description": "Retrieve assembled Board 1 details."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.id) {",
+                  "    pm.collectionVariables.set(\"taskId\", jsonData.id.toString());",
+                  "    pm.collectionVariables.set(\"taskVersion\", jsonData.version);",
+                  "    console.log(\"Captured Task ID:\", jsonData.id, \"Version:\", jsonData.version);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"boardId\": 1,\n  \"columnId\": 1,\n  \"title\": \"Implement Cipher Block Chaining\",\n  \"description\": \"Integrate Dynamic S-Box with CBC mode in C++ core\",\n  \"priority\": \"HIGH\",\n  \"position\": 1000.0,\n  \"assigneeId\": 3,\n  \"dueDate\": \"2026-09-10T18:00:00.000Z\",\n  \"tags\": [\n    \"Crypto\",\n    \"C++\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks"
+              ]
+            },
+            "description": "Create a new task on Board 1, Column 1. Captures generated task ID and version variables."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Task by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{taskId}}"
+              ]
+            },
+            "description": "Fetch details of our dynamically captured task."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Task Metadata (Symmetric JSON Array Tags)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData) {",
+                  "    pm.collectionVariables.set(\"taskVersion\", jsonData.version);",
+                  "    console.log(\"Updated Task Version after Metadata update:\", jsonData.version);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Implement Cipher Block Chaining (Refined)\",\n  \"description\": \"Expanded cryptographic test criteria\",\n  \"priority\": \"URGENT\",\n  \"dueDate\": \"2026-09-12T18:00:00.000Z\",\n  \"tags\": [\n    \"Crypto\",\n    \"C++\",\n    \"Security\"\n  ],\n  \"version\": {{taskVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}/metadata",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{taskId}}",
+                "metadata"
+              ]
+            },
+            "description": "Update task metadata parameters using dynamic version matching. Fully symmetric JSON Array tags support, resolving string casting deserialization bug."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Task Assignee",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData) {",
+                  "    pm.collectionVariables.set(\"taskVersion\", jsonData.version);",
+                  "    console.log(\"Updated Task Version after Assignee update:\", jsonData.version);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assigneeId\": 4,\n  \"version\": {{taskVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}/assignee",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{taskId}}",
+                "assignee"
+              ]
+            },
+            "description": "Assign task to User 4 (QA) utilizing optimistic locking version parameter."
+          },
+          "response": []
+        },
+        {
+          "name": "Move Task to In Progress (Column 2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().columnId).to.equal(2);",
+                  "    pm.expect(pm.response.json().status).to.equal(\"ACTIVE\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData) {",
+                  "    pm.collectionVariables.set(\"taskVersion\", jsonData.version);",
+                  "    console.log(\"Updated Task Version after Move 1 (In Progress):\", jsonData.version);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetColumnId\": 2,\n  \"newPosition\": 1500.0,\n  \"adminBypass\": false,\n  \"version\": {{taskVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}/move",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{taskId}}",
+                "move"
+              ]
+            },
+            "description": "Dev moves task from Column 1 (To-Do) to Column 2 (In Progress). Success path is active."
+          },
+          "response": []
+        },
+        {
+          "name": "Move Task to Code Review (Column 3)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().columnId).to.equal(3);",
+                  "    pm.expect(pm.response.json().status).to.equal(\"ACTIVE\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData) {",
+                  "    pm.collectionVariables.set(\"taskVersion\", jsonData.version);",
+                  "    console.log(\"Updated Task Version after Move 2 (Code Review):\", jsonData.version);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetColumnId\": 3,\n  \"newPosition\": 2000.0,\n  \"adminBypass\": false,\n  \"version\": {{taskVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}/move",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{taskId}}",
+                "move"
+              ]
+            },
+            "description": "Dev moves task from Column 2 (In Progress) to Column 3 (Code Review). Success path is active."
+          },
+          "response": []
+        },
+        {
+          "name": "Move Task to Gated Column (Ready for QA)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK (Pending Approval)\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().status).to.equal(\"PENDING_APPROVAL\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData) {",
+                  "    pm.collectionVariables.set(\"taskVersion\", jsonData.version);",
+                  "    console.log(\"Updated Task Version after Gated Move:\", jsonData.version);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetColumnId\": 4,\n  \"newPosition\": 2500.0,\n  \"adminBypass\": false,\n  \"version\": {{taskVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}/move",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{taskId}}",
+                "move"
+              ]
+            },
+            "description": "Dev moves task from Column 3 (Code Review) to Column 4 (Ready for QA, gated). Status should change to PENDING_APPROVAL."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Task History",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "    console.log(\"Seeded History records retrieved successfully:\", pm.response.json().length);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{taskId}}",
+                "history"
+              ]
+            },
+            "description": "Retrieve the newly implemented Task History / Audit Stream endpoint, verifying correctness and compliance tracking."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Board Activity",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/boards/1/activity?limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boards",
+                "1",
+                "activity"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Gets localized audit events and task transitions on Board 1. Accessible to all members."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. QA Gate Approval & Gated State",
+      "item": [
+        {
+          "name": "Login (QA)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.token) {",
+                  "    pm.collectionVariables.set(\"token\", jsonData.token);",
+                  "    console.log(\"Auth Token set successfully (QA)\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"qa@valeo.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Log in as a QA Tester. Automatically sets the `token` variable on the collection."
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Task Gate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().status).to.equal(\"ACTIVE\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData) {",
+                  "    pm.collectionVariables.set(\"taskVersion\", jsonData.version);",
+                  "    console.log(\"Updated Task Version after QA Gate Approval:\", jsonData.version);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"version\": {{taskVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{taskId}}",
+                "approve"
+              ]
+            },
+            "description": "QA approves the gated transition to Column 4 (Ready for QA). Status reverts to ACTIVE."
+          },
+          "response": []
+        },
+        {
+          "name": "Move Gated Task Again (Requires Re-Auth as Dev)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// We must login as dev first to move the task, but Postman runs pre-request scripts synchronously.",
+                  "// To keep Newman flow simple and clean, we will trigger an inline pre-request login to obtain a Dev token.",
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get(\"baseUrl\") + \"/api/auth/login\",",
+                  "    method: 'POST',",
+                  "    header: {'Content-Type': 'application/json'},",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({ email: 'dev@valeo.com', password: 'password123' })",
+                  "    }",
+                  "}, function (err, res) {",
+                  "    if (res && res.json().token) {",
+                  "        pm.collectionVariables.set(\"devToken\", res.json().token);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK (Pending Approval)\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().status).to.equal(\"PENDING_APPROVAL\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData) {",
+                  "    pm.collectionVariables.set(\"taskVersion\", jsonData.version);",
+                  "    console.log(\"Updated Task Version after Gated Move 2 (Done):\", jsonData.version);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{devToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetColumnId\": 5,\n  \"newPosition\": 3000.0,\n  \"adminBypass\": false,\n  \"version\": {{taskVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}/move",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{taskId}}",
+                "move"
+              ]
+            },
+            "description": "Dev moves task from Column 4 to Column 5 (Done, gated). Requester authentication is overridden using a Dev Token fetched in the pre-request script. Status should become PENDING_APPROVAL again."
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Task Gate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.status).to.equal(\"ACTIVE\");",
+                  "    pm.expect(res.columnId).to.equal(2); // Should have reverted to column 2 (In Progress)",
+                  "    pm.expect(res.rejectionReason).to.not.be.null;",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData) {",
+                  "    pm.collectionVariables.set(\"taskVersion\", jsonData.version);",
+                  "    console.log(\"Updated Task Version after QA Gate Rejection:\", jsonData.version);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fallbackColumnId\": 2,\n  \"rejectionReason\": \"Dynamic S-Box generation failed boundary test on IV initialization.\",\n  \"version\": {{taskVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{taskId}}",
+                "reject"
+              ]
+            },
+            "description": "QA rejects the gated transition to Column 5, reverting the task to Column 2 (In Progress) with a rejection reason."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Resource Cleanup",
+      "item": [
+        {
+          "name": "Login (Admin Re-Auth)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.token) {",
+                  "    pm.collectionVariables.set(\"token\", jsonData.token);",
+                  "    console.log(\"Auth Token set successfully (Admin Re-Auth)\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@valeo.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Log back in as Admin to execute deletes and cleanup of temporary created testing resources."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204 No Content\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([204, 404]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tasks",
+                "{{taskId}}"
+              ]
+            },
+            "description": "Removes the task we created during testing."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Temporary Column",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204 No Content\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([204, 404]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/columns/{{tempColumnId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "columns",
+                "{{tempColumnId}}"
+              ]
+            },
+            "description": "Deletes the temporary column we created."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Temporary Board",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204 No Content\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([204, 404]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/boards/{{tempBoardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "boards",
+                "{{tempBoardId}}"
+              ]
+            },
+            "description": "Deletes the temporary board we created in workspace 1."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Temporary Workspace",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204 No Content\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([204, 404]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/workspaces/{{tempWorkspaceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "workspaces",
+                "{{tempWorkspaceId}}"
+              ]
+            },
+            "description": "Deletes the temporary workspace we created. Cascades to any child items."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tempWorkspaceId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tempBoardId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tempColumnId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "taskId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "taskVersion",
+      "value": "0",
+      "type": "string"
+    },
+    {
+      "key": "devToken",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

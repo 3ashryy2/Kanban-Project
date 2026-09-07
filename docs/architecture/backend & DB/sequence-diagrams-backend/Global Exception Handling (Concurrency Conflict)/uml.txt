@@ -1,0 +1,13 @@
+sequenceDiagram
+    actor User2
+    participant Svc as TaskWorkflowService
+    participant Repo as TaskRepository
+    participant Advice as GlobalExceptionHandler
+    participant Client as Angular Frontend
+
+    Svc->>Repo: save(task) (Client version = 1, DB version = 2)
+    Repo-->>Svc: Throws OptimisticLockException
+    Svc-->>Advice: Exception bubbles up
+    Advice->>Advice: Map to HTTP 409 Conflict
+    Advice-->>Client: { "error": "OPTIMISTIC_LOCK_FAILURE" }
+    Note over Client: Frontend RxJS Pipeline rolls back UI

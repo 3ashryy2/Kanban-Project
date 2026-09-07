@@ -1,0 +1,24 @@
+sequenceDiagram
+    actor Client
+    participant Ctrl as BoardController
+    participant Sec as WorkspaceSecurity
+    participant Svc as BoardService
+    participant BRepo as BoardRepository
+    participant TRepo as TaskRepository
+
+    Client->>Ctrl: GET /api/boards/{boardId}
+    Ctrl->>Sec: @boardSecurity.canReadBoard()
+    Sec-->>Ctrl: Authorized
+    Ctrl->>Svc: getBoardAggregate(boardId)
+    
+    Note over Svc,BRepo: Query 1: Fetch Board & Columns
+    Svc->>BRepo: findBoardWithColumnsById(boardId)
+    BRepo-->>Svc: Board + Columns (JOIN FETCH)
+    
+    Note over Svc,TRepo: Query 2: Fetch Tasks without N+1
+    Svc->>TRepo: findAllByBoardIdOrderByPositionAsc(boardId)
+    TRepo-->>Svc: Ordered Task List
+    
+    Svc->>Svc: Assemble Tasks into Columns in Memory
+    Svc-->>Ctrl: BoardAggregateDto
+    Ctrl-->>Client: HTTP 200 OK

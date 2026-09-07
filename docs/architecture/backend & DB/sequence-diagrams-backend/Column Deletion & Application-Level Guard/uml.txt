@@ -1,0 +1,46 @@
+sequenceDiagram
+    actor Client as Admin / PM
+    participant Ctrl as ColumnController
+    participant Sec as Security Evaluator
+    participant Svc as ColumnService
+    participant TRepo as TaskRepository
+    participant WRepo as WorkflowTransitionRepository
+    participant CRepo as ColumnRepository
+    participant DB as PostgreSQL Database
+
+    Client->>Ctrl: DELETE /api/columns/{id}
+    
+    Note over Client,Ctrl: 1. API & Security Layer
+    Ctrl->>Sec: @PreAuthorize hasAnyRole('ADMIN', 'PROJECT_MANAGER')
+    Sec-->>Ctrl: Authorized
+    
+    Ctrl->>Svc: deleteColumn(columnId)
+    
+    Note over Svc,TRepo: 2. Task Existence Guard (Application Level)
+    Svc->>TRepo: countByColumnId(columnId)
+    TRepo-->>Svc: taskCount
+    
+    alt taskCount > 0
+        Svc-->>Ctrl: throws ConflictException
+        Ctrl-->>Client: HTTP 409 Conflict ("Move tasks first")
+    else taskCount == 0
+        
+        Note over Svc,WRepo: 3. Transition & Fallback Guard
+        Svc->>WRepo: existsByFromColumnIdOrToColumnIdOrFallbackColumnId(columnId)
+        WRepo-->>Svc: isReferenced
+        
+        alt isReferenced == true
+            Svc-->>Ctrl: throws ConflictException
+            Ctrl-->>Client: HTTP 409 Conflict ("Rules reference this stage")
+        else isReferenced == false
+            
+            Note over Svc,DB: 4. Persistence Layer (Safe Delete)
+            Svc->>CRepo: delete(column)
+            CRepo->>DB: DELETE FROM columns WHERE id = ?
+            DB-->>CRepo: Transaction Committed
+            CRepo-->>Svc: Success
+            Svc-->>Ctrl: void
+            Ctrl-->>Client: HTTP 204 No Content
+            
+        end
+    end

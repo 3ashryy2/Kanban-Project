@@ -1,0 +1,24 @@
+sequenceDiagram
+    actor Assignee
+    actor Admin
+    participant UI as TaskDetails / KanbanBoard
+    participant Store as BoardStoreService
+    participant API as Spring Boot Backend
+
+    Note over Assignee,API: Task Delegation & Locks (F4, F13)
+    Assignee->>UI: Click on Locked Card (F13)
+    UI->>UI: Disable inputs & drag handles (UI evaluated)
+    
+    Assignee->>UI: Reassign unlocked card to peer (F4)
+    UI->>Store: Dispatch Assignee Update
+    Store->>API: PATCH /api/tasks/{id}/assignee
+    API->>API: Evaluate @taskSecurity.isAssigneeOrOwner
+    API-->>Store: HTTP 200 OK
+    Store-->>UI: Update Assignee Avatar locally
+
+    Note over Admin,API: Admin State Machine Bypass (F8)
+    Admin->>UI: Drag Card to non-sequential column (Admin Override)
+    UI->>Store: Optimistic Move (adminBypass: true)
+    Store->>API: PATCH /api/tasks/{id}/move
+    API->>API: Bypass state machine & validate role
+    API-->>Store: HTTP 200 OK (Audit Log: ADMIN_OVERRIDE_MOVE)

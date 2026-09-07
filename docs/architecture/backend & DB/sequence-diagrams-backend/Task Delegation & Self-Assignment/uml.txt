@@ -1,0 +1,28 @@
+sequenceDiagram
+    actor Developer
+    participant Ctrl as TaskController
+    participant Sec as TaskSecurityEvaluator (@taskSecurity)
+    participant Svc as TaskService
+    participant Repo as TaskRepository
+    participant DB as PostgreSQL Database
+
+    Developer->>Ctrl: PATCH /api/tasks/{id}/assignee
+    
+    Note over Ctrl,Sec: Security Method Evaluation
+    Ctrl->>Sec: canAssignCard(taskId, currentUser)
+    Sec->>Repo: findById(taskId)
+    Repo-->>Sec: Task Entity (assignee_id = null)
+    Sec->>Sec: Allow self-assignment (Role is Developer)
+    Sec-->>Ctrl: Authorized (true)
+    
+    Ctrl->>Svc: updateAssignee(taskId, newAssigneeId, version)
+    Svc->>Repo: findById(taskId)
+    Svc->>Svc: Verify @Version match
+    Svc->>Svc: task.setAssignee(newAssignee)
+    
+    Svc->>Repo: save(task)
+    Repo->>DB: UPDATE tasks SET assignee_id = ?
+    DB-->>Repo: Commit & Increment Version
+    
+    Svc-->>Ctrl: TaskDto mapped
+    Ctrl-->>Developer: HTTP 200 OK

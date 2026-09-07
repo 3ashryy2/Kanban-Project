@@ -1,0 +1,23 @@
+sequenceDiagram
+    actor Manager
+    participant Ctrl as TaskController
+    participant Svc as ApprovalGateService
+    participant DB as Persistence Layer (Transaction)
+    participant Event as AuditLogEventListener
+    participant Async as ThreadPoolTaskExecutor
+
+    Manager->>Ctrl: POST /api/tasks/{id}/approve (w/ version)
+    Ctrl->>Ctrl: Role check (ADMIN, PM, QA_TESTER)
+    Ctrl->>Svc: approveTask(taskId, version)
+    
+    Svc->>Svc: Set status = ACTIVE & Unlock
+    Svc->>DB: Commit Transaction
+    DB-->>Svc: Transaction Success
+    
+    Svc->>Event: Emits GateApprovedEvent
+    Svc-->>Ctrl: TaskDto
+    Ctrl-->>Manager: HTTP 200 OK
+
+    Note over Event,Async: @TransactionalEventListener(AFTER_COMMIT)
+    Event->>Async: Trigger @Async("auditExecutor")
+    Async->>DB: Insert into AuditLog (Non-blocking)

@@ -1,0 +1,49 @@
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0 20px;
+  height: 64px;
+  z-index: 100;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.logo-icon {
+  font-size: 1.5rem;
+  color: #10b981;
+}
+.brand-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+.workspace-selector-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 24px;
+  border-left: 1px solid #e2e8f0;
+  padding-left: 24px;
+}
+.switcher-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+}
+::ng-deep .workspace-dropdown {
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+  background-color: #f8fafc !important;
+  min-width: 220px;
+}
+.user-badge {
+  font-weight: 600;
+  color: #334155 !important;
+}

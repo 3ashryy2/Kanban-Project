@@ -1,0 +1,159 @@
+<div class="settings-container">
+  <div class="settings-header" *ngIf="workspaceStore.activeWorkspace$ | async as ws">
+    <h2>Workspace Member Provisioning</h2>
+    <p>Manage access levels, project team memberships, and RBAC roles for the workspace <strong>{{ ws.name }}</strong>.</p>
+  </div>
+
+  <div class="settings-card shadow-card">
+    <div class="card-header-bar">
+      <h3>Active Project Roster</h3>
+      <p-button 
+        *ngIf="canManageRoles" 
+        label="Add Member" 
+        icon="pi pi-user-plus" 
+        styleClass="p-button-success p-button-sm"
+        (onClick)="openAddMemberDialog()"
+      ></p-button>
+    </div>
+
+    <div class="roster-list" *ngIf="workspaceStore.activeWorkspaceMembers$ | async as members; else loadingMembers">
+      <table class="roster-table">
+        <thead>
+          <tr>
+            <th>Team Member</th>
+            <th>Corporate Email</th>
+            <th>Workspace RBAC Role</th>
+            <th>Joined On</th>
+            <th *ngIf="canManageRoles" class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let member of members; trackBy: trackByMemberId" class="roster-row">
+            <td class="member-name font-bold">
+              <div class="member-avatar">
+                {{ member.firstName[0] }}{{ member.lastName[0] }}
+              </div>
+              <span>{{ member.firstName }} {{ member.lastName }}</span>
+            </td>
+            <td class="member-email">{{ member.email }}</td>
+            <td>
+              <span class="role-badge" [class]="'role-' + member.role.toLowerCase()">
+                {{ member.role.replace('ROLE_', '') }}
+              </span>
+            </td>
+            <td class="member-date">{{ member.joinedAt | date:'MMMM d, yyyy' }}</td>
+            <td *ngIf="canManageRoles" class="text-right">
+              <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <p-button 
+                  icon="pi pi-user-edit" 
+                  styleClass="p-button-text p-button-success p-button-sm" 
+                  title="Modify member role"
+                  [disabled]="isRoleEditDisabled(member)"
+                  (onClick)="openEditRoleDialog(member)"
+                ></p-button>
+                <p-button 
+                  icon="pi pi-user-minus" 
+                  styleClass="p-button-text p-button-danger p-button-sm" 
+                  title="Remove member"
+                  (onClick)="removeMember(member.userId)"
+                ></p-button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #loadingMembers>
+      <div class="loading-state">
+        <i class="pi pi-spin pi-spinner spinner-icon"></i>
+        <p>Loading active project roster details...</p>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- Add Member Modal -->
+  <p-dialog 
+    header="Provision New Workspace Access" 
+    [(visible)]="addMemberDialogVisible" 
+    [modal]="true" 
+    [style]="{ width: '400px' }"
+    styleClass="custom-dialog"
+  >
+    <div class="dialog-form">
+      <div class="dialog-field">
+        <label for="new-member-select">Search System Users *</label>
+        <p-select 
+          id="new-member-select" 
+          [options]="userOptions" 
+          optionLabel="label"
+          optionValue="value"
+          [filter]="true"
+          filterBy="label,email"
+          [(ngModel)]="newMemberPayload.userId" 
+          placeholder="Select user by name or email"
+          styleClass="w-full"
+        ></p-select>
+      </div>
+
+      <div class="dialog-field">
+        <label for="new-member-role">Assign Role *</label>
+        <p-select 
+          id="new-member-role" 
+          [options]="roleOptions" 
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="newMemberPayload.role" 
+          styleClass="w-full"
+        ></p-select>
+      </div>
+    </div>
+
+    <ng-template #footer>
+      <p-button label="Cancel" styleClass="p-button-text p-button-secondary" (click)="addMemberDialogVisible = false"></p-button>
+      <p-button 
+        label="Grant Access" 
+        icon="pi pi-check" 
+        styleClass="p-button-success" 
+        [disabled]="!newMemberPayload.userId || !newMemberPayload.role" 
+        (click)="addMember()"
+      ></p-button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- Edit Member Role Modal -->
+  <p-dialog 
+    header="Modify Team Member Role" 
+    [(visible)]="editRoleDialogVisible" 
+    [modal]="true" 
+    [style]="{ width: '400px' }"
+    styleClass="custom-dialog"
+  >
+    <div class="dialog-form" *ngIf="selectedMemberToEdit">
+      <div style="margin-bottom: 16px; color: #475569; font-size: 0.9rem;">
+        Updating role for <strong>{{ selectedMemberToEdit.firstName }} {{ selectedMemberToEdit.lastName }}</strong> ({{ selectedMemberToEdit.email }}).
+      </div>
+      <div class="dialog-field">
+        <label for="edit-member-role">Assign New Workspace Role *</label>
+        <p-select 
+          id="edit-member-role" 
+          [options]="activeEditRoleOptions" 
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="newRoleValue" 
+          styleClass="w-full"
+        ></p-select>
+      </div>
+    </div>
+
+    <ng-template #footer>
+      <p-button label="Cancel" styleClass="p-button-text p-button-secondary" (click)="editRoleDialogVisible = false"></p-button>
+      <p-button 
+        label="Update Role" 
+        icon="pi pi-check" 
+        styleClass="p-button-success" 
+        [disabled]="!newRoleValue || (selectedMemberToEdit && selectedMemberToEdit.role === newRoleValue)" 
+        (onClick)="submitRoleUpdate()"
+      ></p-button>
+    </ng-template>
+  </p-dialog>
+</div>

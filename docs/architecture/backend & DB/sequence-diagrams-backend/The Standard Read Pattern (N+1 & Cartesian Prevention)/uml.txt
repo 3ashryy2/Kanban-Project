@@ -1,0 +1,23 @@
+sequenceDiagram
+    actor Client
+    participant Ctrl as REST Controller
+    participant Sec as Security Evaluator (@PreAuthorize)
+    participant Svc as Domain Service
+    participant Repo as Spring Data JPA Repository
+    participant DB as PostgreSQL Database
+
+    Client->>Ctrl: GET /api/{resource}/{id}
+    Ctrl->>Sec: Evaluate Access (e.g., @workspaceSecurity.hasAccess)
+    Sec-->>Ctrl: Access Granted
+    
+    Ctrl->>Svc: fetchAggregate(id)
+    Note over Svc,Repo: Utilizes targeted fetching strategy
+    Svc->>Repo: findByIdWithTargetedJoins(id)
+    
+    Repo->>DB: Execute single optimized SQL query (JOIN FETCH)
+    DB-->>Repo: ResultSet (No Lazy Initialization Proxies)
+    Repo-->>Svc: Domain Entity
+    
+    Svc->>Svc: Map Entity to DTO (Strips sensitive fields)
+    Svc-->>Ctrl: Resource DTO
+    Ctrl-->>Client: HTTP 200 OK
