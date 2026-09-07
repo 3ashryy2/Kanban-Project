@@ -1,0 +1,28 @@
+sequenceDiagram
+    actor Admin_PM
+    participant Ctrl as REST Controller
+    participant Sec as Security Evaluator
+    participant Svc as Domain Service
+    participant Repo as JPA Repository
+    participant DB as PostgreSQL Database
+
+    Admin_PM->>Ctrl: POST / PUT / DELETE /api/{resource}
+    Ctrl->>Sec: Evaluate Admin/PM Authority
+    Sec-->>Ctrl: Access Granted
+    
+    Ctrl->>Svc: executeMutation(payload)
+    
+    alt is Delete Operation
+        Svc->>Repo: delete(entity)
+        Repo->>DB: DELETE FROM table WHERE id = ?
+        Note over Repo,DB: Database executes ON DELETE CASCADE
+    else is Create/Update Operation
+        Svc->>Svc: Apply payload data to Entity
+        Svc->>Repo: save(entity)
+        Repo->>DB: INSERT / UPDATE table
+    end
+    
+    DB-->>Repo: Transaction Committed
+    Repo-->>Svc: Persisted State
+    Svc-->>Ctrl: Map to Response DTO
+    Ctrl-->>Admin_PM: HTTP 201 Created / 200 OK / 204 No Content

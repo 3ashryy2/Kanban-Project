@@ -1,0 +1,140 @@
+.settings-container {
+  padding: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+.settings-header {
+  margin-bottom: 24px;
+}
+.settings-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+}
+.settings-header p {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 0;
+}
+.settings-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+}
+.shadow-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.card-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+.card-header-bar h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+.roster-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.roster-table th {
+  background-color: #f8fafc;
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #475569;
+  border-bottom: 2px solid #e2e8f0;
+}
+.roster-row td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+  color: #334155;
+}
+.member-name {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #0f172a;
+}
+.member-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #3b82f6;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-transform: uppercase;
+}
+.role-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+.role-role_admin {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+.role-role_project_manager {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+.role-role_developer {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+.role-role_qa_tester {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+.role-role_viewer {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+.text-right {
+  text-align: right !important;
+}
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 10px 0;
+}
+.dialog-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dialog-field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+}
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  color: #64748b;
+}
+.spinner-icon {
+  font-size: 2rem;
+  color: #3b82f6;
+  margin-bottom: 8px;
+}

@@ -1,0 +1,446 @@
+<div class="board-layout-container" *ngIf="boardStore.boardState$ | async as board; else loadingBoard">
+  
+  <!-- Sub-header Filter and Action Bar (F12) -->
+  <div class="board-action-bar">
+    <div class="bar-left">
+      <h2 class="board-title">{{ board.title }}</h2>
+      <p class="board-subtitle">{{ board.description }}</p>
+    </div>
+
+    <!-- Live Reactive Filters (F12) -->
+    <div class="bar-center">
+      <div class="search-box">
+        <i class="pi pi-search search-icon"></i>
+        <input 
+          type="text" 
+          pInputText 
+          placeholder="Search card title, tags..." 
+          [(ngModel)]="searchQuery" 
+          (ngModelChange)="onFilterChange()"
+          class="search-input"
+        />
+      </div>
+
+      <div class="filter-dropdown-group">
+        <p-select 
+          [options]="[
+            { label: 'All Priorities', value: 'ALL' },
+            { label: 'Low Priority', value: 'LOW' },
+            { label: 'Medium Priority', value: 'MEDIUM' },
+            { label: 'High Priority', value: 'HIGH' },
+            { label: 'Urgent Priority', value: 'URGENT' }
+          ]"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="selectedPriorityFilter"
+          (onChange)="onFilterChange()"
+          styleClass="filter-select"
+        ></p-select>
+
+        <p-select 
+          [options]="[
+            { label: 'All Statuses', value: 'ALL' },
+            { label: 'Active Cards', value: 'ACTIVE' },
+            { label: 'Locked Pending Approval', value: 'PENDING_APPROVAL' }
+          ]"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="selectedStatusFilter"
+          (onChange)="onFilterChange()"
+          styleClass="filter-select"
+        ></p-select>
+      </div>
+    </div>
+
+    <div class="bar-right">
+      <p-button icon="pi pi-history" label="Activity Stream" styleClass="p-button-outlined p-button-secondary mr-2" (click)="openActivitySidebar()"></p-button>
+      <p-button icon="pi pi-sliders-h" label="Configure Workflow" styleClass="p-button-outlined p-button-success" *ngIf="canEditAndConfigure" (click)="openWorkflowDialog()"></p-button>
+    </div>
+  </div>
+
+  <!-- Interactive Drag-and-Drop Canvas (F5) -->
+  <div class="kanban-canvas">
+    <div 
+      class="kanban-column" 
+      *ngFor="let col of filteredColumns$ | async; trackBy: trackByColumnId"
+      (dragover)="onDragOver($event)"
+      (drop)="onDrop($event, col.id, col.tasks.length)"
+    >
+      <!-- Column Header Area (F11) -->
+      <div class="column-header" [class.gated-column-header]="col.isGated">
+        <div class="col-header-left">
+          <i class="pi pi-lock-open column-icon" *ngIf="!col.isGated"></i>
+          <i class="pi pi-lock gated-column-icon" *ngIf="col.isGated" pTooltip="Gated Transition Area: Entry requires reviewer approval"></i>
+          <span class="column-name">{{ col.name }}</span>
+          <span class="card-count-badge">{{ col.tasks.length }}</span>
+        </div>
+
+        <div class="col-header-right">
+          <!-- WIP Limit Status Indicator Flag (F11) -->
+          <span 
+            *ngIf="col.wipLimit" 
+            class="wip-limit-indicator" 
+            [class.wip-exceeded]="col.tasks.length > col.wipLimit"
+            [pTooltip]="col.tasks.length > col.wipLimit ? 'WIP Limit Exceeded! Reduce load.' : 'Work-In-Progress Limit'"
+          >
+            WIP: {{ col.tasks.length }}/{{ col.wipLimit }}
+          </span>
+          <p-button icon="pi pi-plus" styleClass="p-button-text p-button-secondary col-add-btn" (click)="openCreateTaskDialog(col.id)" pTooltip="Add card to column"></p-button>
+        </div>
+      </div>
+
+      <!-- Draggable Card List Stack (F5) -->
+      <div class="column-card-stack">
+        <div 
+          class="task-card" 
+          *ngFor="let task of col.tasks; trackBy: trackByTaskId"
+          draggable="true"
+          (dragstart)="onDragStart($event, task.id, col.id, task.version)"
+          (click)="openTaskDetails(task)"
+          [class.card-locked]="task.status === 'PENDING_APPROVAL'"
+        >
+          <!-- Locked Padlock Gating Overlay (F6) -->
+          <div class="lock-indicator-banner" *ngIf="task.status === 'PENDING_APPROVAL'">
+            <i class="pi pi-lock lock-banner-icon"></i>
+            <span>LOCKED PENDING APPROVAL</span>
+          </div>
+
+          <!-- Card Header & Priority Tags (F16) -->
+          <div class="card-header">
+            <span class="priority-tag" [class]="'priority-' + task.priority.toLowerCase()">
+              {{ task.priority }}
+            </span>
+            <span class="task-id-badge">#{{ task.id }}</span>
+          </div>
+
+          <!-- Card Title & Content -->
+          <h4 class="card-title">{{ task.title }}</h4>
+          <p class="card-desc" *ngIf="task.description">{{ task.description | slice:0:70 }}{{ task.description.length > 70 ? '...' : '' }}</p>
+
+          <!-- Tags Array Render -->
+          <div class="card-tags" *ngIf="task.tags && task.tags.length > 0">
+            <span class="tag-chip" *ngFor="let t of task.tags">{{ t }}</span>
+          </div>
+
+          <!-- Card Footer (Assignee & Date) (F4) -->
+          <div class="card-footer">
+            <div class="assignee-avatar-group" *ngIf="task.assignee; else unassigned">
+              <div class="user-avatar" pTooltip="Assignee: {{ task.assignee.firstName }} {{ task.assignee.lastName }}">
+                {{ task.assignee.firstName[0] }}{{ task.assignee.lastName[0] }}
+              </div>
+              <span class="assignee-name">{{ task.assignee.firstName }}</span>
+            </div>
+            <ng-template #unassigned>
+              <div class="unassigned-badge">
+                <i class="pi pi-user-plus"></i>
+                <span>Unassigned</span>
+              </div>
+            </ng-template>
+
+            <span class="due-date-badge" *ngIf="task.dueDate" pTooltip="Due Date">
+              <i class="pi pi-calendar"></i>
+              <span>{{ task.dueDate | date:'MMM d' }}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- --- MODALS & DRAWER DIALOGS --- -->
+
+  <!-- 1. Create Task Dialog (F3) -->
+  <p-dialog 
+    header="Create Kanban Task" 
+    [(visible)]="createTaskDialogVisible" 
+    [modal]="true" 
+    [style]="{ width: '450px' }"
+    styleClass="custom-dialog"
+  >
+    <div class="dialog-form">
+      <div class="dialog-field">
+        <label for="new-title">Task Title *</label>
+        <input id="new-title" type="text" pInputText [(ngModel)]="newTask.title" placeholder="Define perceptions objective..." class="w-full" />
+      </div>
+
+      <div class="dialog-field">
+        <label for="new-desc">Technical Description</label>
+        <textarea id="new-desc" rows="4" pTextarea [(ngModel)]="newTask.description" placeholder="Specify platform deliverables, datasets, and acceptance criteria..."></textarea>
+      </div>
+
+      <div class="dialog-field-row">
+        <div class="dialog-field">
+          <label for="new-priority">Priority</label>
+          <p-select id="new-priority" [options]="priorityOptions" optionLabel="label" optionValue="value" [(ngModel)]="newTask.priority" styleClass="w-full"></p-select>
+        </div>
+      </div>
+
+      <div class="dialog-field">
+        <label for="new-tags">Tags (Comma-Separated)</label>
+        <input id="new-tags" type="text" pInputText [(ngModel)]="newTaskTagsString" placeholder="e.g. ADAS, Perception, Vision" class="w-full" />
+      </div>
+    </div>
+
+    <ng-template #footer>
+      <p-button label="Cancel" styleClass="p-button-text p-button-secondary" (click)="createTaskDialogVisible = false"></p-button>
+      <p-button label="Add Task" icon="pi pi-check" styleClass="p-button-success" [disabled]="!newTask.title" (click)="createTask()"></p-button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- 2. Task Details Inspector & Auto-Save Editor (F3, F4, F6, F7) -->
+  <p-dialog 
+    header="Task Inspector - Card #{{ selectedTask?.id }}" 
+    [(visible)]="taskDetailsDialogVisible" 
+    [modal]="true" 
+    [style]="{ width: '600px' }"
+    styleClass="custom-dialog"
+  >
+    <div class="dialog-form" *ngIf="selectedTask">
+      
+      <!-- Locked Banner Warning -->
+      <div class="locked-inspector-banner" *ngIf="selectedTask.status === 'PENDING_APPROVAL'">
+        <i class="pi pi-lock mr-2"></i>
+        <span>Approval Gate Gated: Edits are suspended pending PM review.</span>
+      </div>
+
+      <div class="dialog-field">
+        <label for="edit-title">Title</label>
+        <input 
+          id="edit-title" 
+          type="text" 
+          pInputText 
+          [(ngModel)]="selectedTask.title" 
+          (ngModelChange)="onMetadataFieldChange()" 
+          [disabled]="isTaskLocked"
+          class="w-full font-bold" 
+        />
+      </div>
+
+      <div class="dialog-field">
+        <label for="edit-desc">Technical Description</label>
+        <textarea 
+          id="edit-desc" 
+          rows="5" 
+          pTextarea 
+          [(ngModel)]="selectedTask.description" 
+          (ngModelChange)="onMetadataFieldChange()" 
+          [disabled]="isTaskLocked"
+        ></textarea>
+      </div>
+
+      <div class="dialog-field-row">
+        <div class="dialog-field half-field">
+          <label for="edit-priority">Priority</label>
+          <p-select 
+            id="edit-priority" 
+            [options]="priorityOptions" 
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="selectedTask.priority" 
+            (onChange)="onMetadataFieldChange()" 
+            [disabled]="isTaskLocked"
+            styleClass="w-full"
+          ></p-select>
+        </div>
+
+        <div class="dialog-field half-field">
+          <label for="edit-assignee">Task Assignee</label>
+          <p-select 
+            id="edit-assignee" 
+            [options]="filteredWorkspaceMembers" 
+            optionLabel="email" 
+            optionValue="id" 
+            [(ngModel)]="selectedTaskAssigneeId" 
+            (onChange)="onAssigneeChange(selectedTaskAssigneeId)" 
+            [showClear]="true"
+            [disabled]="!canAssignTask"
+            placeholder="Unassigned"
+            styleClass="w-full"
+          ></p-select>
+        </div>
+      </div>
+
+      <div class="dialog-field">
+        <label for="edit-tags">Tags (Comma-Separated)</label>
+        <input 
+          id="edit-tags" 
+          type="text" 
+          pInputText 
+          [(ngModel)]="selectedTaskTagsString" 
+          (ngModelChange)="onMetadataFieldChange()" 
+          [disabled]="isTaskLocked"
+          class="w-full" 
+        />
+      </div>
+
+      <!-- Human-In-The-Loop Approval Gates Action Bar (F7) -->
+      <div class="approval-action-block" *ngIf="selectedTask.status === 'PENDING_APPROVAL' && canEditAndConfigure">
+        <h4>GATE REVIEW REQUIRED</h4>
+        <p>Review the deliverables of this perception roadmap before granting progression permissions.</p>
+        <div class="approval-btn-group">
+          <p-button label="Approve & Unlock" icon="pi pi-check" styleClass="p-button-success" (click)="approveTask()"></p-button>
+          <p-button label="Reject & Fallback" icon="pi pi-exclamation-triangle" styleClass="p-button-danger" (click)="openRejectDialog()"></p-button>
+        </div>
+      </div>
+
+      <!-- Rejection history reason badge -->
+      <div class="rejection-history-reason" *ngIf="selectedTask.rejectionReason">
+        <div class="rejection-title">
+          <i class="pi pi-exclamation-circle mr-2"></i>
+          <span>PAST REJECTION MEMO:</span>
+        </div>
+        <div class="rejection-text">"{{ selectedTask.rejectionReason }}"</div>
+      </div>
+    </div>
+
+    <ng-template #footer>
+      <p-button label="Delete Card" icon="pi pi-trash" styleClass="p-button-danger p-button-text mr-auto" (click)="deleteTask()"></p-button>
+      <p-button label="Close Details" styleClass="p-button-text p-button-secondary" (click)="taskDetailsDialogVisible = false"></p-button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- 3. Task Rejection Dialog Prompt (F7) -->
+  <p-dialog 
+    header="Review Rejection Memo" 
+    [(visible)]="rejectDialogVisible" 
+    [modal]="true" 
+    [style]="{ width: '450px' }"
+    styleClass="custom-dialog"
+  >
+    <div class="dialog-form">
+      <div class="dialog-field">
+        <label for="fallback-col">Select Rejection Backward Fallback Stage *</label>
+        <p-select 
+          id="fallback-col" 
+          [options]="getFallbackColumnOptions()" 
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="selectedRejectFallbackColumnId" 
+          placeholder="Choose fallback stage..."
+          styleClass="w-full"
+        ></p-select>
+      </div>
+
+      <div class="dialog-field">
+        <label for="reject-reason">Review Rejection Reason *</label>
+        <textarea id="reject-reason" rows="4" pTextarea [(ngModel)]="rejectionReasonPrompt" placeholder="State exactly why this perception block failed verification..."></textarea>
+      </div>
+    </div>
+
+    <ng-template #footer>
+      <p-button label="Cancel" styleClass="p-button-text p-button-secondary" (click)="rejectDialogVisible = false"></p-button>
+      <p-button label="Confirm Rejection" icon="pi pi-check" styleClass="p-button-danger" [disabled]="!selectedRejectFallbackColumnId || !rejectionReasonPrompt" (click)="rejectTask()"></p-button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- 4. State Machine Workflow Transitions Matrix Configurator (F2) -->
+  <p-dialog 
+    header="Board Workflow Governance Configuration" 
+    [(visible)]="workflowDialogVisible" 
+    [modal]="true" 
+    [style]="{ width: '850px' }"
+    styleClass="custom-dialog"
+  >
+    <div class="workflow-config-container">
+      <h3>Active State-Machine Transition Rules</h3>
+      <p>Configure permitted progression channels and lock boundaries across your perception roadmap stages.</p>
+
+      <div class="matrix-table-wrapper">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th>From Stage (Source)</th>
+              <th>To Stage (Target)</th>
+              <th>Permit</th>
+              <th>Requires Approval (Gated)</th>
+              <th>Rejection Fallback Column</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let fromCol of board.columns">
+              <ng-container *ngFor="let toCol of board.columns">
+                <tr *ngIf="fromCol.id !== toCol.id" class="matrix-row">
+                  <td class="col-source">{{ fromCol.name }}</td>
+                  <td class="col-target"><i class="pi pi-arrow-right mr-2"></i>{{ toCol.name }}</td>
+                  <td>
+                    <p-checkbox 
+                      [binary]="true" 
+                      [ngModel]="getTransitionCheckboxValue(fromCol.id, toCol.id)"
+                      (onChange)="toggleTransition(fromCol.id, toCol.id)"
+                    ></p-checkbox>
+                  </td>
+                  <td>
+                    <p-checkbox 
+                      [binary]="true" 
+                      [disabled]="!getTransitionCheckboxValue(fromCol.id, toCol.id)"
+                      [ngModel]="getTransitionApprovalValue(fromCol.id, toCol.id)"
+                      (onChange)="toggleTransitionApproval(fromCol.id, toCol.id)"
+                    ></p-checkbox>
+                  </td>
+                  <td>
+                    <select 
+                      [disabled]="!getTransitionCheckboxValue(fromCol.id, toCol.id) || !getTransitionApprovalValue(fromCol.id, toCol.id)"
+                      [value]="getTransitionFallbackValue(fromCol.id, toCol.id) || ''"
+                      (change)="setTransitionFallback(fromCol.id, toCol.id, $any($event.target).value)"
+                      class="fallback-select"
+                    >
+                      <option value="">No Fallback</option>
+                      <option *ngFor="let fallbackCol of board.columns" [value]="fallbackCol.id">
+                        {{ fallbackCol.name }}
+                      </option>
+                    </select>
+                  </td>
+                </tr>
+              </ng-container>
+            </ng-container>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <ng-template #footer>
+      <p-button label="Cancel" styleClass="p-button-text p-button-secondary" (click)="workflowDialogVisible = false"></p-button>
+      <p-button label="Save Governance Rules" icon="pi pi-check" styleClass="p-button-success" (click)="saveWorkflowTransitions()"></p-button>
+    </ng-template>
+  </p-dialog>
+
+  <!-- 5. Contextual Board Activity Stream (F9) -->
+  <p-drawer 
+    [(visible)]="activitySidebarVisible" 
+    position="right" 
+    [style]="{ width: '400px' }"
+    styleClass="custom-sidebar"
+  >
+    <div class="sidebar-header">
+      <i class="pi pi-history sidebar-title-icon"></i>
+      <h3>Contextual Activity Feed</h3>
+    </div>
+    <div class="sidebar-body">
+      <div class="activity-stream-timeline">
+        <div class="timeline-event" *ngFor="let log of activityStore.boardActivity$ | async">
+          <div class="event-time">{{ log.timestamp | date:'MMM d, HH:mm' }}</div>
+          <div class="event-details">
+            <div class="event-action">
+              <span class="actor-name">{{ log.actor.firstName }} {{ log.actor.lastName }}</span>
+              <span class="action-type-tag" [class]="'action-' + log.actionType.toLowerCase()">
+                {{ log.actionType }}
+              </span>
+            </div>
+            <div class="event-card-details">
+              <span>Card ID: <code>#{{ log.taskId }}</code></span>
+              <p class="parsed-details">{{ log.details | parseDetails }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </p-drawer>
+
+</div>
+
+<ng-template #loadingBoard>
+  <div class="loading-state-screen">
+    <i class="pi pi-spin pi-spinner loading-spinner"></i>
+    <p>Hydrating perception roadmap board details...</p>
+  </div>
+</ng-template>

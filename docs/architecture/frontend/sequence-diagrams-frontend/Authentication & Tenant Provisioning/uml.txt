@@ -1,0 +1,19 @@
+sequenceDiagram
+    actor User
+    participant UI as Presentation (Login/Settings)
+    participant Store as State (Auth/Workspace Store)
+    participant Net as Network (JWT Interceptor)
+    participant API as Spring Boot Backend
+
+    User->>UI: Submit Credentials
+    UI->>Net: POST /api/auth/login
+    Net->>API: Validate Credentials
+    API-->>Net: JWT Token Payload
+    Net-->>Store: Cache JWT & Profile
+    
+    User->>UI: Assign Role to User (F15)
+    UI->>Store: Dispatch Role Assignment
+    Store->>Net: POST /api/workspaces/{id}/members (w/ JWT)
+    Net->>API: Validate @workspaceSecurity.isAdmin
+    API-->>Store: HTTP 201 Created
+    Store-->>UI: Update PrimeNG Member Roster

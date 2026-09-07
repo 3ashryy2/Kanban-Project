@@ -1,0 +1,85 @@
+<div class="audit-container">
+  <div class="audit-header">
+    <h2>Global Security & Compliance Audit Log</h2>
+    <p>Immutable system-wide ledger of state mutations, state-machine decisions, and session provisions (F9).</p>
+  </div>
+
+  <div class="filter-card shadow-card">
+    <div class="filter-bar">
+      <div class="filter-left">
+        <span class="filter-label">Filter Action Type:</span>
+        <p-select 
+          [options]="actionTypeOptions" 
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="selectedActionType" 
+          (onChange)="onActionTypeChange()"
+          styleClass="filter-select"
+        ></p-select>
+      </div>
+      <div class="filter-right">
+        <p-button label="Refresh Ledger" icon="pi pi-refresh" styleClass="p-button-outlined p-button-sm" (click)="loadLogs()"></p-button>
+      </div>
+    </div>
+
+    <div class="ledger-box" *ngIf="activityStore.globalAuditPage$ | async as page; else loadingLedger">
+      <table class="ledger-table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Global ID</th>
+            <th>Actor User</th>
+            <th>Compliance Action</th>
+            <th>Tenant (Workspace)</th>
+            <th>Target Object</th>
+            <th>Raw Details Payload</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of page.content" class="ledger-row">
+            <td class="log-time font-bold">{{ log.timestamp | date:'yyyy-MM-dd HH:mm:ss' }}</td>
+            <td class="log-id font-mono">#{{ log.id }}</td>
+            <td class="log-actor font-bold">
+              {{ log.actor.firstName }} {{ log.actor.lastName }}
+              <span class="actor-email font-mono">({{ log.actor.email }})</span>
+            </td>
+            <td>
+              <span class="action-badge" [class]="'action-' + log.actionType.toLowerCase()">
+                {{ log.actionType }}
+              </span>
+            </td>
+            <td class="log-tenant font-mono">Workspace #{{ log.workspaceId }}</td>
+            <td class="log-target font-mono">Task #{{ log.taskId }}</td>
+            <td class="log-details font-mono">{{ log.details | parseDetails }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Simple Pagination Bar -->
+      <div class="pagination-bar" *ngIf="page.page">
+        <span>Showing Page {{ page.page.number + 1 }} of {{ page.page.totalPages }}</span>
+        <div class="page-btn-group">
+          <p-button 
+            icon="pi pi-chevron-left" 
+            styleClass="p-button-text p-button-sm" 
+            [disabled]="page.page.number === 0" 
+            (click)="goToPage(page.page.number - 1)"
+          ></p-button>
+          <p-button 
+            icon="pi pi-chevron-right" 
+            styleClass="p-button-text p-button-sm" 
+            [disabled]="page.page.number >= page.page.totalPages - 1" 
+            (click)="goToPage(page.page.number + 1)"
+          ></p-button>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #loadingLedger>
+      <div class="loading-state">
+        <i class="pi pi-spin pi-spinner spinner-icon"></i>
+        <p>Hydrating compliance ledger records...</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

@@ -1,0 +1,20 @@
+sequenceDiagram
+    actor QA_Tester
+    participant UI as Kanban/Task Dialog
+    participant Store as BoardStoreService
+    participant API as Spring Boot Backend
+    participant Event as AuditLogDashboard
+
+    QA_Tester->>UI: Move to "Ready for QA"
+    UI->>Store: Optimistic Move
+    Store->>API: PATCH /api/tasks/{id}/move
+    API->>API: Set status = PENDING_APPROVAL
+    API-->>Store: HTTP 200 (Card Locked)
+    
+    actor Manager
+    Manager->>UI: Click Approve (TaskApprovalControls)
+    UI->>Store: Dispatch Approval
+    Store->>API: POST /api/tasks/{taskId}/approve
+    API->>API: Set status = ACTIVE & Publish Async Event
+    API-->>Store: HTTP 200 OK
+    API-->>Event: GET /api/audit-logs (Stream Update)

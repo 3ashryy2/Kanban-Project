@@ -1,0 +1,81 @@
+<aside class="app-sidebar">
+  <div class="sidebar-section" *ngIf="workspaceStore.activeWorkspace$ | async as activeWs">
+    <h3 class="section-title">ACTIVE TENANT</h3>
+    <div class="active-ws-details">
+      <h4>{{ activeWs.name }}</h4>
+      <span class="role-chip">{{ activeWs.currentUserRole }}</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <h3 class="section-title" style="margin: 0">BOARDS</h3>
+      <p-button 
+        label="New Board" 
+        icon="pi pi-plus" 
+        [disabled]="!(isAdmin || isPM)"
+        pTooltip="Requires Admin or Project Manager"
+        [tooltipDisabled]="isAdmin || isPM"
+        styleClass="p-button-sm" 
+        (onClick)="openCreateBoard()">
+      </p-button>
+    </div>
+    <ul class="nav-list" *ngIf="boards && boards.length > 0; else noBoards">
+      <li *ngFor="let board of boards" [class.active]="activeBoardId === board.id">
+        <a (click)="navigateToBoard(board.id)">
+          <i class="pi pi-th-large"></i>
+          <span>{{ board.title }}</span>
+        </a>
+      </li>
+    </ul>
+    <ng-template #noBoards>
+      <div class="sidebar-fallback">No boards configured.</div>
+    </ng-template>
+  </div>
+
+  <div class="sidebar-section">
+    <h3 class="section-title">PREFERENCES</h3>
+    <ul class="nav-list">
+      <li routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+        <a (click)="navigateToWorkspaceSettings()">
+          <i class="pi pi-users"></i>
+          <span>Workspace Members</span>
+        </a>
+      </li>
+      <li *ngIf="isAdmin" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+        <a routerLink="/admin/audit-logs">
+          <i class="pi pi-shield"></i>
+          <span>Global Audit Logs</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="sidebar-footer">
+    <button pButton icon="pi pi-power-off" label="Sign Out" class="p-button-danger p-button-text w-full text-left" (click)="onSignOut()"></button>
+  </div>
+</aside>
+
+<!-- Create Board Modal -->
+<p-dialog 
+  header="Create New Board" 
+  [(visible)]="createBoardVisible" 
+  [modal]="true" 
+  [style]="{ width: '400px' }"
+  styleClass="custom-dialog"
+>
+  <div class="flex flex-column gap-3 py-2">
+    <div class="flex flex-column gap-1">
+      <label for="board-title" class="font-semibold text-sm">Board Title *</label>
+      <input id="board-title" type="text" pInputText [(ngModel)]="newBoard.title" placeholder="e.g. Sprint 42" class="w-full" />
+    </div>
+    <div class="flex flex-column gap-1">
+      <label for="board-desc" class="font-semibold text-sm">Description</label>
+      <textarea id="board-desc" rows="3" pTextarea [(ngModel)]="newBoard.description" placeholder="Sprint goals..." class="w-full"></textarea>
+    </div>
+  </div>
+  <ng-template #footer>
+    <p-button label="Cancel" styleClass="p-button-text p-button-secondary" (click)="createBoardVisible = false"></p-button>
+    <p-button label="Create Board" icon="pi pi-check" styleClass="p-button-success" [disabled]="!newBoard.title" (click)="submitCreateBoard()"></p-button>
+  </ng-template>
+</p-dialog>

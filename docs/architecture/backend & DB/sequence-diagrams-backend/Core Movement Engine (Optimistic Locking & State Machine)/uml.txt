@@ -1,0 +1,31 @@
+sequenceDiagram
+    actor User
+    participant Ctrl as TaskController
+    participant Svc as TaskWorkflowService
+    participant Repo as TaskRepository
+    participant Matrix as WorkflowTransitionRepository
+    participant Event as ApplicationEventPublisher
+
+    User->>Ctrl: PATCH /api/tasks/{id}/move (w/ version)
+    Ctrl->>Ctrl: @taskSecurity.canMoveCard() validation
+    Ctrl->>Svc: processCardMove(taskId, request)
+    
+    Svc->>Repo: findByIdWithHierarchy(taskId)
+    Note over Svc,Repo: Uses JOIN FETCH for safe metadata access
+    Repo-->>Svc: Task Entity
+    
+    Svc->>Svc: Compare @Version token
+    
+    Svc->>Matrix: verifyTransition(source, target)
+    Matrix-->>Svc: Valid Path (requiresApproval = true)
+    
+    Svc->>Svc: Set status = PENDING_APPROVAL
+    Svc->>Svc: Set column_id & position (O(1) update)
+    
+    Svc->>Repo: save(task)
+    Note over Svc,Repo: Hibernate verifies @Version on flush
+    Repo-->>Svc: Persisted Entity
+    
+    Svc->>Event: publishEvent(CardMovedEvent)
+    Svc-->>Ctrl: TaskDto
+    Ctrl-->>User: HTTP 200 OK

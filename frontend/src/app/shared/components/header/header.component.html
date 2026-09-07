@@ -1,0 +1,59 @@
+<header class="app-header">
+  <div class="header-left">
+    <i class="pi pi-clone logo-icon"></i>
+    <span class="brand-title">Valeo Perception PM</span>
+    
+    <div class="workspace-selector-box" *ngIf="workspaceStore.workspaces$ | async as workspaces">
+      <span class="switcher-label">Workspace:</span>
+      <p-select 
+        [options]="workspaces" 
+        optionLabel="name" 
+        [(ngModel)]="selectedWorkspace"
+        (onChange)="onWorkspaceChange($event.value)"
+        styleClass="workspace-dropdown"
+      ></p-select>
+      <p-button 
+        label="New Workspace" 
+        icon="pi pi-plus" 
+        [disabled]="!isAdmin"
+        pTooltip="Requires Global Admin Privileges" 
+        [tooltipDisabled]="isAdmin"
+        styleClass="p-button-sm ml-3" 
+        (onClick)="openCreateWorkspace()">
+      </p-button>
+    </div>
+  </div>
+
+  <div class="header-right" *ngIf="authStore.currentUser$ | async as user">
+    <p-button icon="pi pi-user" label="{{ user.firstName }} {{ user.lastName }}" styleClass="p-button-text user-badge" (click)="userMenu.toggle($event)"></p-button>
+    <p-menu #userMenu [model]="profileMenuItems" [popup]="true"></p-menu>
+  </div>
+</header>
+
+<!-- Create Workspace Modal -->
+<p-dialog 
+  header="Create New Workspace" 
+  [(visible)]="createWorkspaceVisible" 
+  [modal]="true" 
+  [style]="{ width: '400px' }"
+  styleClass="custom-dialog"
+>
+  <div class="flex flex-column gap-3 py-2">
+    <div class="flex flex-column gap-1">
+      <label for="ws-name" class="font-semibold text-sm">Workspace Name *</label>
+      <input id="ws-name" type="text" pInputText [(ngModel)]="newWorkspace.name" placeholder="e.g. ADAS Team" class="w-full" />
+    </div>
+    <div class="flex flex-column gap-1">
+      <label for="ws-slug" class="font-semibold text-sm">Unique Slug *</label>
+      <input id="ws-slug" type="text" pInputText [(ngModel)]="newWorkspace.slug" placeholder="e.g. adas-team" class="w-full" />
+    </div>
+    <div class="flex flex-column gap-1">
+      <label for="ws-desc" class="font-semibold text-sm">Description</label>
+      <textarea id="ws-desc" rows="3" pTextarea [(ngModel)]="newWorkspace.description" placeholder="Workspace objective..." class="w-full"></textarea>
+    </div>
+  </div>
+  <ng-template #footer>
+    <p-button label="Cancel" styleClass="p-button-text p-button-secondary" (click)="createWorkspaceVisible = false"></p-button>
+    <p-button label="Create Workspace" icon="pi pi-check" styleClass="p-button-success" [disabled]="!newWorkspace.name || !newWorkspace.slug" (click)="submitCreateWorkspace()"></p-button>
+  </ng-template>
+</p-dialog>

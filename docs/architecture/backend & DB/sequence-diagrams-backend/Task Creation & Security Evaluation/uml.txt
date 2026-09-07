@@ -1,0 +1,26 @@
+sequenceDiagram
+    actor Client
+    participant Net as JWT Authentication Filter
+    participant Ctrl as TaskController
+    participant Sec as TaskSecurityEvaluator (@taskSecurity)
+    participant Svc as TaskService
+    participant Repo as TaskRepository
+    participant DB as PostgreSQL Database
+
+    Client->>Net: POST /api/tasks (Bearer Token)
+    Net->>Net: Validate Token & Build CustomUserDetails
+    Net->>Ctrl: Pass Authenticated Request
+    
+    Ctrl->>Sec: canEditCard(taskId, currentUser)
+    Sec->>Sec: Verify Ownership & Role (Developer/QA)
+    Sec-->>Ctrl: Authorized (true)
+    
+    Ctrl->>Svc: createTask(TaskCreateRequest)
+    Svc->>Svc: Map DTO to Entity (Set current user as Creator)
+    Svc->>Repo: save(task)
+    Repo->>DB: INSERT INTO tasks
+    DB-->>Repo: Transaction Committed
+    
+    Repo-->>Svc: Persisted Task Entity
+    Svc-->>Ctrl: TaskDto
+    Ctrl-->>Client: HTTP 201 Created

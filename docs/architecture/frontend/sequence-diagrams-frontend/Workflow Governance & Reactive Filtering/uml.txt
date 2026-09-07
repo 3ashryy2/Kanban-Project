@@ -1,0 +1,20 @@
+sequenceDiagram
+    actor PM
+    actor User
+    participant UI as BoardHeader / WorkflowModal
+    participant RxJS as RxJS Filter Pipeline
+    participant Store as Workflow / Board Store
+    participant API as Spring Boot Backend
+
+    Note over PM,API: Workflow Transition Matrix (F2)
+    PM->>UI: Configure Gated Stages & Paths
+    UI->>Store: Save Matrix configuration
+    Store->>API: PUT /api/boards/{id}/transitions
+    API-->>Store: HTTP 200 OK (Matrix Updated)
+
+    Note over User,Store: Client-Side Reactive Filtering (F12)
+    User->>UI: Toggle "My Tasks" or Search Tag
+    UI->>RxJS: Push search criteria
+    RxJS->>Store: local .filter() on active task stream
+    Note over RxJS,Store: No HTTP round-trip required
+    Store-->>UI: Instantly render filtered cards
