@@ -5,8 +5,8 @@
 
   <div class="layout-body">
     <app-sidebar 
-      [boards]="boards" 
-      [activeBoardId]="activeBoardId"
+      [boards]="boards()" 
+      [activeBoardId]="activeBoardId()"
       (loadBoards)="loadBoardsForWorkspace($event)"
       (navBoard)="navigateToBoard($event)"
     ></app-sidebar>

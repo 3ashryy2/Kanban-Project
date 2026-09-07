@@ -58,13 +58,11 @@
     </div>
   </div>
 
-  <!-- Interactive Drag-and-Drop Canvas (F5) -->
-  <div class="kanban-canvas">
+  <!-- Interactive Drag-and-Drop Canvas (CDK) -->
+  <div class="kanban-canvas" cdkDropListGroup>
     <div 
       class="kanban-column" 
       *ngFor="let col of filteredColumns$ | async; trackBy: trackByColumnId"
-      (dragover)="onDragOver($event)"
-      (drop)="onDrop($event, col.id, col.tasks.length)"
     >
       <!-- Column Header Area (F11) -->
       <div class="column-header" [class.gated-column-header]="col.isGated">
@@ -89,13 +87,19 @@
         </div>
       </div>
 
-      <!-- Draggable Card List Stack (F5) -->
-      <div class="column-card-stack">
+      <!-- Draggable Card List Stack (CDK) -->
+      <div 
+        class="column-card-stack"
+        cdkDropList
+        [id]="col.id.toString()"
+        [cdkDropListData]="col.tasks"
+        (cdkDropListDropped)="onCdkDrop($event)"
+      >
         <div 
           class="task-card" 
           *ngFor="let task of col.tasks; trackBy: trackByTaskId"
-          draggable="true"
-          (dragstart)="onDragStart($event, task.id, col.id, task.version)"
+          cdkDrag
+          [cdkDragData]="task"
           (click)="openTaskDetails(task)"
           [class.card-locked]="task.status === 'PENDING_APPROVAL'"
         >
@@ -187,7 +191,7 @@
     </ng-template>
   </p-dialog>
 
-  <!-- 2. Task Details Inspector & Auto-Save Editor (F3, F4, F6, F7) -->
+  <!-- 2. Task Details Inspector & Manual-Save Editor (F3, F4, F6, F7) -->
   <p-dialog 
     header="Task Inspector - Card #{{ selectedTask?.id }}" 
     [(visible)]="taskDetailsDialogVisible" 
@@ -210,7 +214,6 @@
           type="text" 
           pInputText 
           [(ngModel)]="selectedTask.title" 
-          (ngModelChange)="onMetadataFieldChange()" 
           [disabled]="isTaskLocked"
           class="w-full font-bold" 
         />
@@ -223,7 +226,6 @@
           rows="5" 
           pTextarea 
           [(ngModel)]="selectedTask.description" 
-          (ngModelChange)="onMetadataFieldChange()" 
           [disabled]="isTaskLocked"
         ></textarea>
       </div>
@@ -237,7 +239,6 @@
             optionLabel="label"
             optionValue="value"
             [(ngModel)]="selectedTask.priority" 
-            (onChange)="onMetadataFieldChange()" 
             [disabled]="isTaskLocked"
             styleClass="w-full"
           ></p-select>
@@ -251,7 +252,6 @@
             optionLabel="email" 
             optionValue="id" 
             [(ngModel)]="selectedTaskAssigneeId" 
-            (onChange)="onAssigneeChange(selectedTaskAssigneeId)" 
             [showClear]="true"
             [disabled]="!canAssignTask"
             placeholder="Unassigned"
@@ -267,7 +267,6 @@
           type="text" 
           pInputText 
           [(ngModel)]="selectedTaskTagsString" 
-          (ngModelChange)="onMetadataFieldChange()" 
           [disabled]="isTaskLocked"
           class="w-full" 
         />
@@ -295,6 +294,7 @@
 
     <ng-template #footer>
       <p-button label="Delete Card" icon="pi pi-trash" styleClass="p-button-danger p-button-text mr-auto" (click)="deleteTask()"></p-button>
+      <p-button label="Save Changes" icon="pi pi-save" styleClass="p-button-success" [disabled]="isTaskLocked" (click)="saveTaskChanges()"></p-button>
       <p-button label="Close Details" styleClass="p-button-text p-button-secondary" (click)="taskDetailsDialogVisible = false"></p-button>
     </ng-template>
   </p-dialog>
