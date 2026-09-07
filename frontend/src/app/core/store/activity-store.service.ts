@@ -19,6 +19,11 @@ export class ActivityStoreService {
   private readonly _globalAuditPage$ = new BehaviorSubject<any | null>(null);
   readonly globalAuditPage$ = this._globalAuditPage$.asObservable();
 
+  clear(): void {
+    this._boardActivity$.next([]);
+    this._globalAuditPage$.next(null);
+  }
+
   loadBoardActivity(boardId: number, limit = 20): void {
     this.http.get<AuditLogResponseDto[]>(`/api/boards/${boardId}/activity`, {
       params: new HttpParams().set('limit', limit.toString())

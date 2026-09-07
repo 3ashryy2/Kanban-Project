@@ -20,14 +20,27 @@ export class WorkspaceStoreService {
   private readonly _activeWorkspaceMembers$ = new BehaviorSubject<WorkspaceMemberResponseDto[]>([]);
   readonly activeWorkspaceMembers$ = this._activeWorkspaceMembers$.asObservable();
 
-  loadWorkspaces(): void {
+  loadWorkspaces(defaultWorkspaceId?: number): void {
     this.http.get<WorkspaceResponseDto[]>('/api/workspaces')
       .subscribe({
         next: list => {
           this._workspaces$.next(list);
-          // Auto-select first workspace if none active
-          if (list.length > 0 && !this._activeWorkspace$.getValue()) {
-            this.setActiveWorkspace(list[0]);
+          const currentActive = this._activeWorkspace$.getValue();
+          if (list.length > 0) {
+            const activeInList = currentActive ? list.find(w => w.id === currentActive.id) : null;
+            if (activeInList) {
+              this.setActiveWorkspace(activeInList);
+            } else {
+              const matchedDefault = defaultWorkspaceId ? list.find(w => w.id === defaultWorkspaceId) : null;
+              if (matchedDefault) {
+                this.setActiveWorkspace(matchedDefault);
+              } else {
+                this.setActiveWorkspace(list[0]);
+              }
+            }
+          } else {
+            this._activeWorkspace$.next(null);
+            this._activeWorkspaceMembers$.next([]);
           }
         },
         error: () => this.showError('Load Workspaces Failed', 'Could not load workspaces.')
@@ -41,6 +54,12 @@ export class WorkspaceStoreService {
 
   getActiveWorkspace(): WorkspaceResponseDto | null {
     return this._activeWorkspace$.getValue();
+  }
+
+  clear(): void {
+    this._workspaces$.next([]);
+    this._activeWorkspace$.next(null);
+    this._activeWorkspaceMembers$.next([]);
   }
 
   createWorkspace(request: WorkspaceCreateRequest): void {

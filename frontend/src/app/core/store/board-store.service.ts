@@ -23,6 +23,10 @@ export class BoardStoreService {
     map(board => board?.columns ?? [])
   );
 
+  clear(): void {
+    this._boardState$.next(null);
+  }
+
   loadBoard(boardId: number): void {
     this.http.get<BoardDetailsDto>(`/api/boards/${boardId}`)
       .subscribe({

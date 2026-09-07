@@ -59,7 +59,18 @@ public class TaskWorkflowService {
             throw new TaskLockedException("Task is locked pending approval.");
         }
 
-        // 3. Workflow State Machine Rule Evaluation
+        // 3. Assignee Requirement Rule
+        if (!sourceColumnId.equals(targetColumnId)) {
+            com.valeo.kanban.model.entity.Column startingColumn = task.getBoard().getColumns().stream()
+                    .min(java.util.Comparator.comparingDouble(com.valeo.kanban.model.entity.Column::getPosition))
+                    .orElse(task.getColumn());
+
+            if (!targetColumnId.equals(startingColumn.getId()) && task.getAssignee() == null) {
+                throw new InvalidStateTransitionException("A task must have an assignee before it can be moved to another stage.");
+            }
+        }
+
+        // 4. Workflow State Machine Rule Evaluation
         if (!sourceColumnId.equals(targetColumnId)) {
             if (!isAdminOverride) {
                 WorkflowTransition transition = transitionRepository

@@ -6,6 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Subject, Subscription, combineLatest, debounceTime, distinctUntilChanged, map, BehaviorSubject, Observable } from 'rxjs';
 import { MessageService } from 'primeng/api';
+import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 
 // Stores & Services
 import { BoardStoreService } from '../../../core/store/board-store.service';
@@ -46,7 +47,8 @@ import { Tooltip } from 'primeng/tooltip';
     Drawer,
     Checkbox,
     Tooltip,
-    ParseDetailsPipe
+    ParseDetailsPipe,
+    DragDropModule
   ],
   templateUrl: './board-container.component.html',
   styleUrls: ['./board-container.component.scss']
@@ -129,6 +131,7 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
 
   // Selected Task Inspector Payload (F3)
   selectedTask: TaskDto | null = null;
+  originalTask: TaskDto | null = null;
   selectedTaskTagsString = '';
   rejectionReasonPrompt = '';
   selectedRejectFallbackColumnId: number | null = null;
@@ -144,9 +147,6 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
     { label: 'High', value: 'HIGH' },
     { label: 'Urgent', value: 'URGENT' }
   ];
-
-  // Debounce streams for smooth auto-saving on text inputs without flooding (F3)
-  private readonly metadataUpdateSubject = new Subject<TaskMetadataRequest>();
 
   ngOnInit(): void {
     this.currentUserId = this.authStore.getCurrentUserId();
@@ -191,66 +191,28 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
           this.workflowStore.loadTransitions(bId);
         }
       });
-
-    // Debounced Auto-Saving Metadata Updates (F3, leak-safe)
-    this.metadataUpdateSubject.pipe(
-      debounceTime(400),
-      distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)),
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(req => {
-      if (this.selectedTask) {
-        this.boardStore.updateTaskMetadata(this.selectedTask.id, req, this.activeBoardId!)
-          .subscribe({
-            next: updated => {
-              this.selectedTask = updated;
-            },
-            error: err => {
-              this.messageService.add({
-                severity: 'error',
-                summary: 'Auto-Save Failed',
-                detail: err.error?.message || 'Concurrent modification error. Please refresh.',
-                life: 4000
-              });
-            }
-          });
-      }
-    });
   }
 
   ngOnDestroy(): void {
     // Left empty since takeUntilDestroyed completely automates the cleanup lifecycle
   }
 
-  // --- HTML5 Drag-and-Drop Implementation (F5) ---
+  // --- Angular CDK Drag-and-Drop Implementation (F5) ---
 
-  onDragStart(event: DragEvent, taskId: number, sourceColumnId: number, version: number): void {
-    if (event.dataTransfer) {
-      event.dataTransfer.setData('text/plain', JSON.stringify({ taskId, sourceColumnId, version }));
-      event.dataTransfer.effectAllowed = 'move';
-    }
-  }
+  onCdkDrop(event: CdkDragDrop<any[]>): void {
+    const task = event.item.data;
+    const sourceColumnId = Number(event.previousContainer.id);
+    const targetColumnId = Number(event.container.id);
+    const targetIndex = event.currentIndex;
 
-  onDragOver(event: DragEvent): void {
-    event.preventDefault(); // crucial to permit drop event triggers
-  }
-
-  onDrop(event: DragEvent, targetColumnId: number, targetIndex: number): void {
-    event.preventDefault();
-    if (event.dataTransfer) {
-      const dataStr = event.dataTransfer.getData('text/plain');
-      if (dataStr) {
-        const { taskId, sourceColumnId, version } = JSON.parse(dataStr);
-        // Dispatch optimistic movement instant UI response
-        this.boardStore.moveTaskOptimistically(
-          taskId,
-          sourceColumnId,
-          targetColumnId,
-          targetIndex,
-          version,
-          false // standard non-admin bypass
-        );
-      }
-    }
+    this.boardStore.moveTaskOptimistically(
+      task.id,
+      sourceColumnId,
+      targetColumnId,
+      targetIndex,
+      task.version,
+      false // standard non-admin bypass
+    );
   }
 
   // --- Live Reactive Filter Trigger (No DB hit, extremely fast) ---
@@ -314,57 +276,136 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
 
   openTaskDetails(task: TaskDto): void {
     this.selectedTask = { ...task };
+    this.originalTask = { ...task };
     this.selectedTaskTagsString = task.tags ? task.tags.join(', ') : '';
     this.selectedTaskAssigneeId = task.assignee ? task.assignee.id : null;
     this.taskDetailsDialogVisible = true;
   }
 
-  // Captures live keyup updates and queues them in debounced subject for auto-saving (F3)
-  onMetadataFieldChange(): void {
-    if (!this.selectedTask) return;
+  saveTaskChanges(): void {
+    const task = this.selectedTask;
+    const original = this.originalTask;
+    if (!task || !original) return;
 
     const tags = this.selectedTaskTagsString.split(',')
       .map(t => t.trim())
       .filter(t => t !== '');
 
-    const req: TaskMetadataRequest = {
-      title: this.selectedTask.title,
-      description: this.selectedTask.description,
-      priority: this.selectedTask.priority,
-      dueDate: this.selectedTask.dueDate,
-      tags,
-      version: this.selectedTask.version
-    };
+    // Check if metadata changed
+    const metadataChanged = 
+      task.title !== original.title ||
+      task.description !== original.description ||
+      task.priority !== original.priority ||
+      JSON.stringify(tags) !== JSON.stringify(original.tags || []);
 
-    this.metadataUpdateSubject.next(req);
-  }
+    // Check if assignee changed
+    const originalAssigneeId = original.assignee ? original.assignee.id : null;
+    const assigneeChanged = this.selectedTaskAssigneeId !== originalAssigneeId;
 
-  onAssigneeChange(assigneeId: number | null): void {
-    if (!this.selectedTask) return;
+    if (!metadataChanged && !assigneeChanged) {
+      this.taskDetailsDialogVisible = false;
+      return;
+    }
 
-    const req: TaskAssigneeRequest = {
-      assigneeId: assigneeId || undefined,
-      version: this.selectedTask.version
-    };
+    if (metadataChanged && assigneeChanged) {
+      // Sequential saving to prevent concurrent modification exceptions and maintain version order
+      const metadataReq: TaskMetadataRequest = {
+        title: task.title,
+        description: task.description,
+        priority: task.priority,
+        dueDate: task.dueDate,
+        tags,
+        version: task.version
+      };
 
-    this.boardStore.updateTaskAssignee(this.selectedTask.id, req, this.activeBoardId!)
-      .subscribe({
-        next: updated => {
-          this.selectedTask = updated;
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Assignee Synced',
-            detail: 'Card ownership successfully updated.'
-          });
-        },
-        error: err => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Update Failed',
-            detail: err.error?.message || 'Could not update assignee. Out of sync.'
-          });
-        }
-      });
+      this.boardStore.updateTaskMetadata(task.id, metadataReq, this.activeBoardId!)
+        .subscribe({
+          next: updatedTask => {
+            const assigneeReq: TaskAssigneeRequest = {
+              assigneeId: this.selectedTaskAssigneeId || undefined,
+              version: updatedTask.version
+            };
+
+            this.boardStore.updateTaskAssignee(task.id, assigneeReq, this.activeBoardId!)
+              .subscribe({
+                next: () => {
+                  this.taskDetailsDialogVisible = false;
+                  this.messageService.add({
+                    severity: 'success',
+                    summary: 'Task Saved',
+                    detail: 'Task metadata and assignee updated successfully.'
+                  });
+                },
+                error: err => {
+                  this.messageService.add({
+                    severity: 'error',
+                    summary: 'Assignee Save Failed',
+                    detail: err.error?.message || 'Could not update assignee.'
+                  });
+                }
+              });
+          },
+          error: err => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Save Failed',
+              detail: err.error?.message || 'Could not save task metadata.'
+            });
+          }
+        });
+    } else if (metadataChanged) {
+      const metadataReq: TaskMetadataRequest = {
+        title: task.title,
+        description: task.description,
+        priority: task.priority,
+        dueDate: task.dueDate,
+        tags,
+        version: task.version
+      };
+
+      this.boardStore.updateTaskMetadata(task.id, metadataReq, this.activeBoardId!)
+        .subscribe({
+          next: () => {
+            this.taskDetailsDialogVisible = false;
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Task Saved',
+              detail: 'Task metadata updated successfully.'
+            });
+          },
+          error: err => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Save Failed',
+              detail: err.error?.message || 'Could not save task metadata.'
+            });
+          }
+        });
+    } else if (assigneeChanged) {
+      const assigneeReq: TaskAssigneeRequest = {
+        assigneeId: this.selectedTaskAssigneeId || undefined,
+        version: task.version
+      };
+
+      this.boardStore.updateTaskAssignee(task.id, assigneeReq, this.activeBoardId!)
+        .subscribe({
+          next: () => {
+            this.taskDetailsDialogVisible = false;
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Task Saved',
+              detail: 'Task assignee updated successfully.'
+            });
+          },
+          error: err => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Save Failed',
+              detail: err.error?.message || 'Could not save task assignee.'
+            });
+          }
+        });
+    }
   }
 
   deleteTask(): void {

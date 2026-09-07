@@ -145,6 +145,17 @@ public class TaskService {
             newAssignee = userRepository.getReferenceById(request.getAssigneeId());
         }
 
+        // Assignee Requirement Rule:
+        // If unassigning, and the task is in a stage other than the starting column, block it.
+        if (newAssignee == null) {
+            com.valeo.kanban.model.entity.Column startingColumn = task.getBoard().getColumns().stream()
+                    .min(java.util.Comparator.comparingDouble(com.valeo.kanban.model.entity.Column::getPosition))
+                    .orElse(task.getColumn());
+            if (!task.getColumn().getId().equals(startingColumn.getId())) {
+                throw new IllegalArgumentException("A task must remain assigned while in a stage other than To-Do.");
+            }
+        }
+
         task.setAssignee(newAssignee);
         Task savedTask = taskRepository.saveAndFlush(task);
 

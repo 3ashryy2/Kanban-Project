@@ -15,6 +15,11 @@ export class WorkflowStoreService {
   readonly transitions$ = this._transitions$.asObservable();
   transitionsList: WorkflowTransitionUpdateRequest[] = [];
 
+  clear(): void {
+    this._transitions$.next([]);
+    this.transitionsList = [];
+  }
+
   loadTransitions(boardId: number): void {
     this.http.get<WorkflowTransitionUpdateRequest[]>(`/api/boards/${boardId}/transitions`)
       .subscribe({
