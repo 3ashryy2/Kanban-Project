@@ -1,5 +1,12 @@
 import { Routes } from '@angular/router';
+import { Component } from '@angular/core';
 import { authGuard } from './core/guards/auth.guard';
+
+@Component({
+  template: '',
+  standalone: true
+})
+export class EmptyComponent {}
 
 export const routes: Routes = [
   {
@@ -12,11 +19,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       {
-        path: 'workspaces/:workspaceId/boards/:boardId',
+        path: 'dashboard',
         loadComponent: () => import('./features/boards/board-container/board-container.component').then(m => m.BoardContainerComponent)
       },
       {
-        path: 'workspaces/:workspaceId/settings',
+        path: 'settings',
         loadComponent: () => import('./features/workspaces/workspace-settings/workspace-settings.component').then(m => m.WorkspaceSettingsComponent)
       },
       {
@@ -25,8 +32,8 @@ export const routes: Routes = [
       },
       {
         path: '',
-        redirectTo: 'workspaces/1/boards/1',
-        pathMatch: 'full'
+        pathMatch: 'full',
+        redirectTo: 'dashboard'
       }
     ]
   },

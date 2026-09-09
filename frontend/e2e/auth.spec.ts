@@ -22,7 +22,7 @@ test.describe('F10: Authentication and Session Lifecycle', () => {
     await page.click('button[type="submit"]');
 
     // Verification of redirect and board view
-    await expect(page).toHaveURL(/\/workspaces\/1\/boards\/1/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
 
     // Verify Active Tenant info and role badge
     const activeWsHeader = page.locator('.active-ws-details h4');
@@ -43,7 +43,7 @@ test.describe('F10: Authentication and Session Lifecycle', () => {
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/workspaces\/1\/boards\/1/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
 
     const roleChip = page.locator('.role-chip');
     await expect(roleChip).toContainText('ROLE_PROJECT_MANAGER');
@@ -56,7 +56,7 @@ test.describe('F10: Authentication and Session Lifecycle', () => {
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/workspaces\/1\/boards\/1/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
 
     const roleChip = page.locator('.role-chip');
     await expect(roleChip).toContainText('ROLE_ADMIN');
