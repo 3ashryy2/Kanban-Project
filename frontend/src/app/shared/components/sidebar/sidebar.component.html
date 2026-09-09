@@ -20,17 +20,19 @@
         (onClick)="openCreateBoard()">
       </p-button>
     </div>
-    <ul class="nav-list" *ngIf="boards && boards.length > 0; else noBoards">
-      <li *ngFor="let board of boards" [class.active]="activeBoardId === board.id">
-        <a (click)="navigateToBoard(board.id)">
-          <i class="pi pi-th-large"></i>
-          <span>{{ board.title }}</span>
-        </a>
-      </li>
-    </ul>
-    <ng-template #noBoards>
-      <div class="sidebar-fallback">No boards configured.</div>
-    </ng-template>
+    <div class="boards-list-container">
+      <ul class="nav-list" *ngIf="boards && boards.length > 0; else noBoards">
+        <li *ngFor="let board of boards" [class.active]="activeBoardId === board.id">
+          <a (click)="navigateToBoard(board.id)">
+            <i class="pi pi-th-large"></i>
+            <span>{{ board.title }}</span>
+          </a>
+        </li>
+      </ul>
+      <ng-template #noBoards>
+        <div class="sidebar-fallback">No boards configured.</div>
+      </ng-template>
+    </div>
   </div>
 
   <div class="sidebar-section">
