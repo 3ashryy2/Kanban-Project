@@ -21,7 +21,7 @@ export class WorkspaceStoreService {
   readonly activeWorkspaceMembers$ = this._activeWorkspaceMembers$.asObservable();
 
   loadWorkspaces(defaultWorkspaceId?: number): void {
-    this.http.get<WorkspaceResponseDto[]>('/api/workspaces')
+    this.http.get<WorkspaceResponseDto[]>('/api/users/me/workspaces')
       .subscribe({
         next: list => {
           this._workspaces$.next(list);

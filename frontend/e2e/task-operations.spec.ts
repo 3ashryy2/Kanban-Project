@@ -9,7 +9,7 @@ test.describe('F4, F9, F12: Task Operations, Filtering, and Activity Streams', (
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/workspaces\/1\/boards\/1/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
 
     // 1. Create a unique task to search for
     const toDoColumn = page.locator('.kanban-column').first();
@@ -55,7 +55,7 @@ test.describe('F4, F9, F12: Task Operations, Filtering, and Activity Streams', (
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/workspaces\/1\/boards\/1/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
 
     // Create a task
     const toDoColumn = page.locator('.kanban-column').first();
@@ -82,8 +82,8 @@ test.describe('F4, F9, F12: Task Operations, Filtering, and Activity Streams', (
     await expect(option).toBeVisible({ timeout: 5000 });
     await option.click();
 
-    // Close details
-    await page.click('button:has-text("Close Details")');
+    // Save Changes
+    await page.click('button:has-text("Save Changes")');
 
     // Verify that the task card now displays the assignee avatar
     // Initial letter from Mohanad Emad -> "ME"
@@ -103,7 +103,7 @@ test.describe('F4, F9, F12: Task Operations, Filtering, and Activity Streams', (
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/workspaces\/1\/boards\/1/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
 
     // Click "Activity Stream" button
     const streamBtn = page.locator('button:has-text("Activity Stream")');

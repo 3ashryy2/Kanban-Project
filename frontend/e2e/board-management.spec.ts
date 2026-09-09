@@ -9,7 +9,7 @@ test.describe('F1: Workspace & Board Administration', () => {
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/workspaces\/1\/boards\/1/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
 
     // Click "New Board" button in sidebar
     const newBoardBtn = page.locator('button:has-text("New Board")');
@@ -31,7 +31,7 @@ test.describe('F1: Workspace & Board Administration', () => {
 
     // Verification: dialog should close and redirect to new board
     await expect(dialogHeader).not.toBeVisible();
-    await expect(page).toHaveURL(/\/workspaces\/1\/boards\/\d+/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
 
     // Board title should match the new title
     const boardTitle = page.locator('.board-title');
@@ -49,7 +49,7 @@ test.describe('F1: Workspace & Board Administration', () => {
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/workspaces\/1\/boards\/1/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
 
     // "New Board" button should be disabled for non-PMs
     const newBoardBtn = page.locator('button:has-text("New Board")');

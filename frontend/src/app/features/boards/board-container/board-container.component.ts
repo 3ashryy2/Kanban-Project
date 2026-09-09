@@ -2,7 +2,6 @@ import { Component, OnInit, OnDestroy, inject, DestroyRef } from '@angular/core'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Subject, Subscription, combineLatest, debounceTime, distinctUntilChanged, map, BehaviorSubject, Observable } from 'rxjs';
 import { MessageService } from 'primeng/api';
@@ -54,7 +53,6 @@ import { Tooltip } from 'primeng/tooltip';
   styleUrls: ['./board-container.component.scss']
 })
 export class BoardContainerComponent implements OnInit, OnDestroy {
-  readonly route = inject(ActivatedRoute);
   readonly http = inject(HttpClient);
   readonly boardStore = inject(BoardStoreService);
   readonly authStore = inject(AuthStoreService);
@@ -180,15 +178,14 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
         this.allColumns = cols;
       });
 
-    // Reactive Board Loading based on URL path parameters (leak-safe)
-    this.route.params
+    // Reactive Board State Synchronization
+    this.boardStore.boardState$
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(params => {
-        const bId = Number(params['boardId']);
-        if (bId) {
-          this.activeBoardId = bId;
-          this.boardStore.loadBoard(bId);
-          this.workflowStore.loadTransitions(bId);
+      .subscribe(board => {
+        if (board) {
+          this.activeBoardId = board.id;
+        } else {
+          this.activeBoardId = null;
         }
       });
   }

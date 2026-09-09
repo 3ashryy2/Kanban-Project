@@ -67,8 +67,7 @@ export class SidebarComponent implements OnInit {
   }
 
   navigateToWorkspaceSettings(): void {
-    const wsId = this.selectedWorkspace?.id ?? 1;
-    this.router.navigate([`/workspaces/${wsId}/settings`]);
+    this.router.navigate(['/settings']);
   }
 
   openCreateBoard(): void {

@@ -42,7 +42,7 @@ describe('WorkspaceStoreService', () => {
 
     service.loadWorkspaces();
 
-    const req = httpMock.expectOne('/api/workspaces');
+    const req = httpMock.expectOne('/api/users/me/workspaces');
     expect(req.request.method).toBe('GET');
     req.flush(mockWorkspaces);
 
@@ -69,7 +69,7 @@ describe('WorkspaceStoreService', () => {
 
     service.loadWorkspaces();
 
-    const req = httpMock.expectOne('/api/workspaces');
+    const req = httpMock.expectOne('/api/users/me/workspaces');
     req.flush(mockWorkspaces);
 
     // Expect an API request for the members of the newly selected active workspace (id 2)

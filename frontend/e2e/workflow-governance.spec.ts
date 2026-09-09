@@ -1,40 +1,23 @@
 import { test, expect } from '@playwright/test';
 
-// Programmatic HTML5 Drag-and-Drop simulation with DataTransfer injection
-async function dragAndDrop(page, srcIndex: number, targetIndex: number, uniqueTitle: string) {
-  await page.evaluate(({ srcIdx, targetIdx, title }) => {
-    const cols = document.querySelectorAll('.kanban-column');
-    const sourceCol = cols[srcIdx];
-    const targetCol = cols[targetIdx];
-    if (!sourceCol || !targetCol) return;
-
-    const cards = sourceCol.querySelectorAll('.task-card');
-    let sourceCard: Element | null = null;
-    for (const card of Array.from(cards)) {
-      if (card.textContent?.includes(title)) {
-        sourceCard = card;
-        break;
-      }
-    }
-    if (!sourceCard) return;
-
-    const dataTransfer = new DataTransfer();
-
-    const dragStartEvent = new DragEvent('dragstart', { bubbles: true, cancelable: true, dataTransfer });
-    sourceCard.dispatchEvent(dragStartEvent);
-
-    const dragOverEvent = new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer });
-    targetCol.dispatchEvent(dragOverEvent);
-
-    const dropEvent = new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer });
-    targetCol.dispatchEvent(dropEvent);
-
-    const dragEndEvent = new DragEvent('dragend', { bubbles: true, cancelable: true, dataTransfer });
-    sourceCard.dispatchEvent(dragEndEvent);
-  }, { srcIdx: srcIndex, targetIdx: targetIndex, title: uniqueTitle });
+async function dragCard(page, cardLocator, targetLocator) {
+  const cardBoundingBox = await cardLocator.boundingBox();
+  const targetBoundingBox = await targetLocator.boundingBox();
+  if (cardBoundingBox && targetBoundingBox) {
+    await page.mouse.move(cardBoundingBox.x + cardBoundingBox.width / 2, cardBoundingBox.y + cardBoundingBox.height / 2);
+    await page.mouse.down();
+    // Slow down movement to 15 frames so Angular CDK registers the transition hover
+    await page.mouse.move(targetBoundingBox.x + targetBoundingBox.width / 2, targetBoundingBox.y + targetBoundingBox.height / 2, { steps: 15 });
+    await page.mouse.up();
+    await page.waitForTimeout(500); // Wait a brief moment for transition updates to settle
+  }
 }
 
 test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
+
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+  });
 
   test('should allow PM to view and configure workflow transitions', async ({ page }) => {
     // Login as PM
@@ -43,7 +26,7 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/workspaces\/1\/boards\/1/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
 
     // Ensure the board is fully loaded and data is bound to state before performing actions
     const boardTitle = page.locator('.board-title');
@@ -74,7 +57,7 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/workspaces\/1\/boards\/1/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
 
     // Ensure board is fully loaded
     const boardTitle = page.locator('.board-title');
@@ -94,11 +77,25 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
     const taskCard = codeReviewColumn.locator('.task-card', { hasText: uniqueTitle });
     await expect(taskCard).toBeVisible({ timeout: 5000 });
 
+    // Assign task first to satisfy backend assignee validation rule
+    await taskCard.click();
+    await page.click('#edit-assignee');
+    await page.click('.p-select-option:has-text("dev@valeo.com")');
+    await page.click('button:has-text("Save Changes")');
+
+    // Wait for save & board reload to complete
+    const dialog = page.locator('.p-dialog:visible');
+    await expect(dialog).not.toBeVisible({ timeout: 5000 });
+
+    const updatedTaskCard = codeReviewColumn.locator('.task-card', { hasText: uniqueTitle });
+    await expect(updatedTaskCard.locator('.user-avatar')).toBeVisible({ timeout: 5000 });
+
     // Drag from Code Review (column index 2) to Ready for QA (column index 3)
-    await dragAndDrop(page, 2, 3, uniqueTitle);
+    const readyForQaColumn = page.locator('.kanban-column').nth(3);
+    const readyForQaColumnStack = readyForQaColumn.locator('.column-card-stack');
+    await dragCard(page, updatedTaskCard, readyForQaColumnStack);
 
     // Since this transition is gated (requires_approval = true), it should show the LOCKED banner
-    const readyForQaColumn = page.locator('.kanban-column').nth(3);
     const gatedCardInQa = readyForQaColumn.locator('.task-card', { hasText: uniqueTitle });
     const lockBanner = gatedCardInQa.locator('.lock-indicator-banner');
     await expect(lockBanner).toBeVisible({ timeout: 10000 });
@@ -134,7 +131,7 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/workspaces\/1\/boards\/1/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
 
     // Ensure board is fully loaded
     await expect(boardTitle).toBeVisible({ timeout: 10000 });
