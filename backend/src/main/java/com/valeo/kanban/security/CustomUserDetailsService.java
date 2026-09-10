@@ -2,9 +2,7 @@ package com.valeo.kanban.security;
 
 import com.valeo.kanban.model.entity.User;
 import com.valeo.kanban.repository.UserRepository;
-import com.valeo.kanban.repository.WorkspaceMemberRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,10 +18,9 @@ import java.util.List;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
-    private final WorkspaceMemberRepository workspaceMemberRepository;
 
-    @Value("${app.security.platform-admins:admin@valeo.com}")
-    private List<String> platformAdmins;
+    private static final List<GrantedAuthority> ADMIN_AUTHORITIES = List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
+    private static final List<GrantedAuthority> USER_AUTHORITIES = List.of(new SimpleGrantedAuthority("ROLE_VIEWER"));
 
     @Override
     @Transactional(readOnly = true)
@@ -41,16 +38,6 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     private List<GrantedAuthority> buildAuthorities(User user) {
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority("ROLE_VIEWER"));
-
-        // Platform Administration Override
-        if (platformAdmins != null && platformAdmins.contains(user.getEmail().toLowerCase())) {
-            if (authorities.stream().noneMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
-                authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-            }
-        }
-
-        return authorities;
+        return user.isAdmin() ? ADMIN_AUTHORITIES : USER_AUTHORITIES;
     }
 }

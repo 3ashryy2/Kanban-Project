@@ -65,6 +65,7 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
   activeBoardId: number | null = null;
   activeWorkspaceId: number | null = null;
   currentUserRole = 'ROLE_VIEWER';
+  isAdmin = false;
   currentUserId: number | null = null;
 
   // Selected task assignee ID for PrimeNG dropdown binding
@@ -148,6 +149,12 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.currentUserId = this.authStore.getCurrentUserId();
+
+    this.authStore.isAdmin$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(isAdmin => {
+        this.isAdmin = isAdmin;
+      });
 
     // Subscribe to workspace memberships to resolve current user's role (leak-safe)
     this.workspaceStore.activeWorkspace$
@@ -569,7 +576,7 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
   // --- Security Helpers ---
 
   get canEditAndConfigure(): boolean {
-    return this.currentUserRole === 'ROLE_ADMIN' || this.currentUserRole === 'ROLE_PROJECT_MANAGER';
+    return this.isAdmin || this.currentUserRole === 'ROLE_PROJECT_MANAGER';
   }
 
   get canAssignTask(): boolean {
@@ -577,11 +584,11 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
 
     // Locked pending approval tasks can only be assigned by Managers/Admins
     if (this.selectedTask.status === 'PENDING_APPROVAL') {
-      return this.currentUserRole === 'ROLE_ADMIN' || this.currentUserRole === 'ROLE_PROJECT_MANAGER';
+      return this.isAdmin || this.currentUserRole === 'ROLE_PROJECT_MANAGER';
     }
 
     // Admins and PMs can always assign
-    if (this.currentUserRole === 'ROLE_ADMIN' || this.currentUserRole === 'ROLE_PROJECT_MANAGER') {
+    if (this.isAdmin || this.currentUserRole === 'ROLE_PROJECT_MANAGER') {
       return true;
     }
 
@@ -595,7 +602,7 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
   }
 
   get filteredWorkspaceMembers(): SimpleUserDto[] {
-    if (this.currentUserRole === 'ROLE_ADMIN' || this.currentUserRole === 'ROLE_PROJECT_MANAGER') {
+    if (this.isAdmin || this.currentUserRole === 'ROLE_PROJECT_MANAGER') {
       return this.workspaceMembers;
     }
     // Base roles (Developer / QA) can only assign to themselves (or unassign themselves)

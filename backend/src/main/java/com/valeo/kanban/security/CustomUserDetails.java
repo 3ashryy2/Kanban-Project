@@ -15,14 +15,16 @@ public class CustomUserDetails implements UserDetails {
     private final String password;
     private final String firstName;
     private final String lastName;
+    private final boolean isAdmin;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    public CustomUserDetails(Long id, String email, String password, String firstName, String lastName, Collection<? extends GrantedAuthority> authorities) {
+    public CustomUserDetails(Long id, String email, String password, String firstName, String lastName, boolean isAdmin, Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.email = email;
         this.password = password;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.isAdmin = isAdmin;
         this.authorities = authorities;
     }
 
@@ -35,6 +37,7 @@ public class CustomUserDetails implements UserDetails {
                 user.getPasswordHash(),
                 user.getFirstName(),
                 user.getLastName(),
+                user.isAdmin(),
                 authorities
         );
     }
@@ -46,6 +49,7 @@ public class CustomUserDetails implements UserDetails {
                 user.getPasswordHash(),
                 user.getFirstName(),
                 user.getLastName(),
+                user.isAdmin(),
                 authorities
         );
     }
@@ -58,6 +62,7 @@ public class CustomUserDetails implements UserDetails {
                 user.getPasswordHash(),
                 user.getFirstName(),
                 user.getLastName(),
+                user.isAdmin(),
                 authorities
         );
     }
@@ -76,6 +81,10 @@ public class CustomUserDetails implements UserDetails {
 
     public String getLastName() {
         return lastName;
+    }
+
+    public boolean isAdmin() {
+        return isAdmin;
     }
 
     @Override

@@ -1,9 +1,11 @@
 package com.valeo.kanban.security.evaluator;
 
 import com.valeo.kanban.dto.request.TaskAssigneeRequest;
+import com.valeo.kanban.model.entity.Column;
 import com.valeo.kanban.model.entity.Task;
 import com.valeo.kanban.model.enums.TaskStatus;
 import com.valeo.kanban.model.enums.WorkspaceRole;
+import com.valeo.kanban.repository.ColumnRepository;
 import com.valeo.kanban.repository.TaskRepository;
 import com.valeo.kanban.repository.WorkspaceMemberRepository;
 import com.valeo.kanban.security.CustomUserDetails;
@@ -17,6 +19,7 @@ public class TaskSecurityEvaluator {
 
     private final TaskRepository taskRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
+    private final ColumnRepository columnRepository;
 
     private WorkspaceRole getUserRoleInWorkspace(Task task, CustomUserDetails currentUser) {
         return workspaceMemberRepository.findByWorkspaceIdAndUserId(task.getBoard().getWorkspace().getId(), currentUser.getId())
@@ -25,11 +28,12 @@ public class TaskSecurityEvaluator {
     }
 
     private boolean isManager(WorkspaceRole role) {
-        return role == WorkspaceRole.ROLE_ADMIN || role == WorkspaceRole.ROLE_PROJECT_MANAGER;
+        return role == WorkspaceRole.ROLE_PROJECT_MANAGER;
     }
 
     public boolean canEditCard(Long taskId, CustomUserDetails currentUser) {
         if (taskId == null || currentUser == null) return false;
+        if (currentUser.isAdmin()) return true;
 
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found with ID: " + taskId));
@@ -57,8 +61,9 @@ public class TaskSecurityEvaluator {
         return role == WorkspaceRole.ROLE_DEVELOPER || role == WorkspaceRole.ROLE_QA_TESTER;
     }
 
-    public boolean canMoveCard(Long taskId, CustomUserDetails currentUser) {
+    public boolean canMoveCard(Long taskId, Long targetColumnId, CustomUserDetails currentUser) {
         if (taskId == null || currentUser == null) return false;
+        if (currentUser.isAdmin()) return true;
 
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found with ID: " + taskId));
@@ -69,14 +74,25 @@ public class TaskSecurityEvaluator {
             return isManager(role);
         }
 
-        return role == WorkspaceRole.ROLE_ADMIN ||
-               role == WorkspaceRole.ROLE_PROJECT_MANAGER ||
-               role == WorkspaceRole.ROLE_DEVELOPER ||
-               role == WorkspaceRole.ROLE_QA_TESTER;
+        if (role == WorkspaceRole.ROLE_QA_TESTER) {
+            Column sourceColumn = task.getColumn();
+            if (sourceColumn == null || !sourceColumn.getName().equalsIgnoreCase("Ready for QA")) {
+                return false;
+            }
+            if (targetColumnId == null) return false;
+            Column targetColumn = columnRepository.findById(targetColumnId)
+                    .orElseThrow(() -> new EntityNotFoundException("Column not found with ID: " + targetColumnId));
+            return targetColumn.getName().equalsIgnoreCase("Done") || 
+                   targetColumn.getName().equalsIgnoreCase("In Progress");
+        }
+
+        return role == WorkspaceRole.ROLE_PROJECT_MANAGER ||
+               role == WorkspaceRole.ROLE_DEVELOPER;
     }
 
     public boolean canAssignCard(Long taskId, TaskAssigneeRequest request, CustomUserDetails currentUser) {
         if (taskId == null || request == null || currentUser == null) return false;
+        if (currentUser.isAdmin()) return true;
 
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found"));
@@ -98,6 +114,7 @@ public class TaskSecurityEvaluator {
 
     public boolean canDeleteCard(Long taskId, CustomUserDetails currentUser) {
         if (taskId == null || currentUser == null) return false;
+        if (currentUser.isAdmin()) return true;
 
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found with ID: " + taskId));

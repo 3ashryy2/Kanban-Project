@@ -1,6 +1,6 @@
 -- 1. Seed Users (Bcrypt hashed password: 'password123')
-INSERT INTO users (id, email, password_hash, first_name, last_name) VALUES
-(1, 'admin@valeo.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Admin', 'User'),
+INSERT INTO users (id, email, password_hash, first_name, last_name, is_admin) VALUES
+(1, 'admin@valeo.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Admin', 'User', true),
 (2, 'pm@valeo.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Project', 'Manager'),
 (3, 'dev@valeo.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Mohanad', 'Emad'),
 (4, 'qa@valeo.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Sarah', 'Tester'),
@@ -13,7 +13,7 @@ INSERT INTO workspaces (id, name, slug, description, created_by_id) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO workspace_members (workspace_id, user_id, role) VALUES
-(1, 1, 'ROLE_ADMIN'),
+(1, 1, 'ROLE_PROJECT_MANAGER'),
 (1, 2, 'ROLE_PROJECT_MANAGER'),
 (1, 3, 'ROLE_DEVELOPER'),
 (1, 4, 'ROLE_QA_TESTER'),
