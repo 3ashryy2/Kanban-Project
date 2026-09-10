@@ -11,7 +11,7 @@ PM-tool/
 │   ├── pom.xml              # Maven dependencies
 │   └── src/main/
 │       ├── java/...         # Controller, Service, Security ABAC Evaluators, Events, Model/Entity, Repo layers
-│       └── resources/       # application.yml, DDL schema.sql, and seed data.sql
+│       └── resources/       # application.yml, db/migration/ schema versions, and seed data.sql
 └── frontend/                # Angular Standalone Frontend Project
     ├── package.json         # Client-side dependencies (PrimeNG, PrimeIcons)
     └── src/app/
@@ -36,7 +36,7 @@ docker ps
 ---
 
 ### 2. Run the Spring Boot Backend
-The backend utilizes Spring Boot's automatic SQL initialization to automatically execute `schema.sql` (to drop/create tables and indices) and `data.sql` (to seed default users, workspace member roles, the default board, columns, and workflow transition rules) upon startup.
+The backend utilizes **Flyway** for automatic database migrations, executing `V1__init_schema.sql` (located in `src/main/resources/db/migration/`) to build the initial schema. It utilizes Spring Boot's SQL initialization to execute `data.sql` (to seed default users, workspace member roles, the default board, columns, and workflow transition rules) upon startup.
 
 To start the backend inside your WSL terminal (where Java 21 is configured):
 ```bash

@@ -100,16 +100,16 @@ public class WorkspaceService {
 
         Workspace savedWorkspace = workspaceRepository.save(workspace);
 
-        // Auto-assign creator as ROLE_ADMIN of the new workspace
+        // Auto-assign creator as ROLE_PROJECT_MANAGER of the new workspace
         WorkspaceMember adminMember = WorkspaceMember.builder()
                 .workspace(savedWorkspace)
                 .user(creator)
-                .role(WorkspaceRole.ROLE_ADMIN)
+                .role(WorkspaceRole.ROLE_PROJECT_MANAGER)
                 .build();
 
         workspaceMemberRepository.save(adminMember);
 
-        return WorkspaceMapper.toDto(savedWorkspace, WorkspaceRole.ROLE_ADMIN.name(), 0, 1);
+        return WorkspaceMapper.toDto(savedWorkspace, WorkspaceRole.ROLE_PROJECT_MANAGER.name(), 0, 1);
     }
 
     @Transactional
@@ -177,24 +177,23 @@ public class WorkspaceService {
         WorkspaceMember targetMembership = workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
                 .orElseThrow(() -> new EntityNotFoundException("Membership not found"));
 
-        WorkspaceMember actorMembership = workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, currentUser.getId())
-                .orElseThrow(() -> new AccessDeniedException("You are not a member of this workspace"));
-
-        WorkspaceRole actorRole = actorMembership.getRole();
-        WorkspaceRole targetOldRole = targetMembership.getRole();
         WorkspaceRole targetNewRole = WorkspaceRole.valueOf(request.getRole().toUpperCase());
 
-        // Validate security constraints:
-        // PM can change anyone's role EXCEPT Admin (target old/new cannot be ROLE_ADMIN)
-        if (actorRole == WorkspaceRole.ROLE_PROJECT_MANAGER) {
-            if (targetOldRole == WorkspaceRole.ROLE_ADMIN) {
-                throw new AccessDeniedException("Project Managers cannot change an Admin's role.");
-            }
-            if (targetNewRole == WorkspaceRole.ROLE_ADMIN) {
-                throw new AccessDeniedException("Project Managers cannot elevate roles to Admin.");
-            }
-        } else if (actorRole != WorkspaceRole.ROLE_ADMIN) {
-            throw new AccessDeniedException("Only Admins and Project Managers can modify user roles.");
+        // If actor is global admin, they can change any role in any workspace
+        if (currentUser.isAdmin()) {
+            targetMembership.setRole(targetNewRole);
+            WorkspaceMember savedMember = workspaceMemberRepository.save(targetMembership);
+            return WorkspaceMemberMapper.toDto(savedMember);
+        }
+
+        WorkspaceMember actorMembership = workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, currentUser.getId())
+                .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException("You are not a member of this workspace"));
+
+        WorkspaceRole actorRole = actorMembership.getRole();
+
+        // Only Project Manager can modify roles locally
+        if (actorRole != WorkspaceRole.ROLE_PROJECT_MANAGER) {
+            throw new org.springframework.security.access.AccessDeniedException("Only Project Managers or Global Admins can modify user roles.");
         }
 
         targetMembership.setRole(targetNewRole);

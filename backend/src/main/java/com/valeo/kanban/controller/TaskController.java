@@ -45,7 +45,7 @@ public class TaskController {
     }
 
     @PatchMapping("/{taskId}/move")
-    @PreAuthorize("@taskSecurity.canMoveCard(#taskId, principal)")
+    @PreAuthorize("@taskSecurity.canMoveCard(#taskId, #request.targetColumnId, principal)")
     public ResponseEntity<TaskDto> moveTask(
             @PathVariable Long taskId,
             @Valid @RequestBody TaskMoveRequest request,

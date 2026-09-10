@@ -29,6 +29,10 @@ public class User {
     @jakarta.persistence.Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
 
+    @jakarta.persistence.Column(name = "is_admin", nullable = false)
+    @Builder.Default
+    private boolean isAdmin = false;
+
     @jakarta.persistence.Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

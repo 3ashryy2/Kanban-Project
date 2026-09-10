@@ -27,8 +27,7 @@ export interface SelectItem {
     FormsModule,
     Button,
     Dialog,
-    Select,
-    InputText
+    Select
   ],
   templateUrl: './workspace-settings.component.html',
   styleUrls: ['./workspace-settings.component.scss']
@@ -40,6 +39,7 @@ export class WorkspaceSettingsComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   isAdmin = false;
+  isPM = false;
   canManageRoles = false;
   addMemberDialogVisible = false;
   editRoleDialogVisible = false;
@@ -54,7 +54,6 @@ export class WorkspaceSettingsComponent implements OnInit {
   };
 
   roleOptions: SelectItem[] = [
-    { label: 'Admin', value: 'ROLE_ADMIN' },
     { label: 'Project Manager', value: 'ROLE_PROJECT_MANAGER' },
     { label: 'Developer', value: 'ROLE_DEVELOPER' },
     { label: 'QA Tester', value: 'ROLE_QA_TESTER' },
@@ -62,12 +61,19 @@ export class WorkspaceSettingsComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.authStore.isAdmin$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(isAdmin => {
+        this.isAdmin = isAdmin;
+        this.canManageRoles = isAdmin || this.isPM;
+      });
+
     this.workspaceStore.activeWorkspace$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(ws => {
         if (ws) {
-          this.isAdmin = ws.currentUserRole === 'ROLE_ADMIN';
-          this.canManageRoles = ws.currentUserRole === 'ROLE_ADMIN' || ws.currentUserRole === 'ROLE_PROJECT_MANAGER';
+          this.isPM = ws.currentUserRole === 'ROLE_PROJECT_MANAGER';
+          this.canManageRoles = this.isAdmin || this.isPM;
         }
       });
   }
@@ -75,27 +81,11 @@ export class WorkspaceSettingsComponent implements OnInit {
   openEditRoleDialog(member: WorkspaceMemberResponseDto): void {
     this.selectedMemberToEdit = member;
     this.newRoleValue = member.role;
-
-    // Compute edit role options statically once on dialog open to prevent template change detection loops
-    const activeWs = this.workspaceStore.getActiveWorkspace();
-    if (activeWs && activeWs.currentUserRole === 'ROLE_PROJECT_MANAGER') {
-      this.activeEditRoleOptions = this.roleOptions.filter(opt => opt.value !== 'ROLE_ADMIN');
-    } else {
-      this.activeEditRoleOptions = this.roleOptions;
-    }
-
+    this.activeEditRoleOptions = this.roleOptions;
     this.editRoleDialogVisible = true;
   }
 
   isRoleEditDisabled(member: WorkspaceMemberResponseDto): boolean {
-    const activeWs = this.workspaceStore.getActiveWorkspace();
-    if (!activeWs) return true;
-
-    // PM can change anyone's role EXCEPT Admin (old role cannot be ADMIN)
-    if (activeWs.currentUserRole === 'ROLE_PROJECT_MANAGER' && member.role === 'ROLE_ADMIN') {
-      return true;
-    }
-
     // Prevents self de-escalation of role to prevent accidental locking out of settings
     const currentUserId = this.authStore.getCurrentUserId();
     if (member.userId === currentUserId) {

@@ -50,9 +50,8 @@ public class TaskWorkflowService {
                 .findByWorkspaceIdAndUserId(task.getBoard().getWorkspace().getId(), currentUser.getId())
                 .map(com.valeo.kanban.model.entity.WorkspaceMember::getRole)
                 .orElse(WorkspaceRole.ROLE_VIEWER);
-        boolean isWorkspaceAdminOrPM = (actorRole == WorkspaceRole.ROLE_ADMIN ||
-                                       actorRole == WorkspaceRole.ROLE_PROJECT_MANAGER);
-        boolean isAdminOverride = (actorRole == WorkspaceRole.ROLE_ADMIN);
+        boolean isWorkspaceAdminOrPM = currentUser.isAdmin() || actorRole == WorkspaceRole.ROLE_PROJECT_MANAGER;
+        boolean isAdminOverride = currentUser.isAdmin();
 
         // 2. Approval Lock Invariant
         if (task.getStatus() == TaskStatus.PENDING_APPROVAL && !isWorkspaceAdminOrPM) {
