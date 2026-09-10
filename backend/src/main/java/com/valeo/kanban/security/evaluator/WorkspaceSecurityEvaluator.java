@@ -16,18 +16,21 @@ public class WorkspaceSecurityEvaluator {
 
     public boolean hasAccess(Long workspaceId, CustomUserDetails currentUser) {
         if (currentUser == null || workspaceId == null) return false;
+        if (currentUser.isAdmin()) return true;
         return workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, currentUser.getId());
     }
 
     public boolean isAdmin(Long workspaceId, CustomUserDetails currentUser) {
         if (currentUser == null || workspaceId == null) return false;
+        if (currentUser.isAdmin()) return true;
         return workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, currentUser.getId())
-                .map(m -> m.getRole() == WorkspaceRole.ROLE_ADMIN)
+                .map(m -> m.getRole() == WorkspaceRole.ROLE_PROJECT_MANAGER)
                 .orElse(false);
     }
 
     public boolean hasAnyRole(Long workspaceId, CustomUserDetails currentUser, String... roles) {
         if (currentUser == null || workspaceId == null) return false;
+        if (currentUser.isAdmin()) return true;
         return workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, currentUser.getId())
                 .map(m -> Arrays.stream(roles)
                         .anyMatch(r -> m.getRole().name().equalsIgnoreCase(r)))

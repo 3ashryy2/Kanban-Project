@@ -49,12 +49,17 @@ export class HeaderComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.authStore.isAdmin$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(isAdmin => {
+        this.isAdmin = isAdmin;
+      });
+
     this.workspaceStore.activeWorkspace$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(ws => {
         if (ws) {
           this.selectedWorkspace = ws;
-          this.isAdmin = ws.currentUserRole === 'ROLE_ADMIN';
         }
       });
   }

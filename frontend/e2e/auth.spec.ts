@@ -49,7 +49,7 @@ test.describe('F10: Authentication and Session Lifecycle', () => {
     await expect(roleChip).toContainText('ROLE_PROJECT_MANAGER');
   });
 
-  test('should login successfully as ROLE_ADMIN and see role badge', async ({ page }) => {
+  test('should login successfully as Admin (with Workspace role ROLE_PROJECT_MANAGER) and see role badge', async ({ page }) => {
     await page.goto('/auth/login');
 
     await page.fill('#email', 'admin@valeo.com');
@@ -59,6 +59,6 @@ test.describe('F10: Authentication and Session Lifecycle', () => {
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
 
     const roleChip = page.locator('.role-chip');
-    await expect(roleChip).toContainText('ROLE_ADMIN');
+    await expect(roleChip).toContainText('ROLE_PROJECT_MANAGER');
   });
 });
