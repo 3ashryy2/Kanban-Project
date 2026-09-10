@@ -3,6 +3,7 @@ export interface SimpleUserDto {
   email: string;
   firstName: string;
   lastName: string;
+  isAdmin?: boolean;
 }
 
 export interface LoginRequest {

@@ -39,6 +39,7 @@ public class AuthService {
                 .email(userPrincipal.getEmail())
                 .firstName(userPrincipal.getFirstName())
                 .lastName(userPrincipal.getLastName())
+                .isAdmin(userPrincipal.isAdmin())
                 .build();
 
         return AuthResponse.builder()
@@ -76,6 +77,7 @@ public class AuthService {
                 .email(savedUser.getEmail())
                 .firstName(savedUser.getFirstName())
                 .lastName(savedUser.getLastName())
+                .isAdmin(savedUser.isAdmin())
                 .build();
 
         return AuthResponse.builder()

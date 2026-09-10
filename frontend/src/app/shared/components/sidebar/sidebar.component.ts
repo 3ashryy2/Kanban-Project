@@ -51,12 +51,17 @@ export class SidebarComponent implements OnInit {
   newBoard = { title: '', description: '' };
 
   ngOnInit(): void {
+    this.authStore.isAdmin$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(isAdmin => {
+        this.isAdmin = isAdmin;
+      });
+
     this.workspaceStore.activeWorkspace$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(ws => {
         if (ws) {
           this.selectedWorkspace = ws;
-          this.isAdmin = ws.currentUserRole === 'ROLE_ADMIN';
           this.isPM = ws.currentUserRole === 'ROLE_PROJECT_MANAGER';
         }
       });

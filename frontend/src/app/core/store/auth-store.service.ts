@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap, map } from 'rxjs';
 import { AuthResponse } from '../models/user.dto';
 import { WorkspaceStoreService } from './workspace-store.service';
 import { BoardStoreService } from './board-store.service';
@@ -21,6 +21,10 @@ export class AuthStoreService {
 
   private readonly _currentUser$ = new BehaviorSubject<any | null>(null);
   readonly currentUser$ = this._currentUser$.asObservable();
+
+  readonly isAdmin$ = this.currentUser$.pipe(
+    map(user => user?.isAdmin ?? false)
+  );
 
   private readonly _token$ = new BehaviorSubject<string | null>(null);
   readonly token$ = this._token$.asObservable();

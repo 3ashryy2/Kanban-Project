@@ -21,19 +21,21 @@ public class BoardSecurityEvaluator {
 
     public boolean isAdminOrManager(Long boardId, CustomUserDetails currentUser) {
         if (boardId == null || currentUser == null) return false;
+        if (currentUser.isAdmin()) return true;
         return boardRepository.findById(boardId)
                 .map(b -> {
                     WorkspaceRole role = workspaceMemberRepository
                             .findByWorkspaceIdAndUserId(b.getWorkspace().getId(), currentUser.getId())
                             .map(com.valeo.kanban.model.entity.WorkspaceMember::getRole)
                             .orElse(null);
-                    return role == WorkspaceRole.ROLE_ADMIN || role == WorkspaceRole.ROLE_PROJECT_MANAGER;
+                    return role == WorkspaceRole.ROLE_PROJECT_MANAGER;
                 })
                 .orElse(false);
     }
 
     public boolean isAdminOrManagerByColumnId(Long columnId, CustomUserDetails currentUser) {
         if (columnId == null || currentUser == null) return false;
+        if (currentUser.isAdmin()) return true;
         return columnRepository.findById(columnId)
                 .map(c -> isAdminOrManager(c.getBoard().getId(), currentUser))
                 .orElse(false);
@@ -41,6 +43,7 @@ public class BoardSecurityEvaluator {
 
     public boolean canCreateTaskOnBoard(Long boardId, CustomUserDetails currentUser) {
         if (boardId == null || currentUser == null) return false;
+        if (currentUser.isAdmin()) return true;
         return boardRepository.findById(boardId)
                 .map(b -> workspaceMemberRepository
                         .findByWorkspaceIdAndUserId(b.getWorkspace().getId(), currentUser.getId())
@@ -51,14 +54,13 @@ public class BoardSecurityEvaluator {
 
     public boolean canApproveTask(Long taskId, CustomUserDetails currentUser) {
         if (taskId == null || currentUser == null) return false;
+        if (currentUser.isAdmin()) return true;
         return taskRepository.findById(taskId)
                 .map(t -> {
                     Long workspaceId = t.getBoard().getWorkspace().getId();
                     return workspaceMemberRepository
                             .findByWorkspaceIdAndUserId(workspaceId, currentUser.getId())
-                            .map(m -> m.getRole() == WorkspaceRole.ROLE_ADMIN ||
-                                      m.getRole() == WorkspaceRole.ROLE_PROJECT_MANAGER ||
-                                      m.getRole() == WorkspaceRole.ROLE_QA_TESTER)
+                            .map(m -> m.getRole() == WorkspaceRole.ROLE_PROJECT_MANAGER)
                             .orElse(false);
                 })
                 .orElse(false);
