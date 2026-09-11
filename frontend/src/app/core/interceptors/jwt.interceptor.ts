@@ -1,17 +1,27 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, throwError } from 'rxjs';
+import { AuthStoreService } from '../store/auth-store.service';
 
 export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
+  const authStore = inject(AuthStoreService);
+  const router = inject(Router);
   const token = localStorage.getItem('jwt_token');
 
   // Automatically attach Bearer token to all outgoing backend API calls
-  if (token && req.url.startsWith('/api')) {
-    const cloned = req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-    return next(cloned);
-  }
+  const outgoing = token && req.url.startsWith('/api')
+    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+    : req;
 
-  return next(req);
+  return next(outgoing).pipe(
+    catchError((error: HttpErrorResponse) => {
+      // 401 means the session itself is dead (expired/invalid token): end it once and return to sign-in.
+      // Login failures are 401 too, so auth endpoints are excluded.
+      if (error.status === 401 && authStore.isAuthenticated() && !req.url.startsWith('/api/auth/')) {
+        authStore.logout(router.url);
+      }
+      return throwError(() => error);
+    })
+  );
 };

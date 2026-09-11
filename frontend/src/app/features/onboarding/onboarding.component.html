@@ -1,0 +1,107 @@
+<div class="onboarding-wrapper" *ngIf="authStore.currentUser$ | async as user">
+  <p-toast></p-toast>
+
+  <header class="onboarding-topbar">
+    <div class="brand">
+      <i class="pi pi-clone"></i>
+      <span>Valeo Perception PM</span>
+    </div>
+    <div class="session">
+      <span class="session-email">{{ user.email }}</span>
+      <p-button label="Sign Out" icon="pi pi-power-off" styleClass="p-button-text p-button-sm session-signout" (onClick)="signOut()"></p-button>
+    </div>
+  </header>
+
+  <main class="onboarding-body">
+    <!-- Global admin on a fresh system: bootstrap the first workspace -->
+    <section class="onboarding-card" *ngIf="user.isAdmin; else waitingForAccess">
+      <div class="card-icon">
+        <i class="pi pi-sitemap"></i>
+      </div>
+      <h1>Create your first workspace</h1>
+      <p class="lead">
+        There are no workspaces yet. Create one, then add project managers and team members to it.
+      </p>
+
+      <form class="onboarding-form" (ngSubmit)="createWorkspace()">
+        <div class="field-group">
+          <label for="onboarding-ws-name">Workspace Name *</label>
+          <input
+            id="onboarding-ws-name"
+            name="name"
+            type="text"
+            pInputText
+            [(ngModel)]="newWorkspace.name"
+            (ngModelChange)="onWorkspaceNameChange($event)"
+            placeholder="e.g. ADAS Team"
+            class="w-full"
+          />
+        </div>
+        <div class="field-group">
+          <label for="onboarding-ws-slug">Unique Slug *</label>
+          <input
+            id="onboarding-ws-slug"
+            name="slug"
+            type="text"
+            pInputText
+            [(ngModel)]="newWorkspace.slug"
+            (input)="onSlugEdited()"
+            placeholder="e.g. adas-team"
+            class="w-full"
+          />
+          <small class="field-hint">Lowercase letters, numbers and dashes.</small>
+        </div>
+        <div class="field-group">
+          <label for="onboarding-ws-desc">Description</label>
+          <textarea
+            id="onboarding-ws-desc"
+            name="description"
+            rows="3"
+            pTextarea
+            [(ngModel)]="newWorkspace.description"
+            placeholder="Workspace objective..."
+            class="w-full"
+          ></textarea>
+        </div>
+        <p-button
+          type="submit"
+          label="Create Workspace"
+          icon="pi pi-check"
+          [loading]="creating"
+          [disabled]="!newWorkspace.name || !newWorkspace.slug"
+          styleClass="w-full p-button-success"
+        ></p-button>
+      </form>
+    </section>
+
+    <!-- Everyone else: registered, waiting for an admin or PM to add them -->
+    <ng-template #waitingForAccess>
+      <section class="onboarding-card">
+        <div class="card-icon waiting">
+          <i class="pi pi-hourglass"></i>
+        </div>
+        <h1>Welcome, {{ user.firstName }}</h1>
+        <p class="lead">Your account is active, but you haven't been added to a workspace yet.</p>
+
+        <ol class="next-steps">
+          <li>An administrator or project manager adds you to a workspace.</li>
+          <li>They assign your role: Developer, QA Tester, Viewer or Project Manager.</li>
+          <li>Once you're added, signing in takes you straight to your workspace.</li>
+        </ol>
+
+        <div class="account-box">
+          <span class="account-label">Share this email with your project manager</span>
+          <code>{{ user.email }}</code>
+        </div>
+
+        <p-button
+          label="Check again"
+          icon="pi pi-refresh"
+          [loading]="checking"
+          styleClass="w-full"
+          (onClick)="checkAccess()"
+        ></p-button>
+      </section>
+    </ng-template>
+  </main>
+</div>

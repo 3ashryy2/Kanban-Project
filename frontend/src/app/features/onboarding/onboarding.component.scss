@@ -1,0 +1,139 @@
+.onboarding-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: radial-gradient(circle at top right, #1a2238 0%, #0d1222 100%);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+.onboarding-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: #f1f5f9;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+
+  i {
+    color: #3b82f6;
+    font-size: 1.3rem;
+  }
+}
+.session {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.session-email {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+::ng-deep .session-signout.p-button {
+  color: #cbd5e1;
+}
+.onboarding-body {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 32px 20px;
+}
+.onboarding-card {
+  width: 100%;
+  max-width: 460px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  padding: 32px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+
+  h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.02em;
+  }
+}
+.card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+  background-color: #dbeafe;
+  color: #1d4ed8;
+  font-size: 1.3rem;
+
+  &.waiting {
+    background-color: #fef3c7;
+    color: #d97706;
+  }
+}
+.lead {
+  font-size: 0.95rem;
+  color: #475569;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+.next-steps {
+  margin: 0 0 20px 0;
+  padding-left: 20px;
+  color: #334155;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.account-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 20px;
+
+  code {
+    font-family: monospace;
+    color: #1d4ed8;
+    font-size: 0.9rem;
+  }
+}
+.account-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.onboarding-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+  }
+}
+.field-hint {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+::ng-deep .w-full,
+.w-full {
+  width: 100% !important;
+}

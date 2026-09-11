@@ -3,6 +3,7 @@ package com.valeo.kanban.dto.mapper;
 import com.valeo.kanban.model.entity.User;
 import com.valeo.kanban.dto.response.AuthResponse;
 import com.valeo.kanban.dto.response.TaskDto;
+import com.valeo.kanban.dto.response.UserSummaryDto;
 
 public class UserMapper {
 
@@ -13,7 +14,18 @@ public class UserMapper {
                 .email(user.getEmail())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
-                .isAdmin(user.isAdmin())
+                .admin(user.isAdmin())
+                .build();
+    }
+
+    public static UserSummaryDto toSummaryDto(User user) {
+        if (user == null) return null;
+        return UserSummaryDto.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .createdAt(user.getCreatedAt())
                 .build();
     }
 

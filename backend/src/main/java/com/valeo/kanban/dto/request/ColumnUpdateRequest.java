@@ -1,5 +1,6 @@
 package com.valeo.kanban.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,7 +14,8 @@ public class ColumnUpdateRequest {
     @NotBlank(message = "Column name is required")
     private String name;
 
-    private boolean isGated;
+    @JsonProperty("isGated")
+    private boolean gated;
 
     private Integer wipLimit;
 }

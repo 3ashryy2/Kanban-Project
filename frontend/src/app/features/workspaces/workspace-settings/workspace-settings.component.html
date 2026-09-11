@@ -82,17 +82,12 @@
     <div class="dialog-form">
       <div class="dialog-field">
         <label for="new-member-select">Search System Users *</label>
-        <p-select 
-          id="new-member-select" 
-          [options]="userOptions" 
-          optionLabel="label"
-          optionValue="value"
-          [filter]="true"
-          filterBy="label,email"
-          [(ngModel)]="newMemberPayload.userId" 
+        <app-user-search-select
+          inputId="new-member-select"
           placeholder="Select user by name or email"
-          styleClass="w-full"
-        ></p-select>
+          [excludeWorkspaceId]="activeWorkspaceId"
+          [(value)]="newMemberPayload.userId"
+        ></app-user-search-select>
       </div>
 
       <div class="dialog-field">

@@ -1,0 +1,84 @@
+<div class="admin-users-container">
+  <div class="page-header">
+    <h2>User Onboarding</h2>
+    <p>Registered users who haven't been added to any workspace yet. Pick a workspace and role to grant access.</p>
+  </div>
+
+  <div class="users-card shadow-card" *ngIf="userDirectory.unassignedUsers$ | async as users">
+    <div class="card-header-bar">
+      <h3>
+        Waiting for access
+        <span class="count-pill">{{ users.length }}</span>
+      </h3>
+      <p-button
+        label="Refresh"
+        icon="pi pi-refresh"
+        styleClass="p-button-outlined p-button-sm"
+        (onClick)="userDirectory.loadUnassignedUsers()"
+      ></p-button>
+    </div>
+
+    <table class="users-table" *ngIf="users.length > 0; else noPendingUsers">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Email</th>
+          <th>Registered</th>
+          <th>Workspace</th>
+          <th>Role</th>
+          <th class="text-right">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let u of users; trackBy: trackByUserId" class="user-row">
+          <td class="user-name">
+            <div class="user-avatar">{{ u.firstName[0] }}{{ u.lastName[0] }}</div>
+            <span>{{ u.firstName }} {{ u.lastName }}</span>
+          </td>
+          <td class="user-email">{{ u.email }}</td>
+          <td class="user-date">{{ u.createdAt | date:'MMM d, yyyy' }}</td>
+          <td class="select-cell">
+            <p-select
+              [id]="'grant-workspace-' + u.id"
+              [options]="(workspaceStore.workspaces$ | async) ?? []"
+              optionLabel="name"
+              optionValue="id"
+              [(ngModel)]="selections[u.id].workspaceId"
+              placeholder="Choose workspace"
+              styleClass="w-full"
+              appendTo="body"
+            ></p-select>
+          </td>
+          <td class="select-cell">
+            <p-select
+              [id]="'grant-role-' + u.id"
+              [options]="roleOptions"
+              optionLabel="label"
+              optionValue="value"
+              [(ngModel)]="selections[u.id].role"
+              styleClass="w-full"
+              appendTo="body"
+            ></p-select>
+          </td>
+          <td class="text-right">
+            <p-button
+              label="Grant Access"
+              icon="pi pi-check"
+              styleClass="p-button-success p-button-sm"
+              [disabled]="!selections[u.id].workspaceId"
+              [loading]="assigningUserId === u.id"
+              (onClick)="grantAccess(u)"
+            ></p-button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <ng-template #noPendingUsers>
+      <div class="empty-state">
+        <i class="pi pi-check-circle"></i>
+        <p>No users are waiting for access.</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

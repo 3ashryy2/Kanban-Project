@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthStoreService } from '../../../core/store/auth-store.service';
 import { MessageService } from 'primeng/api';
 
@@ -31,6 +31,7 @@ export class LoginComponent {
   private readonly authStore = inject(AuthStoreService);
   private readonly messageService = inject(MessageService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   isRegisterMode = false;
   loading = false;
@@ -64,7 +65,7 @@ export class LoginComponent {
           detail: 'Session opened successfully. Welcome back!',
           life: 2000
         });
-        setTimeout(() => this.router.navigate(['/']), 1000);
+        setTimeout(() => this.navigateAfterSignIn(), 1000);
       },
       error: err => {
         this.loading = false;
@@ -103,5 +104,12 @@ export class LoginComponent {
         });
       }
     });
+  }
+
+  // Return to the page an expired session was on; only in-app paths are honoured
+  private navigateAfterSignIn(): void {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '';
+    const isInAppPath = returnUrl.startsWith('/') && !returnUrl.startsWith('//');
+    this.router.navigateByUrl(isInAppPath ? returnUrl : '/');
   }
 }

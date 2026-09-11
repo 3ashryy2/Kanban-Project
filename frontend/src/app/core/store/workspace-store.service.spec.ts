@@ -80,6 +80,29 @@ describe('WorkspaceStoreService', () => {
     expect(service.getActiveWorkspace()).toEqual(mockWorkspaces[0]);
   });
 
+  it('should share one workspaces request between callers and reflect later additions', () => {
+    let firstResult: WorkspaceResponseDto[] | null = null;
+    let secondResult: WorkspaceResponseDto[] | null = null;
+
+    service.ensureWorkspacesLoaded().subscribe(list => firstResult = list);
+    service.ensureWorkspacesLoaded().subscribe(list => secondResult = list);
+
+    // Two callers (e.g. a guard and the layout), one HTTP call
+    httpMock.expectOne('/api/users/me/workspaces').flush([]);
+    expect(firstResult).toEqual([]);
+    expect(secondResult).toEqual([]);
+
+    // A workspace created afterwards is visible to later callers without refetching
+    const created: WorkspaceResponseDto = { id: 3, name: 'New', slug: 'new', boardCount: 0, memberCount: 0 };
+    service.createWorkspace({ name: 'New', slug: 'new' }).subscribe();
+    httpMock.expectOne('/api/workspaces').flush(created);
+    httpMock.expectOne('/api/workspaces/3/members').flush([]);
+
+    let afterCreate: WorkspaceResponseDto[] | null = null;
+    service.ensureWorkspacesLoaded().subscribe(list => afterCreate = list);
+    expect(afterCreate).toEqual([created]);
+  });
+
   it('should clear workspace state on clear()', () => {
     const activeWorkspace: WorkspaceResponseDto = { id: 1, name: 'Workspace 1', slug: 'ws-1', description: 'Desc 1', boardCount: 0, memberCount: 1 };
     service.setActiveWorkspace(activeWorkspace);

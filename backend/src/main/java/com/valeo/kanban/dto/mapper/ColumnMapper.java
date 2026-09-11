@@ -23,7 +23,7 @@ public class ColumnMapper {
                 .id(column.getId())
                 .name(column.getName())
                 .position(column.getPosition())
-                .isGated(column.isGated())
+                .gated(column.isGated())
                 .wipLimit(column.getWipLimit())
                 .tasks(taskDtos)
                 .build();
@@ -35,7 +35,7 @@ public class ColumnMapper {
                 .id(column.getId())
                 .name(column.getName())
                 .position(column.getPosition())
-                .isGated(column.isGated())
+                .gated(column.isGated())
                 .wipLimit(column.getWipLimit())
                 .tasks(taskDtos)
                 .build();
