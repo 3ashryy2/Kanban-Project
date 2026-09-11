@@ -49,7 +49,7 @@
         ></p-button>
 
         <div class="toggle-mode-text">
-          Don't have an account? <a href="javascript:void(0)" (click)="toggleMode()">Create an account</a>
+          Don't have an account? <a routerLink="/auth/register" queryParamsHandling="preserve">Create an account</a>
         </div>
       </form>
     </p-card>
@@ -126,7 +126,7 @@
         ></p-button>
 
         <div class="toggle-mode-text">
-          Already have an account? <a href="javascript:void(0)" (click)="toggleMode()">Sign-In instead</a>
+          Already have an account? <a routerLink="/auth/login" queryParamsHandling="preserve">Sign-In instead</a>
         </div>
       </form>
     </p-card>

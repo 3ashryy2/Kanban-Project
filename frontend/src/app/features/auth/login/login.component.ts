@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthStoreService } from '../../../core/store/auth-store.service';
 import { MessageService } from 'primeng/api';
 
@@ -17,6 +17,7 @@ import { Button } from 'primeng/button';
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     Card,
     InputText,
     Password,
@@ -31,7 +32,8 @@ export class LoginComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
-  isRegisterMode = false;
+  // /auth/login and /auth/register share this component; the route's data says which form to show
+  readonly isRegisterMode = this.route.snapshot.data['mode'] === 'register';
   loading = false;
 
   credentials = {
@@ -45,10 +47,6 @@ export class LoginComponent {
     email: '',
     password: ''
   };
-
-  toggleMode(): void {
-    this.isRegisterMode = !this.isRegisterMode;
-  }
 
   onSubmit(): void {
     if (!this.credentials.email || !this.credentials.password) return;

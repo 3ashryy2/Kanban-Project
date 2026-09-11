@@ -7,13 +7,24 @@
   <div class="filter-card shadow-card">
     <div class="filter-bar">
       <div class="filter-left">
-        <span class="filter-label">Filter Action Type:</span>
-        <p-select 
-          [options]="actionTypeOptions" 
+        <span class="filter-label">Workspace:</span>
+        <p-select
+          id="audit-workspace-filter"
+          [options]="workspaceOptions"
           optionLabel="label"
           optionValue="value"
-          [(ngModel)]="selectedActionType" 
-          (onChange)="onActionTypeChange()"
+          [(ngModel)]="selectedWorkspaceId"
+          (onChange)="onFilterChange()"
+          styleClass="filter-select"
+        ></p-select>
+        <span class="filter-label">Action:</span>
+        <p-select
+          id="audit-action-filter"
+          [options]="actionTypeOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="selectedActionType"
+          (onChange)="onFilterChange()"
           styleClass="filter-select"
         ></p-select>
       </div>
@@ -48,7 +59,7 @@
                 {{ log.actionType }}
               </span>
             </td>
-            <td class="log-tenant font-mono">Workspace #{{ log.workspaceId }}</td>
+            <td class="log-tenant">{{ workspaceLabel(log.workspaceId) }}</td>
             <td class="log-target font-mono">Task #{{ log.taskId }}</td>
             <td class="log-details font-mono">{{ log.details | parseDetails }}</td>
           </tr>

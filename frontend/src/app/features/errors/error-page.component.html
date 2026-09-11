@@ -1,0 +1,12 @@
+<div class="error-wrapper">
+  <section class="error-card">
+    <p class="error-code">{{ page.status }}</p>
+    <h1>{{ page.title }}</h1>
+    <p class="error-message">{{ page.message }}</p>
+    <code class="error-path" *ngIf="page.status === 404">{{ requestedPath }}</code>
+    <a class="error-action" routerLink="/">
+      <i class="pi pi-arrow-left"></i>
+      <span>Go to your workspace</span>
+    </a>
+  </section>
+</div>

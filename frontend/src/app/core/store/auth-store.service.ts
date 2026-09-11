@@ -8,6 +8,7 @@ import { BoardStoreService } from './board-store.service';
 import { WorkflowStoreService } from './workflow-store.service';
 import { ActivityStoreService } from './activity-store.service';
 import { UserDirectoryStoreService } from './user-directory-store.service';
+import { isTokenExpired } from '../utils/jwt';
 
 @Injectable({
   providedIn: 'root'
@@ -51,6 +52,12 @@ export class AuthStoreService {
   }
 
   logout(returnUrl?: string): void {
+    this.clearSession();
+    this.router.navigate(['/auth/login'], returnUrl ? { queryParams: { returnUrl } } : {});
+  }
+
+  /** Forgets the token, the user and every store's data, without navigating anywhere. */
+  clearSession(): void {
     localStorage.removeItem('jwt_token');
     localStorage.removeItem('current_user');
     this._token$.next(null);
@@ -63,11 +70,16 @@ export class AuthStoreService {
     this.workflowStore.clear();
     this.activityStore.clear();
     this.userDirectoryStore.clear();
-
-    this.router.navigate(['/auth/login'], returnUrl ? { queryParams: { returnUrl } } : {});
   }
 
+  /** A token is present and, as far as the browser can tell, not expired. */
   isAuthenticated(): boolean {
+    const token = this._token$.getValue();
+    return !!token && !isTokenExpired(token);
+  }
+
+  /** A token is stored, expired or not: there is still a session to end. */
+  hasStoredSession(): boolean {
     return !!this._token$.getValue();
   }
 
@@ -118,6 +130,12 @@ export class AuthStoreService {
   private hydrateSession(): void {
     const token = localStorage.getItem('jwt_token');
     const userString = localStorage.getItem('current_user');
+    // A token that expired while the tab was closed isn't a session any more
+    if (token && isTokenExpired(token)) {
+      localStorage.removeItem('jwt_token');
+      localStorage.removeItem('current_user');
+      return;
+    }
     if (token && userString) {
       this._token$.next(token);
       this._currentUser$.next(JSON.parse(userString));

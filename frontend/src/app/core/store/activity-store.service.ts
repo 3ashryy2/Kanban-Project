@@ -3,7 +3,6 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { AuditLogResponseDto } from '../models/audit-log.dto';
 import { MessageService } from 'primeng/api';
-import { WorkspaceStoreService } from './workspace-store.service';
 
 @Injectable({
   providedIn: 'root'
@@ -11,7 +10,6 @@ import { WorkspaceStoreService } from './workspace-store.service';
 export class ActivityStoreService {
   private readonly http = inject(HttpClient);
   private readonly messageService = inject(MessageService);
-  private readonly workspaceStore = inject(WorkspaceStoreService);
 
   private readonly _boardActivity$ = new BehaviorSubject<AuditLogResponseDto[]>([]);
   readonly boardActivity$ = this._boardActivity$.asObservable();
@@ -34,18 +32,17 @@ export class ActivityStoreService {
       });
   }
 
-  loadGlobalAuditLogs(actionType?: string, page = 0, size = 50): void {
-    const activeWs = this.workspaceStore.getActiveWorkspace();
-    if (!activeWs) {
-      this.showError('Workspace Not Selected', 'An active workspace is required to load compliance audit logs.');
-      return;
-    }
+  /** Admin audit ledger; without a workspace it covers every workspace (the backend allows that for admins only). */
+  loadGlobalAuditLogs(filters: { workspaceId?: number | null; actionType?: string; page?: number; size?: number } = {}): void {
+    const { workspaceId, actionType, page = 0, size = 50 } = filters;
 
     let params = new HttpParams()
-      .set('workspaceId', activeWs.id.toString())
       .set('page', page.toString())
       .set('size', size.toString());
 
+    if (workspaceId != null) {
+      params = params.set('workspaceId', workspaceId.toString());
+    }
     if (actionType && actionType.trim() !== '') {
       params = params.set('actionType', actionType);
     }
