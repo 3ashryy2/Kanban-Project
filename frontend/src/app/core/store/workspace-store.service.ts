@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, map, tap } from 'rxjs';
+import { BehaviorSubject, Observable, map, shareReplay, tap } from 'rxjs';
 import { WorkspaceResponseDto, WorkspaceMemberResponseDto, WorkspaceCreateRequest, WorkspaceMemberCreateRequest } from '../models/workspace.dto';
 import { MessageService } from 'primeng/api';
 
@@ -20,31 +20,52 @@ export class WorkspaceStoreService {
   private readonly _activeWorkspaceMembers$ = new BehaviorSubject<WorkspaceMemberResponseDto[]>([]);
   readonly activeWorkspaceMembers$ = this._activeWorkspaceMembers$.asObservable();
 
-  loadWorkspaces(defaultWorkspaceId?: number): void {
-    this.http.get<WorkspaceResponseDto[]>('/api/users/me/workspaces')
-      .subscribe({
-        next: list => {
-          this._workspaces$.next(list);
-          const currentActive = this._activeWorkspace$.getValue();
-          if (list.length > 0) {
-            const activeInList = currentActive ? list.find(w => w.id === currentActive.id) : null;
-            if (activeInList) {
-              this.setActiveWorkspace(activeInList);
-            } else {
-              const matchedDefault = defaultWorkspaceId ? list.find(w => w.id === defaultWorkspaceId) : null;
-              if (matchedDefault) {
-                this.setActiveWorkspace(matchedDefault);
-              } else {
-                this.setActiveWorkspace(list[0]);
-              }
-            }
-          } else {
-            this._activeWorkspace$.next(null);
-            this._activeWorkspaceMembers$.next([]);
-          }
-        },
-        error: () => this.showError('Load Workspaces Failed', 'Could not load workspaces.')
-      });
+  // Last workspaces request, shared so guards and the layout never trigger duplicate calls
+  private workspacesRequest$: Observable<WorkspaceResponseDto[]> | null = null;
+
+  loadWorkspaces(defaultWorkspaceId?: number): Observable<WorkspaceResponseDto[]> {
+    const request$ = this.http.get<WorkspaceResponseDto[]>('/api/users/me/workspaces').pipe(
+      tap(list => this.applyWorkspaces(list, defaultWorkspaceId)),
+      shareReplay(1)
+    );
+    this.workspacesRequest$ = request$;
+
+    request$.subscribe({
+      error: () => {
+        if (this.workspacesRequest$ === request$) {
+          this.workspacesRequest$ = null;
+        }
+        this.showError('Load Workspaces Failed', 'Could not load workspaces.');
+      }
+    });
+    return request$;
+  }
+
+  /** Waits for the first workspaces load, then emits the current list (including later additions). */
+  ensureWorkspacesLoaded(): Observable<WorkspaceResponseDto[]> {
+    const request$ = this.workspacesRequest$ ?? this.loadWorkspaces();
+    return request$.pipe(map(() => this._workspaces$.getValue()));
+  }
+
+  private applyWorkspaces(list: WorkspaceResponseDto[], defaultWorkspaceId?: number): void {
+    this._workspaces$.next(list);
+    const currentActive = this._activeWorkspace$.getValue();
+    if (list.length > 0) {
+      const activeInList = currentActive ? list.find(w => w.id === currentActive.id) : null;
+      if (activeInList) {
+        this.setActiveWorkspace(activeInList);
+      } else {
+        const matchedDefault = defaultWorkspaceId ? list.find(w => w.id === defaultWorkspaceId) : null;
+        if (matchedDefault) {
+          this.setActiveWorkspace(matchedDefault);
+        } else {
+          this.setActiveWorkspace(list[0]);
+        }
+      }
+    } else {
+      this._activeWorkspace$.next(null);
+      this._activeWorkspaceMembers$.next([]);
+    }
   }
 
   setActiveWorkspace(workspace: WorkspaceResponseDto): void {
@@ -60,14 +81,15 @@ export class WorkspaceStoreService {
     this._workspaces$.next([]);
     this._activeWorkspace$.next(null);
     this._activeWorkspaceMembers$.next([]);
+    this.workspacesRequest$ = null;
   }
 
-  createWorkspace(request: WorkspaceCreateRequest): void {
-    this.http.post<WorkspaceResponseDto>('/api/workspaces', request)
-      .subscribe({
+  createWorkspace(request: WorkspaceCreateRequest): Observable<WorkspaceResponseDto> {
+    return this.http.post<WorkspaceResponseDto>('/api/workspaces', request).pipe(
+      tap({
         next: newWs => {
           const current = this._workspaces$.getValue();
-          this._workspaces$.next([...current, newWs]);
+          this._workspaces$.next([...current, newWs].sort((a, b) => a.name.localeCompare(b.name)));
           this.setActiveWorkspace(newWs);
           this.messageService.add({
             severity: 'success',
@@ -76,18 +98,17 @@ export class WorkspaceStoreService {
           });
         },
         error: err => this.showError('Creation Failed', err.error?.message || 'Could not create workspace.')
-      });
+      })
+    );
   }
 
-  addMemberToActiveWorkspace(request: WorkspaceMemberCreateRequest): void {
-    const activeWs = this._activeWorkspace$.getValue();
-    if (!activeWs) return;
-
-    this.http.post<WorkspaceMemberResponseDto>(`/api/workspaces/${activeWs.id}/members`, request)
-      .subscribe({
+  addMember(workspaceId: number, request: WorkspaceMemberCreateRequest): Observable<WorkspaceMemberResponseDto> {
+    return this.http.post<WorkspaceMemberResponseDto>(`/api/workspaces/${workspaceId}/members`, request).pipe(
+      tap({
         next: newMember => {
-          const current = this._activeWorkspaceMembers$.getValue();
-          this._activeWorkspaceMembers$.next([...current, newMember]);
+          if (this._activeWorkspace$.getValue()?.id === workspaceId) {
+            this._activeWorkspaceMembers$.next([...this._activeWorkspaceMembers$.getValue(), newMember]);
+          }
           this.messageService.add({
             severity: 'success',
             summary: 'Member Added',
@@ -95,7 +116,16 @@ export class WorkspaceStoreService {
           });
         },
         error: err => this.showError('Addition Failed', err.error?.message || 'Could not add member.')
-      });
+      })
+    );
+  }
+
+  addMemberToActiveWorkspace(request: WorkspaceMemberCreateRequest): void {
+    const activeWs = this._activeWorkspace$.getValue();
+    if (!activeWs) return;
+
+    // Errors are already surfaced as toasts by addMember
+    this.addMember(activeWs.id, request).subscribe({ error: () => {} });
   }
 
   updateMemberRoleInActiveWorkspace(userId: number, role: string): void {

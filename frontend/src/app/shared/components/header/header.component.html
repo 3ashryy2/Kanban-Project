@@ -4,14 +4,16 @@
     <span class="brand-title">Valeo Perception PM</span>
     
     <div class="workspace-selector-box" *ngIf="workspaceStore.workspaces$ | async as workspaces">
-      <span class="switcher-label">Workspace:</span>
-      <p-select 
-        [options]="workspaces" 
-        optionLabel="name" 
-        [(ngModel)]="selectedWorkspace"
-        (onChange)="onWorkspaceChange($event.value)"
-        styleClass="workspace-dropdown"
-      ></p-select>
+      <ng-container *ngIf="workspaces.length > 0">
+        <span class="switcher-label">Workspace:</span>
+        <p-select
+          [options]="workspaces"
+          optionLabel="name"
+          [(ngModel)]="selectedWorkspace"
+          (onChange)="onWorkspaceChange($event.value)"
+          styleClass="workspace-dropdown"
+        ></p-select>
+      </ng-container>
       <p-button 
         label="New Workspace" 
         icon="pi pi-plus" 
@@ -41,19 +43,28 @@
   <div class="flex flex-column gap-3 py-2">
     <div class="flex flex-column gap-1">
       <label for="ws-name" class="font-semibold text-sm">Workspace Name *</label>
-      <input id="ws-name" type="text" pInputText [(ngModel)]="newWorkspace.name" placeholder="e.g. ADAS Team" class="w-full" />
+      <input id="ws-name" type="text" pInputText [(ngModel)]="newWorkspace.name" (ngModelChange)="onWorkspaceNameChange($event)" placeholder="e.g. ADAS Team" class="w-full" />
     </div>
     <div class="flex flex-column gap-1">
       <label for="ws-slug" class="font-semibold text-sm">Unique Slug *</label>
-      <input id="ws-slug" type="text" pInputText [(ngModel)]="newWorkspace.slug" placeholder="e.g. adas-team" class="w-full" />
+      <input id="ws-slug" type="text" pInputText [(ngModel)]="newWorkspace.slug" (input)="onSlugEdited()" placeholder="e.g. adas-team" class="w-full" />
+      <small class="text-xs text-500">Lowercase letters, numbers and dashes.</small>
     </div>
     <div class="flex flex-column gap-1">
       <label for="ws-desc" class="font-semibold text-sm">Description</label>
       <textarea id="ws-desc" rows="3" pTextarea [(ngModel)]="newWorkspace.description" placeholder="Workspace objective..." class="w-full"></textarea>
     </div>
+    <div class="flex flex-column gap-1">
+      <label for="ws-initial-pm" class="font-semibold text-sm">Initial Project Manager</label>
+      <app-user-search-select
+        inputId="ws-initial-pm"
+        placeholder="Optional: search by name or email"
+        [(value)]="newWorkspace.initialManagerId"
+      ></app-user-search-select>
+    </div>
   </div>
   <ng-template #footer>
     <p-button label="Cancel" styleClass="p-button-text p-button-secondary" (click)="createWorkspaceVisible = false"></p-button>
-    <p-button label="Create Workspace" icon="pi pi-check" styleClass="p-button-success" [disabled]="!newWorkspace.name || !newWorkspace.slug" (click)="submitCreateWorkspace()"></p-button>
+    <p-button label="Create Workspace" icon="pi pi-check" styleClass="p-button-success" [loading]="creatingWorkspace" [disabled]="!newWorkspace.name || !newWorkspace.slug" (click)="submitCreateWorkspace()"></p-button>
   </ng-template>
 </p-dialog>

@@ -6,6 +6,14 @@ export interface SimpleUserDto {
   isAdmin?: boolean;
 }
 
+export interface UserSummaryDto {
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  createdAt: string;
+}
+
 export interface LoginRequest {
   email: string;
   password?: string;

@@ -1,5 +1,6 @@
 package com.valeo.kanban.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,6 +26,8 @@ public class AuthResponse {
         private String email;
         private String firstName;
         private String lastName;
-        private boolean isAdmin;
+        // Named "admin" so Lombok's isAdmin() getter and the field share one Jackson property
+        @JsonProperty("isAdmin")
+        private boolean admin;
     }
 }

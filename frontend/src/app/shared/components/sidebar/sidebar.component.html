@@ -3,7 +3,7 @@
     <h3 class="section-title">ACTIVE TENANT</h3>
     <div class="active-ws-details">
       <h4>{{ activeWs.name }}</h4>
-      <span class="role-chip">{{ activeWs.currentUserRole }}</span>
+      <span class="role-chip">{{ activeWs.currentUserRole ?? (isAdmin ? 'ADMIN' : '') }}</span>
     </div>
   </div>
 
@@ -42,6 +42,13 @@
         <a (click)="navigateToWorkspaceSettings()">
           <i class="pi pi-users"></i>
           <span>Workspace Members</span>
+        </a>
+      </li>
+      <li *ngIf="isAdmin" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+        <a routerLink="/admin/users">
+          <i class="pi pi-user-plus"></i>
+          <span>User Onboarding</span>
+          <span class="count-badge" *ngIf="(userDirectory.unassignedUsers$ | async)?.length as pending">{{ pending }}</span>
         </a>
       </li>
       <li *ngIf="isAdmin" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
