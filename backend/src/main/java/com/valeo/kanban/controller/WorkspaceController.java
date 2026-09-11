@@ -1,13 +1,16 @@
 package com.valeo.kanban.controller;
 
 import com.valeo.kanban.dto.request.BoardCreateRequest;
+import com.valeo.kanban.dto.request.MemberBoardsUpdateRequest;
 import com.valeo.kanban.dto.request.WorkspaceCreateRequest;
 import com.valeo.kanban.dto.request.WorkspaceMemberCreateRequest;
 import com.valeo.kanban.dto.request.WorkspaceMemberUpdateRequest;
 import com.valeo.kanban.dto.response.BoardDetailsDto;
+import com.valeo.kanban.dto.response.MembershipChangeResponseDto;
 import com.valeo.kanban.dto.response.WorkspaceMemberResponseDto;
 import com.valeo.kanban.dto.response.WorkspaceResponseDto;
 import com.valeo.kanban.security.CustomUserDetails;
+import com.valeo.kanban.service.BoardMembershipService;
 import com.valeo.kanban.service.BoardService;
 import com.valeo.kanban.service.WorkspaceService;
 import jakarta.validation.Valid;
@@ -27,6 +30,7 @@ public class WorkspaceController {
 
     private final WorkspaceService workspaceService;
     private final BoardService boardService;
+    private final BoardMembershipService boardMembershipService;
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
@@ -74,8 +78,10 @@ public class WorkspaceController {
 
     @GetMapping("/{workspaceId}/members")
     @PreAuthorize("@workspaceSecurity.hasAccess(#workspaceId, principal)")
-    public ResponseEntity<List<WorkspaceMemberResponseDto>> getWorkspaceMembers(@PathVariable Long workspaceId) {
-        List<WorkspaceMemberResponseDto> members = workspaceService.getWorkspaceMembers(workspaceId);
+    public ResponseEntity<List<WorkspaceMemberResponseDto>> getWorkspaceMembers(
+            @PathVariable Long workspaceId,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+        List<WorkspaceMemberResponseDto> members = workspaceService.getWorkspaceMembers(workspaceId, currentUser);
         return ResponseEntity.ok(members);
     }
 
@@ -88,32 +94,45 @@ public class WorkspaceController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    // 200 with a body (not 204): the client shows how many tasks were unassigned
     @DeleteMapping("/{workspaceId}/members/{userId}")
     @PreAuthorize("@workspaceSecurity.isAdmin(#workspaceId, principal)")
-    public ResponseEntity<Void> removeWorkspaceMember(
+    public ResponseEntity<MembershipChangeResponseDto> removeWorkspaceMember(
             @PathVariable Long workspaceId,
-            @PathVariable Long userId) {
-        workspaceService.removeWorkspaceMember(workspaceId, userId);
-        return ResponseEntity.noContent().build();
+            @PathVariable Long userId,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+        return ResponseEntity.ok(workspaceService.removeWorkspaceMember(workspaceId, userId, currentUser));
     }
 
     @PutMapping("/{workspaceId}/members/{userId}")
     @PreAuthorize("@workspaceSecurity.hasAnyRole(#workspaceId, principal, 'ROLE_ADMIN', 'ROLE_PROJECT_MANAGER')")
-    public ResponseEntity<WorkspaceMemberResponseDto> updateWorkspaceMemberRole(
+    public ResponseEntity<MembershipChangeResponseDto> updateWorkspaceMemberRole(
             @PathVariable Long workspaceId,
             @PathVariable Long userId,
             @Valid @RequestBody WorkspaceMemberUpdateRequest request,
             @AuthenticationPrincipal CustomUserDetails currentUser) {
-        WorkspaceMemberResponseDto response = workspaceService.updateWorkspaceMemberRole(workspaceId, userId, request, currentUser);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(workspaceService.updateWorkspaceMemberRole(workspaceId, userId, request, currentUser));
+    }
+
+    // Replaces the member's board memberships with exactly the given boards
+    @PutMapping("/{workspaceId}/members/{userId}/boards")
+    @PreAuthorize("@workspaceSecurity.isAdmin(#workspaceId, principal)")
+    public ResponseEntity<MembershipChangeResponseDto> updateMemberBoards(
+            @PathVariable Long workspaceId,
+            @PathVariable Long userId,
+            @Valid @RequestBody MemberBoardsUpdateRequest request,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+        return ResponseEntity.ok(boardMembershipService.setMemberBoards(workspaceId, userId, request.getBoardIds(), currentUser));
     }
 
     // --- Board Operations within Workspace ---
 
     @GetMapping("/{workspaceId}/boards")
     @PreAuthorize("@workspaceSecurity.hasAccess(#workspaceId, principal)")
-    public ResponseEntity<List<BoardDetailsDto>> getWorkspaceBoards(@PathVariable Long workspaceId) {
-        List<BoardDetailsDto> response = boardService.getWorkspaceBoards(workspaceId);
+    public ResponseEntity<List<BoardDetailsDto>> getWorkspaceBoards(
+            @PathVariable Long workspaceId,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+        List<BoardDetailsDto> response = boardService.getWorkspaceBoards(workspaceId, currentUser);
         return ResponseEntity.ok(response);
     }
 

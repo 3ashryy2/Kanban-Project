@@ -26,7 +26,7 @@ test.describe('F5, F14: Drag-and-Drop, Optimistic Sync and Transactional Rollbac
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
 
     // Create card in To-Do
     const toDoColumn = page.locator('.kanban-column').nth(0);
@@ -74,7 +74,7 @@ test.describe('F5, F14: Drag-and-Drop, Optimistic Sync and Transactional Rollbac
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
 
     // Create card in To-Do
     const toDoColumn = page.locator('.kanban-column').nth(0);

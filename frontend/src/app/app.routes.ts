@@ -2,7 +2,13 @@ import { Routes } from '@angular/router';
 import { Component } from '@angular/core';
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
-import { hasWorkspaceGuard, noWorkspaceGuard } from './core/guards/workspace.guards';
+import {
+  boardAccessGuard,
+  hasWorkspaceGuard,
+  homeRedirectGuard,
+  noWorkspaceGuard,
+  workspaceGuard
+} from './core/guards/workspace.guards';
 
 @Component({
   template: '',
@@ -27,12 +33,32 @@ export const routes: Routes = [
     canActivate: [authGuard, hasWorkspaceGuard],
     children: [
       {
-        path: 'dashboard',
-        loadComponent: () => import('./features/boards/board-container/board-container.component').then(m => m.BoardContainerComponent)
+        // "/" only redirects: to the last-used workspace, or onboarding
+        path: '',
+        pathMatch: 'full',
+        canActivate: [homeRedirectGuard],
+        children: []
       },
       {
-        path: 'settings',
-        loadComponent: () => import('./features/workspaces/workspace-settings/workspace-settings.component').then(m => m.WorkspaceSettingsComponent)
+        // The URL carries the workspace and board, so refresh and shared links keep their place
+        path: 'w/:workspaceId',
+        canActivate: [workspaceGuard],
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            loadComponent: () => import('./features/workspaces/workspace-home/workspace-home.component').then(m => m.WorkspaceHomeComponent)
+          },
+          {
+            path: 'boards/:boardId',
+            canActivate: [boardAccessGuard],
+            loadComponent: () => import('./features/boards/board-container/board-container.component').then(m => m.BoardContainerComponent)
+          },
+          {
+            path: 'members',
+            loadComponent: () => import('./features/workspaces/workspace-settings/workspace-settings.component').then(m => m.WorkspaceSettingsComponent)
+          }
+        ]
       },
       {
         path: 'admin/users',
@@ -44,11 +70,9 @@ export const routes: Routes = [
         canActivate: [adminGuard],
         loadComponent: () => import('./features/admin/audit-log-dashboard/audit-log-dashboard.component').then(m => m.AuditLogDashboardComponent)
       },
-      {
-        path: '',
-        pathMatch: 'full',
-        redirectTo: 'dashboard'
-      }
+      // Addresses from before workspace URLs existed
+      { path: 'dashboard', redirectTo: '/' },
+      { path: 'settings', redirectTo: '/' }
     ]
   },
   {

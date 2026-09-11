@@ -7,5 +7,6 @@ public enum AuditActionType {
     GATE_REJECTED,
     METADATA_UPDATED,
     TASK_ASSIGNED,
+    TASK_AUTO_UNASSIGNED,
     ADMIN_OVERRIDE
 }

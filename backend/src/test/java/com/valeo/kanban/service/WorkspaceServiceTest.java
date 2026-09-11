@@ -2,16 +2,21 @@ package com.valeo.kanban.service;
 
 import com.valeo.kanban.dto.request.WorkspaceCreateRequest;
 import com.valeo.kanban.dto.request.WorkspaceMemberCreateRequest;
+import com.valeo.kanban.dto.request.WorkspaceMemberUpdateRequest;
+import com.valeo.kanban.dto.response.MembershipChangeResponseDto;
 import com.valeo.kanban.dto.response.WorkspaceResponseDto;
 import com.valeo.kanban.exception.custom.ConflictException;
 import com.valeo.kanban.model.entity.User;
 import com.valeo.kanban.model.entity.Workspace;
 import com.valeo.kanban.model.entity.WorkspaceMember;
 import com.valeo.kanban.model.enums.WorkspaceRole;
+import com.valeo.kanban.repository.BoardMemberRepository;
 import com.valeo.kanban.repository.BoardRepository;
 import com.valeo.kanban.repository.UserRepository;
 import com.valeo.kanban.repository.WorkspaceMemberRepository;
 import com.valeo.kanban.repository.WorkspaceRepository;
+import com.valeo.kanban.security.BoardAccessService;
+import com.valeo.kanban.security.BoardScope;
 import com.valeo.kanban.security.CustomUserDetails;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +26,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -38,8 +45,44 @@ class WorkspaceServiceTest {
     @Mock private WorkspaceMemberRepository workspaceMemberRepository;
     @Mock private UserRepository userRepository;
     @Mock private BoardRepository boardRepository;
+    @Mock private BoardMemberRepository boardMemberRepository;
+    @Mock private BoardAccessService boardAccessService;
+    @Mock private BoardMembershipService boardMembershipService;
+    @Mock private BoardAccessRevocationService revocationService;
 
     @InjectMocks private WorkspaceService workspaceService;
+
+    @Test
+    void removingADeveloperUnassignsTheirTasksOnTheirBoardsBeforeDeletingTheMembership() {
+        WorkspaceMember dev = membership(workspace(1L, "Alpha"), user(3L), WorkspaceRole.ROLE_DEVELOPER);
+        when(workspaceMemberRepository.findByWorkspaceIdAndUserId(1L, 3L)).thenReturn(Optional.of(dev));
+        when(boardMemberRepository.findBoardIdsByWorkspaceIdAndUserId(1L, 3L)).thenReturn(Set.of(10L));
+        when(revocationService.unassignTasksOnBoards(1L, 3L, Set.of(10L), 2L)).thenReturn(4);
+
+        MembershipChangeResponseDto result = workspaceService.removeWorkspaceMember(1L, 3L, principal(2L, false));
+
+        assertThat(result.getUnassignedTaskCount()).isEqualTo(4);
+        assertThat(result.getMember()).isNull();
+        verify(workspaceMemberRepository).delete(dev);
+    }
+
+    @Test
+    void demotingAPmUnassignsTasksOnlyOnBoardsTheyAreNotAnExplicitMemberOf() {
+        WorkspaceMember pm = membership(workspace(1L, "Alpha"), user(2L), WorkspaceRole.ROLE_PROJECT_MANAGER);
+        when(workspaceMemberRepository.findByWorkspaceIdAndUserId(1L, 2L)).thenReturn(Optional.of(pm));
+        when(workspaceMemberRepository.save(pm)).thenReturn(pm);
+        when(boardMemberRepository.findBoardIdsByWorkspaceIdAndUserId(1L, 2L)).thenReturn(Set.of(10L)); // a board they created
+        when(boardRepository.findIdsByWorkspaceId(1L)).thenReturn(List.of(10L, 11L));
+        when(revocationService.unassignTasksOnBoards(1L, 2L, List.of(11L), 1L)).thenReturn(1);
+        when(boardMembershipService.boardsByUser(1L, BoardScope.ALL)).thenReturn(Map.of());
+
+        MembershipChangeResponseDto result = workspaceService.updateWorkspaceMemberRole(
+                1L, 2L, new WorkspaceMemberUpdateRequest("ROLE_DEVELOPER"), principal(1L, true));
+
+        assertThat(result.getUnassignedTaskCount()).isEqualTo(1);
+        assertThat(result.getMember().getRole()).isEqualTo("ROLE_DEVELOPER");
+        assertThat(result.getMember().isAllBoards()).isFalse();
+    }
 
     @Test
     void adminSeesEveryWorkspaceWithNullRoleWhereNotAMember() {

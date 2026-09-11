@@ -1,11 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { BehaviorSubject, EMPTY, Observable } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, Subject } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
 import { BoardDetailsDto } from '../models/board.dto';
 import { ColumnDto } from '../models/column.dto';
 import { TaskDto, TaskMoveRequest, TaskCreateRequest, TaskMetadataRequest, TaskAssigneeRequest, TaskApproveRequest, TaskRejectRequest } from '../models/task.dto';
+import { SimpleUserDto } from '../models/user.dto';
 import { RANK_CALCULATOR_TOKEN } from '../services/rank-calculator.interface';
 
 @Injectable({
@@ -23,8 +24,25 @@ export class BoardStoreService {
     map(board => board?.columns ?? [])
   );
 
+  // People who may be assigned tasks on the open board (its members plus the workspace's PMs)
+  private readonly _boardMembers$ = new BehaviorSubject<SimpleUserDto[]>([]);
+  readonly boardMembers$ = this._boardMembers$.asObservable();
+
+  // Emits a board id when the server refuses it (403/404), e.g. access was revoked while it was open
+  private readonly _accessLost$ = new Subject<number>();
+  readonly accessLost$ = this._accessLost$.asObservable();
+
   clear(): void {
     this._boardState$.next(null);
+    this._boardMembers$.next([]);
+  }
+
+  loadBoardMembers(boardId: number): void {
+    this.http.get<SimpleUserDto[]>(`/api/boards/${boardId}/members`)
+      .subscribe({
+        next: members => this._boardMembers$.next(members),
+        error: () => this._boardMembers$.next([])
+      });
   }
 
   loadBoard(boardId: number): void {
@@ -32,6 +50,11 @@ export class BoardStoreService {
       .subscribe({
         next: board => this._boardState$.next(board),
         error: err => {
+          if (err.status === 403 || err.status === 404) {
+            this.clear();
+            this._accessLost$.next(boardId);
+            return;
+          }
           this.messageService.add({
             severity: 'error',
             summary: 'Load Failed',

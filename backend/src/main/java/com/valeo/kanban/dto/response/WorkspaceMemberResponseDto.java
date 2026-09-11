@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -19,4 +21,9 @@ public class WorkspaceMemberResponseDto {
     private String lastName;
     private String role;
     private Instant joinedAt;
+    // Project Managers open every board of the workspace without a membership row
+    private boolean allBoards;
+    // Explicit board memberships the viewer is allowed to see
+    @Builder.Default
+    private List<BoardRefDto> boards = new ArrayList<>();
 }

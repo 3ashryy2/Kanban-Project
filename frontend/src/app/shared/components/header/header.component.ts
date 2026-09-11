@@ -71,9 +71,8 @@ export class HeaderComponent implements OnInit {
 
   onWorkspaceChange(ws: any): void {
     if (ws) {
-      this.workspaceStore.setActiveWorkspace(ws);
-      // Optional: automatically navigate to the workspace settings or first board
-      this.router.navigate([`/workspaces/${ws.id}/settings`]);
+      // workspaceGuard makes it the active workspace; its home page opens the right board
+      this.router.navigate(['/w', ws.id]);
     }
   }
 
@@ -99,9 +98,10 @@ export class HeaderComponent implements OnInit {
 
     // Keep the dialog open on failure so the admin can fix the slug or name
     this.workspaceStore.createWorkspace(this.newWorkspace).subscribe({
-      next: () => {
+      next: created => {
         this.creatingWorkspace = false;
         this.createWorkspaceVisible = false;
+        this.router.navigate(['/w', created.id]);
       },
       error: () => this.creatingWorkspace = false
     });
