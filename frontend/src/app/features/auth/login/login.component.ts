@@ -10,7 +10,6 @@ import { Card } from 'primeng/card';
 import { InputText } from 'primeng/inputtext';
 import { Password } from 'primeng/password';
 import { Button } from 'primeng/button';
-import { Toast } from 'primeng/toast';
 
 @Component({
   selector: 'app-login',
@@ -21,8 +20,7 @@ import { Toast } from 'primeng/toast';
     Card,
     InputText,
     Password,
-    Button,
-    Toast
+    Button
   ],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']

@@ -26,7 +26,7 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
 
     // Ensure the board is fully loaded and data is bound to state before performing actions
     const boardTitle = page.locator('.board-title');
@@ -57,7 +57,7 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
 
     // Ensure board is fully loaded
     const boardTitle = page.locator('.board-title');
@@ -131,7 +131,7 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
 
     // Ensure board is fully loaded
     await expect(boardTitle).toBeVisible({ timeout: 10000 });

@@ -1,1 +1,8 @@
+<!--
+  One toast host for the whole app, present before guards run so they can show messages too.
+  @defer keeps PrimeNG's toast code out of the initial bundle; "on immediate" fetches it right after first paint.
+-->
+@defer (on immediate) {
+  <p-toast></p-toast>
+}
 <router-outlet></router-outlet>

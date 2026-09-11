@@ -16,6 +16,7 @@ import com.valeo.kanban.repository.BoardRepository;
 import com.valeo.kanban.repository.ColumnRepository;
 import com.valeo.kanban.repository.TaskRepository;
 import com.valeo.kanban.repository.UserRepository;
+import com.valeo.kanban.security.BoardAccessService;
 import com.valeo.kanban.security.CustomUserDetails;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.OptimisticLockException;
@@ -34,6 +35,7 @@ public class TaskService {
     private final BoardRepository boardRepository;
     private final ColumnRepository columnRepository;
     private final UserRepository userRepository;
+    private final BoardAccessService boardAccessService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
@@ -48,12 +50,13 @@ public class TaskService {
         Board board = boardRepository.findById(request.getBoardId())
                 .orElseThrow(() -> new EntityNotFoundException("Board not found"));
 
-        Column column = columnRepository.findById(request.getColumnId())
-                .orElseThrow(() -> new EntityNotFoundException("Column not found"));
+        Column column = columnRepository.findByIdAndBoardId(request.getColumnId(), board.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Column " + request.getColumnId() + " does not belong to this board."));
 
         User creator = userRepository.getReferenceById(currentUser.getId());
         User assignee = null;
         if (request.getAssigneeId() != null) {
+            requireBoardAccess(request.getAssigneeId(), board.getId());
             assignee = userRepository.getReferenceById(request.getAssigneeId());
         }
 
@@ -142,6 +145,7 @@ public class TaskService {
 
         User newAssignee = null;
         if (request.getAssigneeId() != null) {
+            requireBoardAccess(request.getAssigneeId(), task.getBoard().getId());
             newAssignee = userRepository.getReferenceById(request.getAssigneeId());
         }
 
@@ -191,5 +195,12 @@ public class TaskService {
         ));
 
         taskRepository.delete(task);
+    }
+
+    // A task may only be assigned to someone who can open its board
+    private void requireBoardAccess(Long assigneeId, Long boardId) {
+        if (!boardAccessService.userCanAccessBoard(assigneeId, boardId)) {
+            throw new IllegalArgumentException("The assignee must be a member of this board.");
+        }
     }
 }

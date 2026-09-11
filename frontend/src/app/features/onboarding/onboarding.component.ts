@@ -11,7 +11,6 @@ import { slugify } from '../../shared/utils/slugify';
 import { Button } from 'primeng/button';
 import { InputText } from 'primeng/inputtext';
 import { Textarea } from 'primeng/textarea';
-import { Toast } from 'primeng/toast';
 
 // Minimum gap between automatic re-checks when the tab regains focus
 const FOCUS_RECHECK_MS = 10_000;
@@ -19,7 +18,7 @@ const FOCUS_RECHECK_MS = 10_000;
 @Component({
   selector: 'app-onboarding',
   standalone: true,
-  imports: [CommonModule, FormsModule, Button, InputText, Textarea, Toast],
+  imports: [CommonModule, FormsModule, Button, InputText, Textarea],
   templateUrl: './onboarding.component.html',
   styleUrls: ['./onboarding.component.scss']
 })

@@ -26,7 +26,7 @@ test.describe('F15: Onboarding newly registered users', () => {
     await admin.fill('#email', 'admin@valeo.com');
     await admin.fill('#password input', 'password123');
     await admin.click('button[type="submit"]');
-    await expect(admin).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(admin).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
 
     await admin.goto('/admin/users');
     const row = admin.locator('.user-row', { hasText: email });
@@ -39,10 +39,12 @@ test.describe('F15: Onboarding newly registered users', () => {
     await expect(row).not.toBeVisible({ timeout: 5000 });
     await adminContext.close();
 
-    // 3. The new user checks again and enters the workspace as a Developer (the default role)
+    // 3. The new user checks again and enters the workspace as a Developer (the default role).
+    //    They belong to no board yet, so the workspace home explains that instead of opening one.
     await page.click('button:has-text("Check again")');
-    await expect(page).toHaveURL(/\/(dashboard|settings)/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/w\/\d+$/, { timeout: 10000 });
     await expect(page.locator('.role-chip')).toContainText('ROLE_DEVELOPER');
+    await expect(page.locator('.empty-card h2')).toContainText("You haven't been added to a board yet");
   });
 
   test('a user with a workspace is sent away from the onboarding page', async ({ page }) => {
@@ -50,9 +52,9 @@ test.describe('F15: Onboarding newly registered users', () => {
     await page.fill('#email', 'dev@valeo.com');
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
 
     await page.goto('/onboarding');
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
   });
 });

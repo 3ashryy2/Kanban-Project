@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter, inject, DestroyRef } from '@angular/core';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +6,8 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthStoreService } from '../../../core/store/auth-store.service';
 import { WorkspaceStoreService } from '../../../core/store/workspace-store.service';
 import { UserDirectoryStoreService } from '../../../core/store/user-directory-store.service';
+import { WorkspaceResponseDto } from '../../../core/models/workspace.dto';
+import { BoardDetailsDto } from '../../../core/models/board.dto';
 import { HttpClient } from '@angular/common/http';
 import { distinctUntilChanged, filter } from 'rxjs';
 import { MessageService } from 'primeng/api';
@@ -41,16 +43,12 @@ export class SidebarComponent implements OnInit {
   private readonly messageService = inject(MessageService);
   private readonly destroyRef = inject(DestroyRef);
 
-  @Input() boards: any[] = [];
-  @Input() activeBoardId: number | null = null;
-  @Output() loadBoards = new EventEmitter<number>();
-  @Output() navBoard = new EventEmitter<number>();
-
-  selectedWorkspace: any = null;
+  selectedWorkspace: WorkspaceResponseDto | null = null;
   isAdmin = false;
   isPM = false;
 
   createBoardVisible = false;
+  creatingBoard = false;
   newBoard = { title: '', description: '' };
 
   ngOnInit(): void {
@@ -68,19 +66,9 @@ export class SidebarComponent implements OnInit {
     this.workspaceStore.activeWorkspace$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(ws => {
-        if (ws) {
-          this.selectedWorkspace = ws;
-          this.isPM = ws.currentUserRole === 'ROLE_PROJECT_MANAGER';
-        }
+        this.selectedWorkspace = ws;
+        this.isPM = ws?.currentUserRole === 'ROLE_PROJECT_MANAGER';
       });
-  }
-
-  navigateToBoard(boardId: number): void {
-    this.navBoard.emit(boardId);
-  }
-
-  navigateToWorkspaceSettings(): void {
-    this.router.navigate(['/settings']);
   }
 
   openCreateBoard(): void {
@@ -89,21 +77,28 @@ export class SidebarComponent implements OnInit {
   }
 
   submitCreateBoard(): void {
-    if (!this.newBoard.title || !this.selectedWorkspace) return;
-    
-    this.http.post<any>(`/api/workspaces/${this.selectedWorkspace.id}/boards`, this.newBoard)
+    const workspace = this.selectedWorkspace;
+    if (!this.newBoard.title || !workspace || this.creatingBoard) return;
+    this.creatingBoard = true;
+
+    this.http.post<BoardDetailsDto>(`/api/workspaces/${workspace.id}/boards`, this.newBoard)
       .subscribe({
-        next: (createdBoard) => {
+        next: createdBoard => {
+          this.creatingBoard = false;
           this.createBoardVisible = false;
+          this.workspaceStore.addBoard(createdBoard);
           this.messageService.add({ severity: 'success', summary: 'Board Created', detail: 'New board initialized with default workflow stages.' });
-          // Notify parent to refresh boards and navigate
-          this.loadBoards.emit(this.selectedWorkspace.id);
-          this.navBoard.emit(createdBoard.id);
+          this.router.navigate(['/w', workspace.id, 'boards', createdBoard.id]);
         },
-        error: (err) => {
+        error: err => {
+          this.creatingBoard = false;
           this.messageService.add({ severity: 'error', summary: 'Creation Failed', detail: err.error?.message || 'Could not create board.' });
         }
       });
+  }
+
+  trackByBoardId(index: number, board: BoardDetailsDto): number {
+    return board.id;
   }
 
   onSignOut(): void {

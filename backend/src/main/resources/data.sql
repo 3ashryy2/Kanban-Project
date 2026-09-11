@@ -32,6 +32,13 @@ INSERT INTO columns (id, board_id, name, position, is_gated) VALUES
 (5, 1, 'Done', 5000.0, false)
 ON CONFLICT (id) DO NOTHING;
 
+-- 3b. Board membership: Developer, QA and Viewer work on board 1 (PMs and the admin see every board)
+INSERT INTO board_members (board_id, workspace_id, user_id, added_by_id) VALUES
+(1, 1, 3, 2),
+(1, 1, 4, 2),
+(1, 1, 5, 2)
+ON CONFLICT (board_id, user_id) DO NOTHING;
+
 -- 4. Seed Dynamic Workflow Transitions (with Gating & Fallbacks)
 INSERT INTO workflow_transitions (board_id, from_column_id, to_column_id, fallback_column_id, requires_approval) VALUES
 (1, 1, 2, NULL, false), -- To-Do -> In Progress
