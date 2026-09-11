@@ -6,6 +6,9 @@ import { HttpClient } from '@angular/common/http';
 import { Subject, Subscription, combineLatest, debounceTime, distinctUntilChanged, map, BehaviorSubject, Observable } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
+import { ActivatedRoute, Router } from '@angular/router';
+import { findRouteParam } from '../../../core/utils/route-params';
+import { lastVisited } from '../../../core/utils/last-visited';
 
 // Stores & Services
 import { BoardStoreService } from '../../../core/store/board-store.service';
@@ -60,6 +63,8 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
   readonly workflowStore = inject(WorkflowStoreService);
   readonly activityStore = inject(ActivityStoreService);
   readonly messageService = inject(MessageService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   activeBoardId: number | null = null;
@@ -138,8 +143,8 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
   // Workflow Governance Rules Matrix State (F2)
   transitionsList: WorkflowTransitionUpdateRequest[] = [];
 
-  // Roster lists for dropdown selections
-  workspaceMembers: SimpleUserDto[] = [];
+  // Assignee choices: people who can open this board (its members plus the workspace's PMs)
+  assignableMembers: SimpleUserDto[] = [];
   priorityOptions = [
     { label: 'Low', value: 'LOW' },
     { label: 'Medium', value: 'MEDIUM' },
@@ -166,16 +171,41 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
         }
       });
 
-    // Subscribes to the active workspace members list for assignee dropdowns (F4, leak-safe)
-    this.workspaceStore.activeWorkspaceMembers$
+    // The board to show comes from the URL; the component is reused when only :boardId changes
+    this.route.paramMap
+      .pipe(
+        map(params => Number(params.get('boardId'))),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(boardId => {
+        this.boardStore.clear(); // show the loading state, never the previous board
+        this.boardStore.loadBoard(boardId);
+        this.workflowStore.loadTransitions(boardId);
+        this.boardStore.loadBoardMembers(boardId);
+        lastVisited.rememberBoard(this.currentWorkspaceId(), boardId);
+      });
+
+    // The server refused the board (e.g. access revoked while it was open): back to the workspace
+    this.boardStore.accessLost$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        const workspaceId = this.currentWorkspaceId();
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Board unavailable',
+          detail: 'You no longer have access to this board.',
+          life: 4000
+        });
+        this.workspaceStore.loadBoards(workspaceId); // refresh the list, so it can't send us straight back
+        this.router.navigate(['/w', workspaceId]);
+      });
+
+    // Assignee dropdown (F4, leak-safe)
+    this.boardStore.boardMembers$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(members => {
-        this.workspaceMembers = members.map(m => ({
-          id: m.userId,
-          email: m.email,
-          firstName: m.firstName,
-          lastName: m.lastName
-        }));
+        this.assignableMembers = members;
       });
 
     // Subscribe to columns to keep our un-filtered list updated for dropdown utilities
@@ -601,15 +631,24 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
     return this.selectedTask.assignee.id === this.currentUserId;
   }
 
-  get filteredWorkspaceMembers(): SimpleUserDto[] {
+  get assigneeOptions(): SimpleUserDto[] {
     if (this.isAdmin || this.currentUserRole === 'ROLE_PROJECT_MANAGER') {
-      return this.workspaceMembers;
+      return this.assignableMembers;
     }
     // Base roles (Developer / QA) can only assign to themselves (or unassign themselves)
     if (this.currentUserId) {
-      return this.workspaceMembers.filter(m => m.id === this.currentUserId);
+      return this.assignableMembers.filter(m => m.id === this.currentUserId);
     }
     return [];
+  }
+
+  // Columns arrive sorted by position; unassigned cards anywhere else are flagged "Needs assignee"
+  get firstColumnId(): number | null {
+    return this.allColumns.length > 0 ? this.allColumns[0].id : null;
+  }
+
+  private currentWorkspaceId(): number {
+    return Number(findRouteParam(this.route.snapshot, 'workspaceId'));
   }
 
   get isTaskLocked(): boolean {

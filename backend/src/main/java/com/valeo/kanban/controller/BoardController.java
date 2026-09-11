@@ -6,7 +6,9 @@ import com.valeo.kanban.dto.request.ColumnReorderRequest;
 import com.valeo.kanban.dto.response.AuditLogResponseDto;
 import com.valeo.kanban.dto.response.BoardDetailsDto;
 import com.valeo.kanban.dto.response.ColumnDto;
+import com.valeo.kanban.dto.response.TaskDto;
 import com.valeo.kanban.service.AuditLogService;
+import com.valeo.kanban.service.BoardMembershipService;
 import com.valeo.kanban.service.BoardService;
 import com.valeo.kanban.service.ColumnService;
 import jakarta.validation.Valid;
@@ -26,6 +28,14 @@ public class BoardController {
     private final BoardService boardService;
     private final ColumnService columnService;
     private final AuditLogService auditLogService;
+    private final BoardMembershipService boardMembershipService;
+
+    // People who may be assigned tasks on this board (explicit members + the workspace's PMs)
+    @GetMapping("/{boardId}/members")
+    @PreAuthorize("@boardSecurity.canReadBoard(#boardId, principal)")
+    public ResponseEntity<List<TaskDto.SimpleUserDto>> getBoardMembers(@PathVariable Long boardId) {
+        return ResponseEntity.ok(boardMembershipService.getAssignableUsers(boardId));
+    }
 
     @GetMapping("/{boardId}")
     @PreAuthorize("@boardSecurity.canReadBoard(#boardId, principal)")

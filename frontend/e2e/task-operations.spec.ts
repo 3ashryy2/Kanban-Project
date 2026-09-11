@@ -9,7 +9,7 @@ test.describe('F4, F9, F12: Task Operations, Filtering, and Activity Streams', (
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
 
     // 1. Create a unique task to search for
     const toDoColumn = page.locator('.kanban-column').first();
@@ -55,7 +55,7 @@ test.describe('F4, F9, F12: Task Operations, Filtering, and Activity Streams', (
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
 
     // Create a task
     const toDoColumn = page.locator('.kanban-column').first();
@@ -103,7 +103,7 @@ test.describe('F4, F9, F12: Task Operations, Filtering, and Activity Streams', (
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
 
     // Click "Activity Stream" button
     const streamBtn = page.locator('button:has-text("Activity Stream")');

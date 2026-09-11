@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,4 +29,11 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findAllByBoardIdOrderByPositionAsc(@Param("boardId") Long boardId);
 
     long countByColumnId(Long columnId);
+
+    @Query("SELECT t.board.id FROM Task t WHERE t.id = :taskId")
+    Optional<Long> findBoardIdById(@Param("taskId") Long taskId);
+
+    // Tasks a user is losing access to; the assignee is fetched for the audit entry
+    @Query("SELECT t FROM Task t JOIN FETCH t.assignee WHERE t.assignee.id = :userId AND t.board.id IN :boardIds")
+    List<Task> findAllAssignedToUserOnBoards(@Param("userId") Long userId, @Param("boardIds") Collection<Long> boardIds);
 }

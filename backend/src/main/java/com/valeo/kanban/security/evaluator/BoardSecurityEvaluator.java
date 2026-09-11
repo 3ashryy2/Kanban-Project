@@ -5,6 +5,7 @@ import com.valeo.kanban.repository.BoardRepository;
 import com.valeo.kanban.repository.ColumnRepository;
 import com.valeo.kanban.repository.TaskRepository;
 import com.valeo.kanban.repository.WorkspaceMemberRepository;
+import com.valeo.kanban.security.BoardAccessService;
 import com.valeo.kanban.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ public class BoardSecurityEvaluator {
     private final ColumnRepository columnRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final WorkspaceSecurityEvaluator workspaceSecurity;
+    private final BoardAccessService boardAccess;
 
     public boolean isAdminOrManager(Long boardId, CustomUserDetails currentUser) {
         if (boardId == null || currentUser == null) return false;
@@ -44,11 +46,9 @@ public class BoardSecurityEvaluator {
     public boolean canCreateTaskOnBoard(Long boardId, CustomUserDetails currentUser) {
         if (boardId == null || currentUser == null) return false;
         if (currentUser.isAdmin()) return true;
-        return boardRepository.findById(boardId)
-                .map(b -> workspaceMemberRepository
-                        .findByWorkspaceIdAndUserId(b.getWorkspace().getId(), currentUser.getId())
-                        .map(m -> m.getRole() != WorkspaceRole.ROLE_VIEWER)
-                        .orElse(false))
+        // Must be able to open the board, and viewers stay read-only
+        return boardAccess.roleOnBoard(boardId, currentUser.getId())
+                .map(role -> role != WorkspaceRole.ROLE_VIEWER)
                 .orElse(false);
     }
 
@@ -67,16 +67,13 @@ public class BoardSecurityEvaluator {
     }
 
     public boolean canReadBoard(Long boardId, CustomUserDetails currentUser) {
-        if (boardId == null || currentUser == null) return false;
-        return boardRepository.findById(boardId)
-                .map(b -> workspaceSecurity.hasAccess(b.getWorkspace().getId(), currentUser))
-                .orElse(false);
+        return boardAccess.canAccessBoard(boardId, currentUser);
     }
 
     public boolean canReadTask(Long taskId, CustomUserDetails currentUser) {
         if (taskId == null || currentUser == null) return false;
-        return taskRepository.findById(taskId)
-                .map(t -> workspaceSecurity.hasAccess(t.getBoard().getWorkspace().getId(), currentUser))
+        return taskRepository.findBoardIdById(taskId)
+                .map(boardId -> boardAccess.canAccessBoard(boardId, currentUser))
                 .orElse(false);
     }
 

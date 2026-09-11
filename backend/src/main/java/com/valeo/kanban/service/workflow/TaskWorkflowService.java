@@ -46,6 +46,11 @@ public class TaskWorkflowService {
         Long sourceColumnId = task.getColumn().getId();
         Long targetColumnId = request.getTargetColumnId();
 
+        // A task never leaves its board, not even through the admin override
+        if (columnRepository.findByIdAndBoardId(targetColumnId, task.getBoard().getId()).isEmpty()) {
+            throw new InvalidStateTransitionException("The target column does not belong to this task's board.");
+        }
+
         WorkspaceRole actorRole = workspaceMemberRepository
                 .findByWorkspaceIdAndUserId(task.getBoard().getWorkspace().getId(), currentUser.getId())
                 .map(com.valeo.kanban.model.entity.WorkspaceMember::getRole)

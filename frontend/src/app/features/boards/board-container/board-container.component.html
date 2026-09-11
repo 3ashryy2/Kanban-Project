@@ -135,10 +135,21 @@
               <span class="assignee-name">{{ task.assignee.firstName }}</span>
             </div>
             <ng-template #unassigned>
-              <div class="unassigned-badge">
-                <i class="pi pi-user-plus"></i>
-                <span>Unassigned</span>
+              <!-- Past the first column a card can't move again until someone is assigned (e.g. after an auto-unassign) -->
+              <div
+                class="unassigned-badge needs-assignee"
+                *ngIf="col.id !== firstColumnId; else plainUnassigned"
+                pTooltip="Assign someone before this card can move"
+              >
+                <i class="pi pi-exclamation-triangle"></i>
+                <span>Needs assignee</span>
               </div>
+              <ng-template #plainUnassigned>
+                <div class="unassigned-badge">
+                  <i class="pi pi-user-plus"></i>
+                  <span>Unassigned</span>
+                </div>
+              </ng-template>
             </ng-template>
 
             <span class="due-date-badge" *ngIf="task.dueDate" pTooltip="Due Date">
@@ -248,7 +259,7 @@
           <label for="edit-assignee">Task Assignee</label>
           <p-select 
             id="edit-assignee" 
-            [options]="filteredWorkspaceMembers" 
+            [options]="assigneeOptions"
             optionLabel="email" 
             optionValue="id" 
             [(ngModel)]="selectedTaskAssigneeId" 

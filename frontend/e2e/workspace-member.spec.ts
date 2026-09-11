@@ -9,14 +9,14 @@ test.describe('F15: Workspace Membership & Role Provisioning', () => {
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
 
     // Click "Workspace Members" in preferences section
     const membersLink = page.locator('span:has-text("Workspace Members")');
     await membersLink.click();
 
     // Verify redirected to settings view
-    await expect(page).toHaveURL(/\/settings/, { timeout: 5000 });
+    await expect(page).toHaveURL(/\/w\/\d+\/members/, { timeout: 5000 });
 
     // Roster title should render
     const settingsHeader = page.locator('.settings-header h2');
@@ -43,11 +43,11 @@ test.describe('F15: Workspace Membership & Role Provisioning', () => {
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
 
     // Click "Workspace Members" link
     await page.click('span:has-text("Workspace Members")');
-    await expect(page).toHaveURL(/\/settings/, { timeout: 5000 });
+    await expect(page).toHaveURL(/\/w\/\d+\/members/, { timeout: 5000 });
 
     // "Add Member" button should NOT be visible to Developer
     const addMemberBtn = page.locator('button:has-text("Add Member")');

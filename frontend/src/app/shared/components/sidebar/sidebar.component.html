@@ -20,17 +20,17 @@
         (onClick)="openCreateBoard()">
       </p-button>
     </div>
-    <div class="boards-list-container">
-      <ul class="nav-list" *ngIf="boards && boards.length > 0; else noBoards">
-        <li *ngFor="let board of boards" [class.active]="activeBoardId === board.id">
-          <a (click)="navigateToBoard(board.id)">
+    <div class="boards-list-container" *ngIf="workspaceStore.boards$ | async as boards">
+      <ul class="nav-list" *ngIf="boards.length > 0; else noBoards">
+        <li *ngFor="let board of boards; trackBy: trackByBoardId" routerLinkActive="active">
+          <a [routerLink]="['/w', board.workspaceId, 'boards', board.id]">
             <i class="pi pi-th-large"></i>
             <span>{{ board.title }}</span>
           </a>
         </li>
       </ul>
       <ng-template #noBoards>
-        <div class="sidebar-fallback">No boards configured.</div>
+        <div class="sidebar-fallback">{{ (isAdmin || isPM) ? 'No boards yet.' : 'No boards assigned to you yet.' }}</div>
       </ng-template>
     </div>
   </div>
@@ -38,8 +38,8 @@
   <div class="sidebar-section">
     <h3 class="section-title">PREFERENCES</h3>
     <ul class="nav-list">
-      <li routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
-        <a (click)="navigateToWorkspaceSettings()">
+      <li *ngIf="selectedWorkspace" routerLinkActive="active">
+        <a [routerLink]="['/w', selectedWorkspace.id, 'members']">
           <i class="pi pi-users"></i>
           <span>Workspace Members</span>
         </a>
@@ -85,6 +85,6 @@
   </div>
   <ng-template #footer>
     <p-button label="Cancel" styleClass="p-button-text p-button-secondary" (click)="createBoardVisible = false"></p-button>
-    <p-button label="Create Board" icon="pi pi-check" styleClass="p-button-success" [disabled]="!newBoard.title" (click)="submitCreateBoard()"></p-button>
+    <p-button label="Create Board" icon="pi pi-check" styleClass="p-button-success" [loading]="creatingBoard" [disabled]="!newBoard.title" (click)="submitCreateBoard()"></p-button>
   </ng-template>
 </p-dialog>

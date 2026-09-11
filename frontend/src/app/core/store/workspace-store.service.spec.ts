@@ -3,13 +3,22 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { WorkspaceStoreService } from './workspace-store.service';
 import { MessageService } from 'primeng/api';
 import { WorkspaceResponseDto } from '../models/workspace.dto';
+import { BoardDetailsDto } from '../models/board.dto';
 
 describe('WorkspaceStoreService', () => {
   let service: WorkspaceStoreService;
   let httpMock: HttpTestingController;
   let messageServiceMock: any;
 
+  // Making a workspace active loads its members and its boards
+  const flushActivation = (workspaceId: number, boards: BoardDetailsDto[] = []) => {
+    httpMock.expectOne(`/api/workspaces/${workspaceId}/members`).flush([]);
+    httpMock.expectOne(`/api/workspaces/${workspaceId}/boards`).flush(boards);
+  };
+
   beforeEach(() => {
+    // The store remembers the last workspace in localStorage; start every test clean
+    localStorage.clear();
     messageServiceMock = {
       add: vi.fn()
     };
@@ -46,9 +55,8 @@ describe('WorkspaceStoreService', () => {
     expect(req.request.method).toBe('GET');
     req.flush(mockWorkspaces);
 
-    // Expect an API request for the members of the newly selected active workspace (id 1)
-    const memberReq = httpMock.expectOne('/api/workspaces/1/members');
-    memberReq.flush([]);
+    // The newly selected active workspace (id 1) loads its members and boards
+    flushActivation(1);
 
     // Should auto-select first workspace (id 1)
     expect(service.getActiveWorkspace()).toEqual(mockWorkspaces[0]);
@@ -62,19 +70,15 @@ describe('WorkspaceStoreService', () => {
     // Set an active workspace with id 1 (which won't be in the loaded list)
     const oldWorkspace: WorkspaceResponseDto = { id: 1, name: 'Workspace 1', slug: 'ws-1', description: 'Desc 1', boardCount: 0, memberCount: 1 };
     service.setActiveWorkspace(oldWorkspace);
-
-    // Expect an API request for the members of the old workspace upon setActiveWorkspace
-    const memberReq = httpMock.expectOne('/api/workspaces/1/members');
-    memberReq.flush([]);
+    flushActivation(1);
 
     service.loadWorkspaces();
 
     const req = httpMock.expectOne('/api/users/me/workspaces');
     req.flush(mockWorkspaces);
 
-    // Expect an API request for the members of the newly selected active workspace (id 2)
-    const newMemberReq = httpMock.expectOne('/api/workspaces/2/members');
-    newMemberReq.flush([]);
+    // The newly selected active workspace (id 2) loads its members and boards
+    flushActivation(2);
 
     // Should auto-select first workspace (id 2) since id 1 is not in the list
     expect(service.getActiveWorkspace()).toEqual(mockWorkspaces[0]);
@@ -96,20 +100,37 @@ describe('WorkspaceStoreService', () => {
     const created: WorkspaceResponseDto = { id: 3, name: 'New', slug: 'new', boardCount: 0, memberCount: 0 };
     service.createWorkspace({ name: 'New', slug: 'new' }).subscribe();
     httpMock.expectOne('/api/workspaces').flush(created);
-    httpMock.expectOne('/api/workspaces/3/members').flush([]);
+    flushActivation(3);
 
     let afterCreate: WorkspaceResponseDto[] | null = null;
     service.ensureWorkspacesLoaded().subscribe(list => afterCreate = list);
     expect(afterCreate).toEqual([created]);
   });
 
+  it('should share the boards request and ignore a late answer for a workspace already left', () => {
+    const boardA: BoardDetailsDto = { id: 10, workspaceId: 1, title: 'A', description: '', columns: [] };
+    const boardB: BoardDetailsDto = { id: 20, workspaceId: 2, title: 'B', description: '', columns: [] };
+
+    let fromGuard: BoardDetailsDto[] | null = null;
+    service.ensureBoardsLoaded(1).subscribe(list => fromGuard = list);
+    service.ensureBoardsLoaded(1).subscribe();   // a second caller reuses the same request
+    const slowRequest = httpMock.expectOne('/api/workspaces/1/boards');
+
+    // The user switches to workspace 2 before workspace 1's boards arrive
+    service.ensureBoardsLoaded(2).subscribe();
+    httpMock.expectOne('/api/workspaces/2/boards').flush([boardB]);
+    slowRequest.flush([boardA]);
+
+    let current: BoardDetailsDto[] = [];
+    service.boards$.subscribe(list => current = list);
+    expect(current).toEqual([boardB]);
+    expect(fromGuard).toEqual([]);   // never answered with another workspace's boards
+  });
+
   it('should clear workspace state on clear()', () => {
     const activeWorkspace: WorkspaceResponseDto = { id: 1, name: 'Workspace 1', slug: 'ws-1', description: 'Desc 1', boardCount: 0, memberCount: 1 };
     service.setActiveWorkspace(activeWorkspace);
-
-    // Flush member req
-    const memberReq = httpMock.expectOne('/api/workspaces/1/members');
-    memberReq.flush([]);
+    flushActivation(1);
 
     service.clear();
 
@@ -117,5 +138,6 @@ describe('WorkspaceStoreService', () => {
     let workspaces: any[] = [];
     service.workspaces$.subscribe(ws => workspaces = ws);
     expect(workspaces).toEqual([]);
+    expect(localStorage.getItem('kanban.lastWorkspaceId')).toBeNull();
   });
 });

@@ -15,7 +15,12 @@ import com.valeo.kanban.repository.UserRepository;
 import com.valeo.kanban.repository.WorkspaceMemberRepository;
 import com.valeo.kanban.repository.WorkspaceRepository;
 import com.valeo.kanban.repository.BoardRepository;
+import com.valeo.kanban.repository.BoardMemberRepository;
+import com.valeo.kanban.security.BoardAccessService;
+import com.valeo.kanban.security.BoardScope;
 import com.valeo.kanban.security.CustomUserDetails;
+import com.valeo.kanban.dto.response.BoardRefDto;
+import com.valeo.kanban.dto.response.MembershipChangeResponseDto;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -24,7 +29,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.valeo.kanban.dto.request.WorkspaceMemberUpdateRequest;
 import com.valeo.kanban.dto.response.WorkspaceCountProjection;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.List;
@@ -38,6 +45,10 @@ public class WorkspaceService {
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final UserRepository userRepository;
     private final BoardRepository boardRepository;
+    private final BoardMemberRepository boardMemberRepository;
+    private final BoardAccessService boardAccessService;
+    private final BoardMembershipService boardMembershipService;
+    private final BoardAccessRevocationService revocationService;
 
     @Transactional(readOnly = true)
     public List<WorkspaceResponseDto> getUserWorkspaces(CustomUserDetails currentUser) {
@@ -160,9 +171,13 @@ public class WorkspaceService {
     }
 
     @Transactional(readOnly = true)
-    public List<WorkspaceMemberResponseDto> getWorkspaceMembers(Long workspaceId) {
-        return workspaceMemberRepository.findAllByWorkspaceId(workspaceId).stream()
-                .map(WorkspaceMemberMapper::toDto)
+    public List<WorkspaceMemberResponseDto> getWorkspaceMembers(Long workspaceId, CustomUserDetails currentUser) {
+        // Board chips only name boards the viewer may open themselves
+        BoardScope viewerScope = boardAccessService.scopeFor(workspaceId, currentUser);
+        Map<Long, List<BoardRefDto>> boardsByUser = boardMembershipService.boardsByUser(workspaceId, viewerScope);
+
+        return workspaceMemberRepository.findAllByWorkspaceIdWithUser(workspaceId).stream()
+                .map(m -> WorkspaceMemberMapper.toDto(m, boardsByUser.getOrDefault(m.getUser().getId(), List.of())))
                 .collect(Collectors.toList());
     }
 
@@ -191,39 +206,57 @@ public class WorkspaceService {
     }
 
     @Transactional
-    public void removeWorkspaceMember(Long workspaceId, Long userId) {
+    public MembershipChangeResponseDto removeWorkspaceMember(Long workspaceId, Long userId, CustomUserDetails actor) {
         WorkspaceMember membership = workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
                 .orElseThrow(() -> new EntityNotFoundException("Membership not found"));
+
+        // Every board this user can open in the workspace is about to become inaccessible
+        Collection<Long> boardsLosingAccess = membership.getRole() == WorkspaceRole.ROLE_PROJECT_MANAGER
+                ? boardRepository.findIdsByWorkspaceId(workspaceId)
+                : boardMemberRepository.findBoardIdsByWorkspaceIdAndUserId(workspaceId, userId);
+        int unassigned = revocationService.unassignTasksOnBoards(workspaceId, userId, boardsLosingAccess, actor.getId());
+
+        // The user's board_members rows go with it (ON DELETE CASCADE on the composite foreign key)
         workspaceMemberRepository.delete(membership);
+        return MembershipChangeResponseDto.builder().unassignedTaskCount(unassigned).build();
     }
 
     @Transactional
-    public WorkspaceMemberResponseDto updateWorkspaceMemberRole(Long workspaceId, Long userId, WorkspaceMemberUpdateRequest request, CustomUserDetails currentUser) {
+    public MembershipChangeResponseDto updateWorkspaceMemberRole(Long workspaceId, Long userId, WorkspaceMemberUpdateRequest request, CustomUserDetails currentUser) {
         WorkspaceMember targetMembership = workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
                 .orElseThrow(() -> new EntityNotFoundException("Membership not found"));
 
         WorkspaceRole targetNewRole = parseRole(request.getRole());
 
-        // If actor is global admin, they can change any role in any workspace
-        if (currentUser.isAdmin()) {
-            targetMembership.setRole(targetNewRole);
-            WorkspaceMember savedMember = workspaceMemberRepository.save(targetMembership);
-            return WorkspaceMemberMapper.toDto(savedMember);
+        // Global admins may change any role; otherwise only a Project Manager of this workspace may
+        if (!currentUser.isAdmin()) {
+            WorkspaceMember actorMembership = workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, currentUser.getId())
+                    .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException("You are not a member of this workspace"));
+            if (actorMembership.getRole() != WorkspaceRole.ROLE_PROJECT_MANAGER) {
+                throw new org.springframework.security.access.AccessDeniedException("Only Project Managers or Global Admins can modify user roles.");
+            }
         }
 
-        WorkspaceMember actorMembership = workspaceMemberRepository.findByWorkspaceIdAndUserId(workspaceId, currentUser.getId())
-                .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException("You are not a member of this workspace"));
-
-        WorkspaceRole actorRole = actorMembership.getRole();
-
-        // Only Project Manager can modify roles locally
-        if (actorRole != WorkspaceRole.ROLE_PROJECT_MANAGER) {
-            throw new org.springframework.security.access.AccessDeniedException("Only Project Managers or Global Admins can modify user roles.");
-        }
-
+        WorkspaceRole previousRole = targetMembership.getRole();
         targetMembership.setRole(targetNewRole);
         WorkspaceMember savedMember = workspaceMemberRepository.save(targetMembership);
-        return WorkspaceMemberMapper.toDto(savedMember);
+
+        // A demoted PM keeps only the boards they are an explicit member of
+        int unassigned = 0;
+        if (previousRole == WorkspaceRole.ROLE_PROJECT_MANAGER && targetNewRole != WorkspaceRole.ROLE_PROJECT_MANAGER) {
+            Set<Long> explicitBoards = boardMemberRepository.findBoardIdsByWorkspaceIdAndUserId(workspaceId, userId);
+            List<Long> boardsLosingAccess = boardRepository.findIdsByWorkspaceId(workspaceId).stream()
+                    .filter(boardId -> !explicitBoards.contains(boardId))
+                    .collect(Collectors.toList());
+            unassigned = revocationService.unassignTasksOnBoards(workspaceId, userId, boardsLosingAccess, currentUser.getId());
+        }
+
+        // Only Admins and PMs reach this point, and both see every board
+        List<BoardRefDto> boards = boardMembershipService.boardsByUser(workspaceId, BoardScope.ALL).getOrDefault(userId, List.of());
+        return MembershipChangeResponseDto.builder()
+                .member(WorkspaceMemberMapper.toDto(savedMember, boards))
+                .unassignedTaskCount(unassigned)
+                .build();
     }
 
     private String findRoleName(Long workspaceId, Long userId) {

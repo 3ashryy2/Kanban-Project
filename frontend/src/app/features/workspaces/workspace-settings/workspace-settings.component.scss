@@ -40,6 +40,33 @@
   font-weight: 700;
   color: #1e293b;
 }
+.card-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.roster-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #475569;
+}
+.member-boards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.empty-filter {
+  padding: 20px 16px;
+  text-align: center;
+  color: #64748b;
+}
+.dialog-intro {
+  color: #475569;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
 .roster-table {
   width: 100%;
   border-collapse: collapse;

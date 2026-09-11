@@ -24,9 +24,22 @@ export interface WorkspaceMemberResponseDto {
   lastName: string;
   role: string;
   joinedAt: string;
+  allBoards: boolean;      // Project Managers open every board without a membership
+  boards: BoardRefDto[];   // explicit board memberships the viewer may see
+}
+
+export interface BoardRefDto {
+  id: number;
+  title: string;
 }
 
 export interface WorkspaceMemberCreateRequest {
   userId: number;
   role: string;
+}
+
+/** Answer to a role, board or membership change: the member now (null if removed) and the cost. */
+export interface MembershipChangeResponseDto {
+  member: WorkspaceMemberResponseDto | null;
+  unassignedTaskCount: number;
 }

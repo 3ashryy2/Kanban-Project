@@ -7,24 +7,25 @@ import com.valeo.kanban.model.enums.TaskStatus;
 import com.valeo.kanban.model.enums.WorkspaceRole;
 import com.valeo.kanban.repository.ColumnRepository;
 import com.valeo.kanban.repository.TaskRepository;
-import com.valeo.kanban.repository.WorkspaceMemberRepository;
+import com.valeo.kanban.security.BoardAccessService;
 import com.valeo.kanban.security.CustomUserDetails;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import java.util.Optional;
 
 @Component("taskSecurity")
 @RequiredArgsConstructor
 public class TaskSecurityEvaluator {
 
     private final TaskRepository taskRepository;
-    private final WorkspaceMemberRepository workspaceMemberRepository;
     private final ColumnRepository columnRepository;
+    private final BoardAccessService boardAccess;
 
-    private WorkspaceRole getUserRoleInWorkspace(Task task, CustomUserDetails currentUser) {
-        return workspaceMemberRepository.findByWorkspaceIdAndUserId(task.getBoard().getWorkspace().getId(), currentUser.getId())
-                .map(com.valeo.kanban.model.entity.WorkspaceMember::getRole)
-                .orElse(WorkspaceRole.ROLE_VIEWER);
+    // The actor's role on the task's board; empty when they may not open that board at all
+    // (no longer in the workspace, or not a member of this board). Checked before any ABAC rule.
+    private Optional<WorkspaceRole> roleOnTaskBoard(Task task, CustomUserDetails currentUser) {
+        return boardAccess.roleOnBoard(task.getBoard().getId(), currentUser.getId());
     }
 
     private boolean isManager(WorkspaceRole role) {
@@ -38,7 +39,9 @@ public class TaskSecurityEvaluator {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found with ID: " + taskId));
 
-        WorkspaceRole role = getUserRoleInWorkspace(task, currentUser);
+        Optional<WorkspaceRole> access = roleOnTaskBoard(task, currentUser);
+        if (access.isEmpty()) return false;
+        WorkspaceRole role = access.get();
 
         // 1. Approval Lock Precedence: If locked, ONLY Admin or Project Manager can edit
         if (task.getStatus() == TaskStatus.PENDING_APPROVAL) {
@@ -68,7 +71,9 @@ public class TaskSecurityEvaluator {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found with ID: " + taskId));
 
-        WorkspaceRole role = getUserRoleInWorkspace(task, currentUser);
+        Optional<WorkspaceRole> access = roleOnTaskBoard(task, currentUser);
+        if (access.isEmpty()) return false;
+        WorkspaceRole role = access.get();
 
         if (task.getStatus() == TaskStatus.PENDING_APPROVAL) {
             return isManager(role);
@@ -82,7 +87,7 @@ public class TaskSecurityEvaluator {
             if (targetColumnId == null) return false;
             Column targetColumn = columnRepository.findById(targetColumnId)
                     .orElseThrow(() -> new EntityNotFoundException("Column not found with ID: " + targetColumnId));
-            return targetColumn.getName().equalsIgnoreCase("Done") || 
+            return targetColumn.getName().equalsIgnoreCase("Done") ||
                    targetColumn.getName().equalsIgnoreCase("In Progress");
         }
 
@@ -97,7 +102,9 @@ public class TaskSecurityEvaluator {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found"));
 
-        WorkspaceRole role = getUserRoleInWorkspace(task, currentUser);
+        Optional<WorkspaceRole> access = roleOnTaskBoard(task, currentUser);
+        if (access.isEmpty()) return false;
+        WorkspaceRole role = access.get();
 
         if (isManager(role)) {
             return true;
@@ -119,7 +126,9 @@ public class TaskSecurityEvaluator {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new EntityNotFoundException("Task not found with ID: " + taskId));
 
-        WorkspaceRole role = getUserRoleInWorkspace(task, currentUser);
+        Optional<WorkspaceRole> access = roleOnTaskBoard(task, currentUser);
+        if (access.isEmpty()) return false;
+        WorkspaceRole role = access.get();
 
         if (task.getStatus() == TaskStatus.PENDING_APPROVAL) {
             return isManager(role);

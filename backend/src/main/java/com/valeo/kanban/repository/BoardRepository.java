@@ -15,7 +15,13 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
     @Query("SELECT b FROM Board b LEFT JOIN FETCH b.columns c WHERE b.id = :boardId")
     Optional<Board> findBoardWithColumnsById(@Param("boardId") Long boardId);
 
-    List<Board> findAllByWorkspaceId(Long workspaceId);
+    List<Board> findAllByWorkspaceIdOrderByIdAsc(Long workspaceId);
+
+    @Query("SELECT b.id FROM Board b WHERE b.workspace.id = :workspaceId")
+    List<Long> findIdsByWorkspaceId(@Param("workspaceId") Long workspaceId);
+
+    @Query("SELECT b.workspace.id FROM Board b WHERE b.id = :boardId")
+    Optional<Long> findWorkspaceIdById(@Param("boardId") Long boardId);
 
     long countByWorkspaceId(Long workspaceId);
 

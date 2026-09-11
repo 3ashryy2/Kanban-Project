@@ -4,15 +4,20 @@ import com.valeo.kanban.dto.request.BoardCreateRequest;
 import com.valeo.kanban.dto.response.BoardDetailsDto;
 import com.valeo.kanban.dto.mapper.BoardMapper;
 import com.valeo.kanban.model.entity.Board;
+import com.valeo.kanban.model.entity.BoardMember;
 import com.valeo.kanban.model.entity.Column;
 import com.valeo.kanban.model.entity.Task;
 import com.valeo.kanban.model.entity.User;
 import com.valeo.kanban.model.entity.Workspace;
+import com.valeo.kanban.repository.BoardMemberRepository;
 import com.valeo.kanban.repository.BoardRepository;
 import com.valeo.kanban.repository.ColumnRepository;
 import com.valeo.kanban.repository.TaskRepository;
 import com.valeo.kanban.repository.UserRepository;
+import com.valeo.kanban.repository.WorkspaceMemberRepository;
 import com.valeo.kanban.repository.WorkspaceRepository;
+import com.valeo.kanban.security.BoardAccessService;
+import com.valeo.kanban.security.BoardScope;
 import com.valeo.kanban.security.CustomUserDetails;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +38,9 @@ public class BoardService {
     private final WorkspaceRepository workspaceRepository;
     private final UserRepository userRepository;
     private final ColumnRepository columnRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
+    private final BoardMemberRepository boardMemberRepository;
+    private final BoardAccessService boardAccessService;
 
     @Transactional(readOnly = true)
     public BoardDetailsDto getBoardAggregate(Long boardId) {
@@ -48,9 +56,12 @@ public class BoardService {
     }
 
     @Transactional(readOnly = true)
-    public List<BoardDetailsDto> getWorkspaceBoards(Long workspaceId) {
-        return boardRepository.findAllByWorkspaceId(workspaceId).stream()
-                .map(board -> BoardMapper.toAggregateDto(board, Collections.emptyList()))
+    public List<BoardDetailsDto> getWorkspaceBoards(Long workspaceId, CustomUserDetails currentUser) {
+        // Members only see the boards they belong to; Admins and PMs see them all
+        BoardScope scope = boardAccessService.scopeFor(workspaceId, currentUser);
+        return boardRepository.findAllByWorkspaceIdOrderByIdAsc(workspaceId).stream()
+                .filter(board -> scope.includes(board.getId()))
+                .map(BoardMapper::toSummaryDto)
                 .collect(Collectors.toList());
     }
 
@@ -81,6 +92,17 @@ public class BoardService {
 
         List<Column> savedColumns = columnRepository.saveAll(defaultColumns);
         savedColumns.forEach(savedBoard::addColumn);
+
+        // A PM who creates a board becomes its explicit member, so a later demotion doesn't take it away.
+        // The global admin has no workspace membership and needs none.
+        if (workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, currentUser.getId())) {
+            boardMemberRepository.save(BoardMember.builder()
+                    .board(savedBoard)
+                    .workspaceId(workspaceId)
+                    .user(creator)
+                    .addedBy(creator)
+                    .build());
+        }
 
         return BoardMapper.toAggregateDto(savedBoard, Collections.emptyList());
     }
