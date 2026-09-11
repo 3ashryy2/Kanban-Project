@@ -17,8 +17,9 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
   return next(outgoing).pipe(
     catchError((error: HttpErrorResponse) => {
       // 401 means the session itself is dead (expired/invalid token): end it once and return to sign-in.
+      // hasStoredSession() is true until the first logout, so parallel failures log out only once.
       // Login failures are 401 too, so auth endpoints are excluded.
-      if (error.status === 401 && authStore.isAuthenticated() && !req.url.startsWith('/api/auth/')) {
+      if (error.status === 401 && authStore.hasStoredSession() && !req.url.startsWith('/api/auth/')) {
         authStore.logout(router.url);
       }
       return throwError(() => error);

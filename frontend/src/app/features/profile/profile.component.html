@@ -1,0 +1,40 @@
+<div class="profile-container" *ngIf="authStore.currentUser$ | async as user">
+  <div class="page-header">
+    <h2>My Profile</h2>
+    <p>Your account and the workspaces you can open.</p>
+  </div>
+
+  <section class="profile-card">
+    <div class="identity">
+      <div class="avatar">{{ user.firstName[0] }}{{ user.lastName[0] }}</div>
+      <div class="identity-text">
+        <h3>{{ user.firstName }} {{ user.lastName }}</h3>
+        <span class="email">{{ user.email }}</span>
+      </div>
+      <p-tag *ngIf="user.isAdmin" value="Global Admin" severity="danger"></p-tag>
+    </div>
+    <p class="hint">To change your name or email, ask an administrator.</p>
+  </section>
+
+  <section class="profile-card">
+    <h3 class="card-title">Workspaces</h3>
+    <table class="memberships" *ngIf="workspaceStore.workspaces$ | async as workspaces">
+      <thead>
+        <tr>
+          <th>Workspace</th>
+          <th>Your role</th>
+          <th class="text-right"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let ws of workspaces" class="membership-row">
+          <td class="ws-name">{{ ws.name }}</td>
+          <td>{{ roleLabel(ws.currentUserRole, user.isAdmin) }}</td>
+          <td class="text-right"><a [routerLink]="['/w', ws.id]">Open</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <p-button label="Sign Out" icon="pi pi-power-off" severity="danger" [outlined]="true" (onClick)="signOut()"></p-button>
+</div>
