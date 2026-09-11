@@ -6,6 +6,7 @@ import com.valeo.kanban.dto.response.TaskDto;
 import com.valeo.kanban.dto.mapper.TaskMapper;
 import com.valeo.kanban.event.model.GateApprovedEvent;
 import com.valeo.kanban.event.model.GateRejectedEvent;
+import com.valeo.kanban.exception.custom.ConflictException;
 import com.valeo.kanban.exception.custom.InvalidStateTransitionException;
 import com.valeo.kanban.model.entity.Column;
 import com.valeo.kanban.model.entity.Task;
@@ -38,7 +39,7 @@ public class ApprovalGateService {
         }
 
         if (task.getStatus() != TaskStatus.PENDING_APPROVAL) {
-            throw new IllegalStateException("Task is not in PENDING_APPROVAL status.");
+            throw new ConflictException("Task is not in PENDING_APPROVAL status.");
         }
 
         task.setStatus(TaskStatus.ACTIVE);
@@ -68,7 +69,7 @@ public class ApprovalGateService {
         }
 
         if (task.getStatus() != TaskStatus.PENDING_APPROVAL) {
-            throw new IllegalStateException("Task is not in PENDING_APPROVAL status.");
+            throw new ConflictException("Task is not in PENDING_APPROVAL status.");
         }
 
         // Validate that the requested fallback column is configured as a valid fallback for this transition

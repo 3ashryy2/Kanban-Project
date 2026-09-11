@@ -2,21 +2,19 @@ import { Component, OnInit, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { WorkspaceStoreService } from '../../../core/store/workspace-store.service';
 import { AuthStoreService } from '../../../core/store/auth-store.service';
-import { WorkspaceMemberResponseDto, WorkspaceMemberCreateRequest } from '../../../core/models/workspace.dto';
+import { WorkspaceMemberResponseDto } from '../../../core/models/workspace.dto';
+import { UserSearchSelectComponent } from '../../../shared/components/user-search-select/user-search-select.component';
 
 // PrimeNG Standalone Components (v22+)
 import { Button } from 'primeng/button';
 import { Dialog } from 'primeng/dialog';
 import { Select } from 'primeng/select';
-import { InputText } from 'primeng/inputtext';
 
 export interface SelectItem {
   label: string;
   value: string | number;
-  email?: string;
 }
 
 @Component({
@@ -27,7 +25,8 @@ export interface SelectItem {
     FormsModule,
     Button,
     Dialog,
-    Select
+    Select,
+    UserSearchSelectComponent
   ],
   templateUrl: './workspace-settings.component.html',
   styleUrls: ['./workspace-settings.component.scss']
@@ -35,21 +34,20 @@ export interface SelectItem {
 export class WorkspaceSettingsComponent implements OnInit {
   readonly workspaceStore = inject(WorkspaceStoreService);
   private readonly authStore = inject(AuthStoreService);
-  private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
 
   isAdmin = false;
   isPM = false;
   canManageRoles = false;
+  activeWorkspaceId: number | null = null;
   addMemberDialogVisible = false;
   editRoleDialogVisible = false;
   selectedMemberToEdit: WorkspaceMemberResponseDto | null = null;
   newRoleValue = '';
-  userOptions: SelectItem[] = [];
   activeEditRoleOptions: SelectItem[] = [];
 
-  newMemberPayload: Partial<WorkspaceMemberCreateRequest> = {
-    userId: undefined,
+  newMemberPayload: { userId: number | null; role: string } = {
+    userId: null,
     role: 'ROLE_DEVELOPER'
   };
 
@@ -72,6 +70,7 @@ export class WorkspaceSettingsComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(ws => {
         if (ws) {
+          this.activeWorkspaceId = ws.id;
           this.isPM = ws.currentUserRole === 'ROLE_PROJECT_MANAGER';
           this.canManageRoles = this.isAdmin || this.isPM;
         }
@@ -96,35 +95,12 @@ export class WorkspaceSettingsComponent implements OnInit {
   }
 
   openAddMemberDialog(): void {
+    // Candidates come from the server-side directory search, which already excludes current members
     this.newMemberPayload = {
-      userId: undefined,
+      userId: null,
       role: 'ROLE_DEVELOPER'
     };
-    
-    // Fetch all system users and filter out existing members
-    this.http.get<any[]>('/api/users').subscribe({
-      next: usersList => {
-        let currentMemberIds: number[] = [];
-        const subscription = this.workspaceStore.activeWorkspaceMembers$.subscribe(members => {
-          currentMemberIds = members.map(m => m.userId);
-        });
-        subscription.unsubscribe(); // clean up immediately to prevent memory leak
-
-        this.userOptions = usersList
-          .filter(u => !currentMemberIds.includes(u.id))
-          .map(u => ({
-            label: `${u.firstName} ${u.lastName} (${u.email})`,
-            email: u.email,
-            value: u.id
-          }));
-          
-        this.addMemberDialogVisible = true;
-      },
-      error: () => {
-        this.userOptions = [];
-        this.addMemberDialogVisible = true;
-      }
-    });
+    this.addMemberDialogVisible = true;
   }
 
   addMember(): void {

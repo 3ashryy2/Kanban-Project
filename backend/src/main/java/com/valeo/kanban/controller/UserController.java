@@ -1,7 +1,7 @@
 package com.valeo.kanban.controller;
 
-import com.valeo.kanban.dto.mapper.UserMapper;
-import com.valeo.kanban.dto.response.TaskDto;
+import com.valeo.kanban.dto.response.AuthResponse;
+import com.valeo.kanban.dto.response.UserSummaryDto;
 import com.valeo.kanban.service.UserService;
 import com.valeo.kanban.service.WorkspaceService;
 import com.valeo.kanban.dto.response.WorkspaceResponseDto;
@@ -22,11 +22,10 @@ public class UserController {
     private final UserService userService;
     private final WorkspaceService workspaceService;
 
-    @GetMapping
-    @PreAuthorize("@workspaceSecurity.hasAccess(#workspaceId, principal)")
-    public ResponseEntity<List<TaskDto.SimpleUserDto>> getUsersInWorkspace(@RequestParam Long workspaceId) {
-        List<TaskDto.SimpleUserDto> response = userService.getUsersInWorkspace(workspaceId);
-        return ResponseEntity.ok(response);
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<AuthResponse.UserDetails> getMe(@AuthenticationPrincipal CustomUserDetails currentUser) {
+        return ResponseEntity.ok(userService.getCurrentUser(currentUser));
     }
 
     @GetMapping("/me/workspaces")
@@ -36,13 +35,12 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/me/workspace")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<WorkspaceResponseDto> getMyWorkspace(@AuthenticationPrincipal CustomUserDetails currentUser) {
-        List<WorkspaceResponseDto> workspaces = workspaceService.getUserWorkspaces(currentUser);
-        if (workspaces.isEmpty()) {
-            throw new jakarta.persistence.EntityNotFoundException("No workspaces found for user");
-        }
-        return ResponseEntity.ok(workspaces.get(0));
+    // Directory lookup for adding members: any admin, or a PM of the workspace being staffed
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('ROLE_ADMIN') or (#excludeWorkspaceId != null and @workspaceSecurity.isAdmin(#excludeWorkspaceId, principal))")
+    public ResponseEntity<List<UserSummaryDto>> searchUsers(
+            @RequestParam String q,
+            @RequestParam(required = false) Long excludeWorkspaceId) {
+        return ResponseEntity.ok(userService.searchUsers(q, excludeWorkspaceId));
     }
 }

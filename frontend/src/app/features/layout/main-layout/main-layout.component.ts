@@ -40,8 +40,9 @@ export class MainLayoutComponent implements OnInit {
   selectedWorkspaceId = signal<number | null>(null);
 
   ngOnInit(): void {
-    this.workspaceStore.loadWorkspaces();
-    
+    // Usually already loaded by hasWorkspaceGuard; the request is shared, not repeated
+    this.workspaceStore.ensureWorkspacesLoaded().subscribe({ error: () => {} });
+
     // Subscribe to active workspace to fetch associated boards
     this.workspaceStore.activeWorkspace$
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -60,15 +61,14 @@ export class MainLayoutComponent implements OnInit {
           this.boards.set(list);
           const activeBoardExists = this.activeBoardId() && list.some(b => b.id === this.activeBoardId());
           if (list.length > 0) {
-            if (activeBoardExists) {
-              this.navigateToBoard(this.activeBoardId()!);
-            } else {
-              this.navigateToBoard(list[0].id);
-            }
+            // Select without navigating, so loading boards never pulls the user off another page
+            this.selectBoard(activeBoardExists ? this.activeBoardId()! : list[0].id);
           } else {
             this.activeBoardId.set(null);
             this.boardStore.clear();
-            this.router.navigate(['/settings']);
+            if (this.router.url.startsWith('/dashboard')) {
+              this.router.navigate(['/settings']);
+            }
           }
         },
         error: () => {
@@ -79,14 +79,17 @@ export class MainLayoutComponent implements OnInit {
       });
   }
 
+  // Explicit board choice from the sidebar: select it and show the board canvas
   navigateToBoard(boardId: number): void {
-    this.activeBoardId.set(boardId);
-    this.boardStore.loadBoard(boardId);
-    this.workflowStore.loadTransitions(boardId);
-    
-    // Ensure we are showing the board canvas (dashboard route)
+    this.selectBoard(boardId);
     if (this.router.url !== '/dashboard') {
       this.router.navigate(['/dashboard']);
     }
+  }
+
+  private selectBoard(boardId: number): void {
+    this.activeBoardId.set(boardId);
+    this.boardStore.loadBoard(boardId);
+    this.workflowStore.loadTransitions(boardId);
   }
 }

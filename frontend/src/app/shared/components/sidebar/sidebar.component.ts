@@ -5,7 +5,9 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthStoreService } from '../../../core/store/auth-store.service';
 import { WorkspaceStoreService } from '../../../core/store/workspace-store.service';
+import { UserDirectoryStoreService } from '../../../core/store/user-directory-store.service';
 import { HttpClient } from '@angular/common/http';
+import { distinctUntilChanged, filter } from 'rxjs';
 import { MessageService } from 'primeng/api';
 
 import { Button } from 'primeng/button';
@@ -33,6 +35,7 @@ import { Tooltip } from 'primeng/tooltip';
 export class SidebarComponent implements OnInit {
   readonly authStore = inject(AuthStoreService);
   readonly workspaceStore = inject(WorkspaceStoreService);
+  readonly userDirectory = inject(UserDirectoryStoreService);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly messageService = inject(MessageService);
@@ -56,6 +59,11 @@ export class SidebarComponent implements OnInit {
       .subscribe(isAdmin => {
         this.isAdmin = isAdmin;
       });
+
+    // The admin's onboarding link shows how many registered users still wait for access
+    this.authStore.isAdmin$
+      .pipe(distinctUntilChanged(), filter(Boolean), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.userDirectory.loadUnassignedUsers());
 
     this.workspaceStore.activeWorkspace$
       .pipe(takeUntilDestroyed(this.destroyRef))
