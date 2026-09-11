@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
-import { Component } from '@angular/core';
-import { authGuard } from './core/guards/auth.guard';
+import { authGuard, guestGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
 import {
   boardAccessGuard,
@@ -9,18 +8,16 @@ import {
   noWorkspaceGuard,
   workspaceGuard
 } from './core/guards/workspace.guards';
+// Type-only import: erased at compile time, so the error page stays in its own lazy chunk
+import type { ErrorPageData } from './features/errors/error-page.component';
 
-@Component({
-  template: '',
-  standalone: true
-})
-export class EmptyComponent {}
+const loadAuthPage = () => import('./features/auth/login/login.component').then(m => m.LoginComponent);
+const loadErrorPage = () => import('./features/errors/error-page.component').then(m => m.ErrorPageComponent);
 
 export const routes: Routes = [
-  {
-    path: 'auth/login',
-    loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent)
-  },
+  // Sign-in and registration share one component; signed-in users are sent into the app
+  { path: 'auth/login', canActivate: [guestGuard], loadComponent: loadAuthPage },
+  { path: 'auth/register', canActivate: [guestGuard], loadComponent: loadAuthPage, data: { mode: 'register' } },
   {
     // Signed-in users who belong to no workspace yet wait here (outside the main shell)
     path: 'onboarding',
@@ -61,6 +58,10 @@ export const routes: Routes = [
         ]
       },
       {
+        path: 'profile',
+        loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent)
+      },
+      {
         path: 'admin/users',
         canActivate: [adminGuard],
         loadComponent: () => import('./features/admin/admin-users/admin-users.component').then(m => m.AdminUsersComponent)
@@ -76,7 +77,22 @@ export const routes: Routes = [
     ]
   },
   {
+    path: 'forbidden',
+    loadComponent: loadErrorPage,
+    data: {
+      status: 403,
+      title: "You don't have access to this page",
+      message: 'This page is only available to administrators. If you need it, ask an administrator.'
+    } satisfies ErrorPageData
+  },
+  {
+    // Anything unmatched gets a real "not found" page instead of a silent redirect
     path: '**',
-    redirectTo: ''
+    loadComponent: loadErrorPage,
+    data: {
+      status: 404,
+      title: 'Page not found',
+      message: "There's nothing at this address. The link may be wrong, or the page may have moved."
+    } satisfies ErrorPageData
   }
 ];

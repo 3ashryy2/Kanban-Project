@@ -49,7 +49,7 @@ export class HeaderComponent implements OnInit {
   private slugEdited = false;
 
   profileMenuItems: MenuItem[] = [
-    { label: 'My Settings', icon: 'pi pi-cog' },
+    { label: 'My Profile', icon: 'pi pi-user', command: () => this.router.navigate(['/profile']) },
     { label: 'Log Out', icon: 'pi pi-power-off', command: () => this.onSignOut() }
   ];
 
