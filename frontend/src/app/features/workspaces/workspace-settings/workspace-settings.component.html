@@ -5,11 +5,13 @@
   </div>
 
   <div class="settings-card shadow-card" *ngIf="workspaceStore.activeWorkspaceMembers$ | async as members; else loadingMembers">
+    <!-- The rows the filter lets through; the paginator then picks one page of them -->
+    @let shown = visibleMembers(members);
     <div class="card-header-bar">
       <h3>Active Project Roster</h3>
       <div class="card-header-actions" *ngIf="canManageRoles">
         <div class="roster-filter">
-          <p-checkbox inputId="unassigned-only" [binary]="true" [(ngModel)]="showUnassignedOnly"></p-checkbox>
+          <p-checkbox inputId="unassigned-only" [binary]="true" [(ngModel)]="showUnassignedOnly" (ngModelChange)="pager.reset()"></p-checkbox>
           <label for="unassigned-only">Without boards ({{ countWithoutBoards(members) }})</label>
         </div>
         <p-button
@@ -37,7 +39,7 @@
           <tr *ngIf="showUnassignedOnly && countWithoutBoards(members) === 0">
             <td [attr.colspan]="canManageRoles ? 5 : 4" class="empty-filter">Everyone in this workspace has at least one board.</td>
           </tr>
-          <tr *ngFor="let member of visibleMembers(members); trackBy: trackByMemberId" class="roster-row">
+          <tr *ngFor="let member of shown | slice:pager.first:(pager.first + pager.rows); trackBy: trackByMemberId" class="roster-row">
             <td class="member-cell">
               <div class="identity">
                 <div class="member-avatar">{{ member.firstName[0] }}{{ member.lastName[0] }}</div>
@@ -89,6 +91,20 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- The whole roster is already loaded; the paginator only chooses which slice of it the table shows -->
+    <div class="list-pager" *ngIf="pager.isNeeded(shown.length)">
+      <p-paginator
+        [first]="pager.first"
+        [rows]="pager.rows"
+        [totalRecords]="shown.length"
+        [rowsPerPageOptions]="pager.pageSizes"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="{first}–{last} of {totalRecords}"
+        appendTo="body"
+        (onPageChange)="pager.change($event)"
+      ></p-paginator>
     </div>
   </div>
   <ng-template #loadingMembers>
