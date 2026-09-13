@@ -16,6 +16,7 @@ public class ColumnDto {
     private Long id;
     private String name;
     private double position;
+    // Read-only summary of the workflow rules: true when a rule into this column requires approval.
     // Named "gated" so Lombok's isGated() getter and the field share one Jackson property
     @JsonProperty("isGated")
     private boolean gated;

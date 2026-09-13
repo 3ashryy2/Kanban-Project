@@ -1,6 +1,5 @@
 package com.valeo.kanban.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,8 +13,6 @@ public class ColumnUpdateRequest {
     @NotBlank(message = "Column name is required")
     private String name;
 
-    @JsonProperty("isGated")
-    private boolean gated;
-
+    // No "isGated" here: a column is gated only through the workflow rules into it
     private Integer wipLimit;
 }

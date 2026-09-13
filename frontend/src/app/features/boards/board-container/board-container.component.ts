@@ -139,6 +139,7 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
   selectedTaskTagsString = '';
   rejectionReasonPrompt = '';
   selectedRejectFallbackColumnId: number | null = null;
+  rejectFallbackOptions: { label: string; value: number }[] = [];
 
   // Workflow Governance Rules Matrix State (F2)
   transitionsList: WorkflowTransitionUpdateRequest[] = [];
@@ -239,13 +240,18 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
     const targetColumnId = Number(event.container.id);
     const targetIndex = event.currentIndex;
 
+    // Same rule the server applies: a gated rule locks the card unless an admin or PM moves it
+    const rule = this.workflowStore.transitionsList
+      .find(t => t.fromColumnId === sourceColumnId && t.toColumnId === targetColumnId);
+    const awaitsApproval = sourceColumnId !== targetColumnId && !!rule?.requiresApproval && !this.canEditAndConfigure;
+
     this.boardStore.moveTaskOptimistically(
       task.id,
       sourceColumnId,
       targetColumnId,
       targetIndex,
       task.version,
-      false // standard non-admin bypass
+      awaitsApproval
     );
   }
 
@@ -496,17 +502,23 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
 
   openRejectDialog(): void {
     this.rejectionReasonPrompt = '';
-    this.selectedRejectFallbackColumnId = null;
+    this.rejectFallbackOptions = this.fallbackOptionsFor(this.selectedTask);
+    // Usually a gate has exactly one fallback, so there is nothing to choose
+    this.selectedRejectFallbackColumnId =
+      this.rejectFallbackOptions.length === 1 ? this.rejectFallbackOptions[0].value : null;
     this.rejectDialogVisible = true;
   }
 
-  getFallbackColumnOptions(): any[] {
-    if (!this.selectedTask || !this.allColumns) return [];
-    
-    const currentColumnId = this.selectedTask.columnId;
+  // The server only accepts a fallback configured on a gated rule into the card's current column
+  private fallbackOptionsFor(task: TaskDto | null): { label: string; value: number }[] {
+    if (!task) return [];
+
+    const fallbackIds = new Set(this.workflowStore.transitionsList
+      .filter(t => t.toColumnId === task.columnId && t.requiresApproval && t.fallbackColumnId != null)
+      .map(t => t.fallbackColumnId));
 
     return this.allColumns
-      .filter(col => col.id !== currentColumnId)
+      .filter(col => fallbackIds.has(col.id))
       .map(col => ({ label: col.name, value: col.id }));
   }
 
@@ -576,7 +588,19 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
     const t = this.transitionsList.find(x => x.fromColumnId === fromColId && x.toColumnId === toColId);
     if (t) {
       t.requiresApproval = !t.requiresApproval;
+      // A gate needs somewhere to send rejected cards: start with the column the card came from
+      t.fallbackColumnId = t.requiresApproval ? (t.fallbackColumnId ?? fromColId) : undefined;
     }
+  }
+
+  /** A rule that requires approval but has no fallback column; the server refuses to save one. */
+  isMissingFallback(fromColId: number, toColId: number): boolean {
+    return this.transitionsList.some(t =>
+      t.fromColumnId === fromColId && t.toColumnId === toColId && t.requiresApproval && !t.fallbackColumnId);
+  }
+
+  get hasRuleMissingFallback(): boolean {
+    return this.transitionsList.some(t => t.requiresApproval && !t.fallbackColumnId);
   }
 
   getTransitionFallbackValue(fromColId: number, toColId: number): number | null {
@@ -584,16 +608,21 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
     return t ? t.fallbackColumnId || null : null;
   }
 
-  setTransitionFallback(fromColId: number, toColId: number, fallbackColId: any): void {
+  setTransitionFallback(fromColId: number, toColId: number, fallbackColId: number | null): void {
     const t = this.transitionsList.find(x => x.fromColumnId === fromColId && x.toColumnId === toColId);
     if (t) {
-      t.fallbackColumnId = fallbackColId ? Number(fallbackColId) : undefined;
+      t.fallbackColumnId = fallbackColId ?? undefined;
     }
   }
 
   saveWorkflowTransitions(): void {
-    this.workflowStore.updateTransitions(this.activeBoardId!, this.transitionsList);
-    this.workflowDialogVisible = false;
+    const boardId = this.activeBoardId!;
+    // On failure the store shows the reason and the dialog stays open, so the rules can be fixed
+    this.workflowStore.updateTransitions(boardId, this.transitionsList).subscribe(() => {
+      this.workflowDialogVisible = false;
+      // Column lock icons follow the rules, so fetch the board again for the recomputed flags
+      this.boardStore.loadBoard(boardId);
+    });
   }
 
   // --- Contextual Activity Side panel (F9) ---
@@ -607,6 +636,13 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
 
   get canEditAndConfigure(): boolean {
     return this.isAdmin || this.currentUserRole === 'ROLE_PROJECT_MANAGER';
+  }
+
+  /** Admins and PMs add cards anywhere; developers and QA start them in the first column; viewers never. */
+  canAddCardTo(columnId: number): boolean {
+    if (this.canEditAndConfigure) return true;
+    if (this.currentUserRole === 'ROLE_VIEWER') return false;
+    return columnId === this.firstColumnId;
   }
 
   get canAssignTask(): boolean {

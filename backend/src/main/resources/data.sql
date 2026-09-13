@@ -24,12 +24,13 @@ INSERT INTO boards (id, workspace_id, title, description, created_by_id) VALUES
 (1, 1, 'Core Platform Roadmap', 'Q3 Engineering Deliverables', 1)
 ON CONFLICT (id) DO NOTHING;
 
+-- is_gated mirrors the rules in step 4: true when a rule into the column requires approval
 INSERT INTO columns (id, board_id, name, position, is_gated) VALUES
 (1, 1, 'To-Do', 1000.0, false),
 (2, 1, 'In Progress', 2000.0, false),
 (3, 1, 'Code Review', 3000.0, false),
 (4, 1, 'Ready for QA', 4000.0, true),
-(5, 1, 'Done', 5000.0, false)
+(5, 1, 'Done', 5000.0, true)
 ON CONFLICT (id) DO NOTHING;
 
 -- 3b. Board membership: Developer, QA and Viewer work on board 1 (PMs and the admin see every board)

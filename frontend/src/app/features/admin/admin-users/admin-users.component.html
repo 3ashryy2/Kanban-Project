@@ -18,61 +18,67 @@
       ></p-button>
     </div>
 
-    <table class="users-table" *ngIf="users.length > 0; else noPendingUsers">
-      <thead>
-        <tr>
-          <th>User</th>
-          <th>Email</th>
-          <th>Registered</th>
-          <th>Workspace</th>
-          <th>Role</th>
-          <th class="text-right">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let u of users; trackBy: trackByUserId" class="user-row">
-          <td class="user-name">
-            <div class="user-avatar">{{ u.firstName[0] }}{{ u.lastName[0] }}</div>
-            <span>{{ u.firstName }} {{ u.lastName }}</span>
-          </td>
-          <td class="user-email">{{ u.email }}</td>
-          <td class="user-date">{{ u.createdAt | date:'MMM d, yyyy' }}</td>
-          <td class="select-cell">
-            <p-select
-              [id]="'grant-workspace-' + u.id"
-              [options]="(workspaceStore.workspaces$ | async) ?? []"
-              optionLabel="name"
-              optionValue="id"
-              [(ngModel)]="selections[u.id].workspaceId"
-              placeholder="Choose workspace"
-              styleClass="w-full"
-              appendTo="body"
-            ></p-select>
-          </td>
-          <td class="select-cell">
-            <p-select
-              [id]="'grant-role-' + u.id"
-              [options]="roleOptions"
-              optionLabel="label"
-              optionValue="value"
-              [(ngModel)]="selections[u.id].role"
-              styleClass="w-full"
-              appendTo="body"
-            ></p-select>
-          </td>
-          <td class="text-right">
-            <p-button
-              label="Grant Access"
-              icon="pi pi-check"
-              styleClass="p-button-success p-button-sm"
-              [disabled]="!selections[u.id].workspaceId"
-              [loading]="assigningUserId === u.id"
-              (onClick)="grantAccess(u)"
-            ></p-button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <!-- Wide card: a table. Narrow card: each row restacks into a block (see the @container rules) -->
+    <div class="users-list" *ngIf="users.length > 0; else noPendingUsers">
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Registered</th>
+            <th>Workspace</th>
+            <th>Role</th>
+            <th class="text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let u of users; trackBy: trackByUserId" class="user-row">
+            <td class="user-cell">
+              <div class="identity">
+                <div class="user-avatar">{{ u.firstName[0] }}{{ u.lastName[0] }}</div>
+                <div class="identity-text">
+                  <span class="identity-name">{{ u.firstName }} {{ u.lastName }}</span>
+                  <span class="identity-email">{{ u.email }}</span>
+                </div>
+              </div>
+            </td>
+            <td class="date-cell" data-label="Registered">{{ u.createdAt | date:'MMM d, yyyy' }}</td>
+            <td class="select-cell workspace-cell" data-label="Workspace">
+              <p-select
+                [id]="'grant-workspace-' + u.id"
+                [options]="(workspaceStore.workspaces$ | async) ?? []"
+                optionLabel="name"
+                optionValue="id"
+                [(ngModel)]="selections[u.id].workspaceId"
+                placeholder="Choose workspace"
+                styleClass="w-full"
+                appendTo="body"
+              ></p-select>
+            </td>
+            <td class="select-cell role-cell" data-label="Role">
+              <p-select
+                [id]="'grant-role-' + u.id"
+                [options]="roleOptions"
+                optionLabel="label"
+                optionValue="value"
+                [(ngModel)]="selections[u.id].role"
+                styleClass="w-full"
+                appendTo="body"
+              ></p-select>
+            </td>
+            <td class="action-cell text-right">
+              <p-button
+                label="Grant Access"
+                icon="pi pi-check"
+                styleClass="p-button-success p-button-sm"
+                [disabled]="!selections[u.id].workspaceId"
+                [loading]="assigningUserId === u.id"
+                (onClick)="grantAccess(u)"
+              ></p-button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
     <ng-template #noPendingUsers>
       <div class="empty-state">

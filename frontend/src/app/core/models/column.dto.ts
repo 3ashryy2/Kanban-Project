@@ -4,6 +4,7 @@ export interface ColumnDto {
   id: number;
   name: string;
   position: number;
+  /** Set by the server: true when a workflow rule into this column requires approval. */
   isGated: boolean;
   wipLimit?: number;
   tasks: TaskDto[];
@@ -12,7 +13,6 @@ export interface ColumnDto {
 export interface ColumnCreateRequest {
   name: string;
   position: number;
-  isGated: boolean;
   wipLimit?: number;
 }
 
