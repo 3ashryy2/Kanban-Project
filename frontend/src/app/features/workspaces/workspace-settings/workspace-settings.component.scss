@@ -202,6 +202,37 @@
   color: var(--accent);
   margin-bottom: 8px;
 }
+// Deleting the workspace: set apart from the roster, outlined in the danger colour
+.danger-zone {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  background-color: var(--surface-card);
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+}
+.danger-text {
+  flex: 1 1 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.danger-text h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--danger-text);
+}
+.danger-text p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
 
 // Narrow card: too tight for five columns, so each member becomes a stacked block
 @container roster-card (max-width: 860px) {

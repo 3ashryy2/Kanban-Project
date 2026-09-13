@@ -21,14 +21,21 @@ export class WorkflowStoreService {
   }
 
   loadTransitions(boardId: number): void {
-    this.http.get<WorkflowTransitionUpdateRequest[]>(`/api/boards/${boardId}/transitions`)
-      .subscribe({
+    // Errors are already surfaced as toasts by fetchTransitions
+    this.fetchTransitions(boardId).subscribe({ error: () => {} });
+  }
+
+  /** Reads the board's rules from the server, keeps them here, and hands them to the caller. */
+  fetchTransitions(boardId: number): Observable<WorkflowTransitionUpdateRequest[]> {
+    return this.http.get<WorkflowTransitionUpdateRequest[]>(`/api/boards/${boardId}/transitions`).pipe(
+      tap({
         next: list => {
           this._transitions$.next(list);
           this.transitionsList = list;
         },
         error: () => this.showError('Load Transitions Failed', 'Could not load state machine transitions.')
-      });
+      })
+    );
   }
 
   /** Emits the saved rules on success; on failure shows the reason and completes without emitting. */

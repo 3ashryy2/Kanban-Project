@@ -53,8 +53,12 @@
     </div>
 
     <div class="bar-right">
-      <p-button icon="pi pi-history" label="Activity Stream" styleClass="p-button-outlined p-button-secondary mr-2" (click)="openActivitySidebar()"></p-button>
-      <p-button icon="pi pi-sliders-h" label="Configure Workflow" styleClass="p-button-outlined p-button-success" *ngIf="canEditAndConfigure" (click)="openWorkflowDialog()"></p-button>
+      <p-button icon="pi pi-history" label="Activity Stream" styleClass="p-button-outlined p-button-secondary" (click)="openActivitySidebar()"></p-button>
+      <ng-container *ngIf="canEditAndConfigure">
+        <p-button icon="pi pi-users" label="Members" styleClass="p-button-outlined p-button-secondary" (click)="boardMembersVisible = true"></p-button>
+        <p-button icon="pi pi-sliders-h" label="Configure Workflow" styleClass="p-button-outlined p-button-success" (click)="openWorkflowDialog()"></p-button>
+        <p-button icon="pi pi-trash" label="Delete Board" styleClass="p-button-outlined p-button-danger" (click)="confirmDeleteBoard()"></p-button>
+      </ng-container>
     </div>
   </div>
 
@@ -348,92 +352,12 @@
     </ng-template>
   </p-dialog>
 
-  <!-- 4. State Machine Workflow Transitions Matrix Configurator (F2) -->
-  <p-dialog 
-    header="Board Workflow Governance Configuration" 
-    [(visible)]="workflowDialogVisible" 
-    [modal]="true" 
-    [style]="{ width: '850px' }"
-    styleClass="custom-dialog"
-  >
-    <div class="workflow-config-container">
-      <h3>Active State-Machine Transition Rules</h3>
-      <p>Configure permitted progression channels and lock boundaries across your perception roadmap stages.</p>
-      <p class="matrix-hint">
-        <i class="pi pi-info-circle"></i>
-        A rule that requires approval needs a fallback column: rejected cards go back there.
-      </p>
-
-      <div class="matrix-table-wrapper">
-        <table class="matrix-table">
-          <thead>
-            <tr>
-              <th>From Stage (Source)</th>
-              <th>To Stage (Target)</th>
-              <th>Permit</th>
-              <th>Requires Approval (Gated)</th>
-              <th>Rejection Fallback Column</th>
-            </tr>
-          </thead>
-          <tbody>
-            <ng-container *ngFor="let fromCol of board.columns">
-              <ng-container *ngFor="let toCol of board.columns">
-                <tr *ngIf="fromCol.id !== toCol.id" class="matrix-row">
-                  <td class="col-source">{{ fromCol.name }}</td>
-                  <td class="col-target"><i class="pi pi-arrow-right mr-2"></i>{{ toCol.name }}</td>
-                  <td>
-                    <p-checkbox 
-                      [binary]="true" 
-                      [ngModel]="getTransitionCheckboxValue(fromCol.id, toCol.id)"
-                      (onChange)="toggleTransition(fromCol.id, toCol.id)"
-                    ></p-checkbox>
-                  </td>
-                  <td>
-                    <p-checkbox 
-                      [binary]="true" 
-                      [disabled]="!getTransitionCheckboxValue(fromCol.id, toCol.id)"
-                      [ngModel]="getTransitionApprovalValue(fromCol.id, toCol.id)"
-                      (onChange)="toggleTransitionApproval(fromCol.id, toCol.id)"
-                    ></p-checkbox>
-                  </td>
-                  <td>
-                    <!-- ngModel, not [value]: it re-selects the saved fallback once the options below exist -->
-                    <select
-                      [disabled]="!getTransitionCheckboxValue(fromCol.id, toCol.id) || !getTransitionApprovalValue(fromCol.id, toCol.id)"
-                      [ngModel]="getTransitionFallbackValue(fromCol.id, toCol.id)"
-                      (ngModelChange)="setTransitionFallback(fromCol.id, toCol.id, $event)"
-                      class="fallback-select"
-                      [class.missing-fallback]="isMissingFallback(fromCol.id, toCol.id)"
-                    >
-                      <option [ngValue]="null">No Fallback</option>
-                      <!-- A rejected card has to leave the gated column, so its own target is not an option -->
-                      <ng-container *ngFor="let fallbackCol of board.columns">
-                        <option *ngIf="fallbackCol.id !== toCol.id" [ngValue]="fallbackCol.id">
-                          {{ fallbackCol.name }}
-                        </option>
-                      </ng-container>
-                    </select>
-                  </td>
-                </tr>
-              </ng-container>
-            </ng-container>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <ng-template #footer>
-      <p-button label="Cancel" styleClass="p-button-text p-button-secondary" (click)="workflowDialogVisible = false"></p-button>
-      <p-button
-        label="Save Governance Rules"
-        icon="pi pi-check"
-        styleClass="p-button-success"
-        [disabled]="hasRuleMissingFallback"
-        [pTooltip]="hasRuleMissingFallback ? 'Pick a fallback column for every rule that requires approval' : ''"
-        (click)="saveWorkflowTransitions()"
-      ></p-button>
-    </ng-template>
-  </p-dialog>
+  <!-- 4. Workflow rules (F2): the active transitions, and adding new ones -->
+  <app-workflow-rules-dialog
+    [boardId]="board.id"
+    [columns]="allColumns"
+    [(visible)]="workflowDialogVisible"
+  ></app-workflow-rules-dialog>
 
   <!-- 5. Contextual Board Activity Stream (F9) -->
   <p-drawer 
@@ -466,6 +390,45 @@
       </div>
     </div>
   </p-drawer>
+
+  <!-- 6. Board Members: who can open this board, and taking someone off it -->
+  <p-dialog
+    header="Board Members"
+    [(visible)]="boardMembersVisible"
+    [modal]="true"
+    [style]="{ width: '480px' }"
+    [breakpoints]="{ '575px': '92vw' }"
+    styleClass="custom-dialog"
+  >
+    <div class="dialog-form">
+      <p class="people-intro">People who can open <strong>{{ board.title }}</strong>.</p>
+      <ul class="people-list" *ngIf="peopleOnBoard$ | async as people">
+        <li class="person-row" *ngFor="let person of people; trackBy: trackByUserId">
+          <div class="user-avatar">{{ person.firstName[0] }}{{ person.lastName[0] }}</div>
+          <div class="person-text">
+            <span class="person-name">{{ person.firstName }} {{ person.lastName }}</span>
+            <span class="person-meta">{{ person.email }} · {{ roleLabel(person.role) }}</span>
+          </div>
+          <!-- PMs open every board by role, so there is no board membership to remove -->
+          <p-tag *ngIf="person.allBoards" value="All boards (PM)" severity="info"></p-tag>
+          <p-button
+            *ngIf="!person.allBoards"
+            icon="pi pi-user-minus"
+            label="Remove"
+            styleClass="p-button-text p-button-danger p-button-sm"
+            (click)="confirmRemoveFromBoard(person)"
+          ></p-button>
+        </li>
+        <li class="people-hint" *ngIf="people.length === 0">Only admins can open this board so far.</li>
+      </ul>
+      <p class="people-hint">
+        To give someone access, use <strong>Manage boards</strong> on the
+        <a [routerLink]="['/w', board.workspaceId, 'members']">Workspace Members</a> page.
+      </p>
+    </div>
+  </p-dialog>
+
+  <p-confirmdialog [style]="{ width: '440px' }"></p-confirmdialog>
 
 </div>
 
