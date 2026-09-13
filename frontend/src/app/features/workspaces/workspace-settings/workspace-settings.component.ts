@@ -8,6 +8,7 @@ import { WorkspaceStoreService } from '../../../core/store/workspace-store.servi
 import { AuthStoreService } from '../../../core/store/auth-store.service';
 import { UserDirectoryStoreService } from '../../../core/store/user-directory-store.service';
 import { WorkspaceMemberResponseDto } from '../../../core/models/workspace.dto';
+import { ListPager } from '../../../core/utils/list-pager';
 import { UserSearchSelectComponent } from '../../../shared/components/user-search-select/user-search-select.component';
 
 // PrimeNG Standalone Components (v22+)
@@ -17,6 +18,7 @@ import { ConfirmDialog } from 'primeng/confirmdialog';
 import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { MultiSelect } from 'primeng/multiselect';
+import { Paginator } from 'primeng/paginator';
 import { Select } from 'primeng/select';
 import { Tag } from 'primeng/tag';
 
@@ -37,6 +39,7 @@ export interface SelectItem {
     Dialog,
     InputText,
     MultiSelect,
+    Paginator,
     Select,
     Tag,
     UserSearchSelectComponent
@@ -64,6 +67,7 @@ export class WorkspaceSettingsComponent implements OnInit {
   newRoleValue = '';
   activeEditRoleOptions: SelectItem[] = [];
   showUnassignedOnly = false;
+  readonly pager = new ListPager();
 
   // Manage-boards dialog
   boardsDialogVisible = false;
@@ -100,11 +104,19 @@ export class WorkspaceSettingsComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(ws => {
         if (ws) {
+          // Another workspace's roster starts on its first page
+          if (ws.id !== this.activeWorkspaceId) this.pager.reset();
           this.activeWorkspaceId = ws.id;
           this.isPM = ws.currentUserRole === 'ROLE_PROJECT_MANAGER';
           this.canManageRoles = this.isAdmin || this.isPM;
         }
       });
+
+    // Subscribed before the template's async pipe: when someone leaves the roster (or the filter),
+    // the page is moved back before the list renders, so it never shows an empty page
+    this.workspaceStore.activeWorkspaceMembers$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(members => this.pager.fit(this.visibleMembers(members).length));
   }
 
   /** In the workspace but on no board: they can sign in, yet have nothing to work on. */
