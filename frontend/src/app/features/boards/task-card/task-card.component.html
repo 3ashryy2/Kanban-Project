@@ -1,0 +1,125 @@
+<!-- Locked Padlock Gating Overlay (F6) -->
+<div class="lock-indicator-banner" *ngIf="task.status === 'PENDING_APPROVAL'">
+  <i class="pi pi-lock lock-banner-icon"></i>
+  <span>LOCKED PENDING APPROVAL</span>
+</div>
+
+<!-- Card Header & Priority Tags (F16): the tag is a button when the viewer may change it -->
+<div class="card-header">
+  <button
+    *ngIf="editable; else plainPriority"
+    type="button"
+    class="priority-tag editable"
+    [ngClass]="'priority-' + task.priority.toLowerCase()"
+    aria-haspopup="true"
+    [attr.aria-label]="'Priority: ' + task.priority + '. Change the priority'"
+    (click)="openPanel($event, priorityPanel)"
+  >{{ task.priority }}</button>
+  <ng-template #plainPriority>
+    <span class="priority-tag" [ngClass]="'priority-' + task.priority.toLowerCase()">{{ task.priority }}</span>
+  </ng-template>
+  <span class="task-id-badge">#{{ task.id }}</span>
+</div>
+
+<!-- Card Title & Content -->
+<h4 class="card-title">{{ task.title }}</h4>
+<p class="card-desc" *ngIf="task.description">{{ task.description | slice:0:70 }}{{ task.description.length > 70 ? '...' : '' }}</p>
+
+<!-- Tags Array Render -->
+<div class="card-tags" *ngIf="task.tags && task.tags.length > 0">
+  <span class="tag-chip" *ngFor="let t of task.tags">{{ t }}</span>
+</div>
+
+<!-- Card Footer (Assignee & Date) (F4): the assignee is a button when the viewer may change it -->
+<div class="card-footer">
+  <button
+    *ngIf="choices; else plainAssignee"
+    type="button"
+    class="assignee-button"
+    aria-haspopup="true"
+    [attr.aria-label]="assigneeLabel"
+    (click)="openPanel($event, assigneePanel)"
+  >
+    <ng-container *ngTemplateOutlet="assigneeView"></ng-container>
+  </button>
+  <ng-template #plainAssignee>
+    <div class="assignee-static"><ng-container *ngTemplateOutlet="assigneeView"></ng-container></div>
+  </ng-template>
+
+  <ng-template #assigneeView>
+    <span class="assignee-avatar-group" *ngIf="task.assignee; else unassigned">
+      <span class="user-avatar">{{ task.assignee.firstName[0] }}{{ task.assignee.lastName[0] }}</span>
+      <span class="assignee-name">{{ task.assignee.firstName }}</span>
+    </span>
+    <ng-template #unassigned>
+      <!-- Past the first column a card can't move again until someone is assigned (e.g. after an auto-unassign) -->
+      <span class="unassigned-badge needs-assignee" *ngIf="!inFirstColumn; else plainUnassigned" title="Assign someone before this card can move">
+        <i class="pi pi-exclamation-triangle"></i>
+        <span>Needs assignee</span>
+      </span>
+      <ng-template #plainUnassigned>
+        <span class="unassigned-badge">
+          <i class="pi pi-user-plus"></i>
+          <span>Unassigned</span>
+        </span>
+      </ng-template>
+    </ng-template>
+  </ng-template>
+
+  <span class="due-date-badge" *ngIf="task.dueDate" title="Due Date">
+    <i class="pi pi-calendar"></i>
+    <span>{{ task.dueDate | date:'MMM d' }}</span>
+  </span>
+</div>
+
+<!-- The panels are attached to <body>, so their clicks never reach the card -->
+<p-popover #assigneePanel (onShow)="onPanelShown()" (onHide)="onPanelHidden()" ariaLabel="Choose the assignee">
+  <div class="popover-body" (keydown)="moveFocus($event)">
+    <p class="popover-title">{{ assigneeHeading }}</p>
+    <input
+      *ngIf="showSearch"
+      type="text"
+      class="popover-search"
+      placeholder="Search people"
+      aria-label="Search people"
+      [(ngModel)]="search"
+    />
+    <button
+      *ngFor="let person of visiblePeople"
+      type="button"
+      class="popover-option"
+      role="menuitemradio"
+      [attr.aria-checked]="task.assignee?.id === person.id"
+      (click)="assign(person, assigneePanel)"
+    >
+      <span class="user-avatar">{{ person.firstName[0] }}{{ person.lastName[0] }}</span>
+      <span class="option-text">
+        <span class="option-name">{{ person.firstName }} {{ person.lastName }}<ng-container *ngIf="person.id === viewer.userId"> (you)</ng-container></span>
+        <span class="option-meta">{{ person.email }}</span>
+      </span>
+      <i class="pi pi-check option-check" *ngIf="task.assignee?.id === person.id"></i>
+    </button>
+    <p class="popover-empty" *ngIf="showSearch && visiblePeople.length === 0">No one matches "{{ search }}".</p>
+    <button *ngIf="choices?.canUnassign" type="button" class="popover-option popover-danger" (click)="assign(null, assigneePanel)">
+      <i class="pi pi-user-minus"></i>
+      <span>Unassign</span>
+    </button>
+  </div>
+</p-popover>
+
+<p-popover #priorityPanel (onShow)="onPanelShown()" (onHide)="onPanelHidden()" ariaLabel="Choose the priority">
+  <div class="popover-body" (keydown)="moveFocus($event)">
+    <p class="popover-title">Priority</p>
+    <button
+      *ngFor="let priority of priorities"
+      type="button"
+      class="popover-option"
+      role="menuitemradio"
+      [attr.aria-checked]="task.priority === priority"
+      (click)="setPriority(priority, priorityPanel)"
+    >
+      <span class="priority-tag" [ngClass]="'priority-' + priority.toLowerCase()">{{ priority }}</span>
+      <i class="pi pi-check option-check" *ngIf="task.priority === priority"></i>
+    </button>
+  </div>
+</p-popover>

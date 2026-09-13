@@ -100,69 +100,21 @@
         [cdkDropListData]="col.tasks"
         (cdkDropListDropped)="onCdkDrop($event)"
       >
-        <div 
-          class="task-card" 
+        <!-- One card: its assignee and priority change in place; a click anywhere else opens the Task Inspector -->
+        <app-task-card
+          class="task-card"
           *ngFor="let task of col.tasks; trackBy: trackByTaskId"
           cdkDrag
           [cdkDragData]="task"
-          (click)="openTaskDetails(task)"
+          [cdkDragDisabled]="editingTaskId === task.id"
           [class.card-locked]="task.status === 'PENDING_APPROVAL'"
-        >
-          <!-- Locked Padlock Gating Overlay (F6) -->
-          <div class="lock-indicator-banner" *ngIf="task.status === 'PENDING_APPROVAL'">
-            <i class="pi pi-lock lock-banner-icon"></i>
-            <span>LOCKED PENDING APPROVAL</span>
-          </div>
-
-          <!-- Card Header & Priority Tags (F16) -->
-          <div class="card-header">
-            <span class="priority-tag" [class]="'priority-' + task.priority.toLowerCase()">
-              {{ task.priority }}
-            </span>
-            <span class="task-id-badge">#{{ task.id }}</span>
-          </div>
-
-          <!-- Card Title & Content -->
-          <h4 class="card-title">{{ task.title }}</h4>
-          <p class="card-desc" *ngIf="task.description">{{ task.description | slice:0:70 }}{{ task.description.length > 70 ? '...' : '' }}</p>
-
-          <!-- Tags Array Render -->
-          <div class="card-tags" *ngIf="task.tags && task.tags.length > 0">
-            <span class="tag-chip" *ngFor="let t of task.tags">{{ t }}</span>
-          </div>
-
-          <!-- Card Footer (Assignee & Date) (F4) -->
-          <div class="card-footer">
-            <div class="assignee-avatar-group" *ngIf="task.assignee; else unassigned">
-              <div class="user-avatar" pTooltip="Assignee: {{ task.assignee.firstName }} {{ task.assignee.lastName }}">
-                {{ task.assignee.firstName[0] }}{{ task.assignee.lastName[0] }}
-              </div>
-              <span class="assignee-name">{{ task.assignee.firstName }}</span>
-            </div>
-            <ng-template #unassigned>
-              <!-- Past the first column a card can't move again until someone is assigned (e.g. after an auto-unassign) -->
-              <div
-                class="unassigned-badge needs-assignee"
-                *ngIf="col.id !== firstColumnId; else plainUnassigned"
-                pTooltip="Assign someone before this card can move"
-              >
-                <i class="pi pi-exclamation-triangle"></i>
-                <span>Needs assignee</span>
-              </div>
-              <ng-template #plainUnassigned>
-                <div class="unassigned-badge">
-                  <i class="pi pi-user-plus"></i>
-                  <span>Unassigned</span>
-                </div>
-              </ng-template>
-            </ng-template>
-
-            <span class="due-date-badge" *ngIf="task.dueDate" pTooltip="Due Date">
-              <i class="pi pi-calendar"></i>
-              <span>{{ task.dueDate | date:'MMM d' }}</span>
-            </span>
-          </div>
-        </div>
+          [task]="task"
+          [viewer]="viewer"
+          [members]="assignableMembers"
+          [inFirstColumn]="col.id === firstColumnId"
+          (editingChange)="editingTaskId = $event ? task.id : null"
+          (click)="openTaskDetails(task)"
+        ></app-task-card>
       </div>
     </div>
   </div>
@@ -187,11 +139,25 @@
         <label for="new-desc">Technical Description</label>
         <textarea id="new-desc" rows="4" pTextarea [(ngModel)]="newTask.description" placeholder="Specify platform deliverables, datasets, and acceptance criteria..."></textarea>
       </div>
-
       <div class="dialog-field-row">
-        <div class="dialog-field">
+        <div class="dialog-field half-field">
           <label for="new-priority">Priority</label>
           <p-select id="new-priority" [options]="priorityOptions" optionLabel="label" optionValue="value" [(ngModel)]="newTask.priority" styleClass="w-full"></p-select>
+        </div>
+
+        <!-- Same people as taking an unassigned card: anyone for admins and PMs, themselves for developers and QA -->
+        <div class="dialog-field half-field">
+          <label for="new-assignee">Task Assignee</label>
+          <p-select
+            id="new-assignee"
+            [options]="newTaskAssigneeOptions"
+            optionLabel="email"
+            optionValue="id"
+            [(ngModel)]="newTask.assigneeId"
+            [showClear]="true"
+            placeholder="Unassigned"
+            styleClass="w-full"
+          ></p-select>
         </div>
       </div>
 
@@ -311,7 +277,6 @@
     <ng-template #footer>
       <p-button label="Delete Card" icon="pi pi-trash" styleClass="p-button-danger p-button-text mr-auto" (click)="deleteTask()"></p-button>
       <p-button label="Save Changes" icon="pi pi-save" styleClass="p-button-success" [disabled]="isTaskLocked" (click)="saveTaskChanges()"></p-button>
-      <p-button label="Close Details" styleClass="p-button-text p-button-secondary" (click)="taskDetailsDialogVisible = false"></p-button>
     </ng-template>
   </p-dialog>
 

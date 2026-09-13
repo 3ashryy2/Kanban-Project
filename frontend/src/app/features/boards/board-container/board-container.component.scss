@@ -197,95 +197,7 @@
 .card-locked {
   border-left: 4px solid var(--warning-solid) !important;
 }
-.lock-indicator-banner {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background-color: rgba(245, 158, 11, 0.08);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-  border-radius: 4px;
-  padding: 6px 8px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--warning-text);
-}
-.lock-banner-icon {
-  font-size: 0.8rem;
-}
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.priority-tag {
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-.priority-low {
-  background-color: var(--surface-sunken);
-  color: var(--text-muted);
-}
-.priority-medium {
-  background-color: var(--accent-soft);
-  color: var(--accent-strong);
-}
-.priority-high {
-  background-color: #ffedd5;
-  color: #9a3412;
-}
-.priority-urgent {
-  background-color: var(--danger-soft);
-  color: var(--danger-text);
-}
-.task-id-badge {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-subtle);
-  font-variant-numeric: tabular-nums;
-}
-.card-title {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-strong);
-  margin: 0;
-  line-height: 1.4;
-}
-.card-desc {
-  font-size: 0.8rem;
-  color: var(--text-subtle);
-  margin: 0;
-  line-height: 1.5;
-}
-.card-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-.tag-chip {
-  background-color: var(--surface-subtle);
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  font-weight: 500;
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
-}
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid var(--divider);
-  padding-top: 10px;
-  margin-top: 4px;
-}
-.assignee-avatar-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+// The card's contents are styled in task-card.component.scss; the Members dialog still uses this avatar
 .user-avatar {
   flex-shrink: 0;
   width: 24px;
@@ -299,32 +211,6 @@
   justify-content: center;
   align-items: center;
   text-transform: uppercase;
-}
-.assignee-name {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--text-muted);
-}
-.unassigned-badge {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--text-subtle);
-  font-size: 0.75rem;
-}
-.unassigned-badge.needs-assignee {
-  color: var(--warning-text);
-  background-color: var(--warning-soft);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: 600;
-}
-.due-date-badge {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.75rem;
-  color: var(--text-subtle);
 }
 
 // Dialog Form Styles

@@ -42,16 +42,26 @@ class BoardSecurityEvaluatorTest {
         when(columnRepository.findFirstByBoardIdOrderByPositionAsc(10L))
                 .thenReturn(Optional.of(Column.builder().id(1L).name("To-Do").build()));
 
-        assertThat(boardSecurity.canCreateTaskInColumn(10L, 1L, developer)).isTrue();
+        assertThat(boardSecurity.canCreateTaskInColumn(10L, 1L, null, developer)).isTrue();
         // e.g. straight into "Ready for QA", which would skip the approval gate
-        assertThat(boardSecurity.canCreateTaskInColumn(10L, 4L, developer)).isFalse();
+        assertThat(boardSecurity.canCreateTaskInColumn(10L, 4L, null, developer)).isFalse();
     }
 
     @Test
-    void projectManagersCreateCardsInAnyColumn() {
+    void developersPutOnlyThemselvesOnANewCard() {
+        when(boardAccess.roleOnBoard(10L, 3L)).thenReturn(Optional.of(WorkspaceRole.ROLE_DEVELOPER));
+        when(columnRepository.findFirstByBoardIdOrderByPositionAsc(10L))
+                .thenReturn(Optional.of(Column.builder().id(1L).name("To-Do").build()));
+
+        assertThat(boardSecurity.canCreateTaskInColumn(10L, 1L, 3L, developer)).isTrue();
+        assertThat(boardSecurity.canCreateTaskInColumn(10L, 1L, 4L, developer)).isFalse();
+    }
+
+    @Test
+    void projectManagersCreateCardsInAnyColumnForAnyone() {
         when(boardAccess.roleOnBoard(10L, 2L)).thenReturn(Optional.of(WorkspaceRole.ROLE_PROJECT_MANAGER));
 
-        assertThat(boardSecurity.canCreateTaskInColumn(10L, 4L, projectManager)).isTrue();
+        assertThat(boardSecurity.canCreateTaskInColumn(10L, 4L, 3L, projectManager)).isTrue();
         verifyNoInteractions(columnRepository);
     }
 
@@ -59,7 +69,7 @@ class BoardSecurityEvaluatorTest {
     void viewersCannotCreateCardsAnywhere() {
         when(boardAccess.roleOnBoard(10L, 5L)).thenReturn(Optional.of(WorkspaceRole.ROLE_VIEWER));
 
-        assertThat(boardSecurity.canCreateTaskInColumn(10L, 1L, viewer)).isFalse();
+        assertThat(boardSecurity.canCreateTaskInColumn(10L, 1L, null, viewer)).isFalse();
     }
 
     private static CustomUserDetails user(long id, String email) {
