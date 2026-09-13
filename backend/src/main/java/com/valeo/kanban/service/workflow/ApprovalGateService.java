@@ -72,8 +72,8 @@ public class ApprovalGateService {
             throw new ConflictException("Task is not in PENDING_APPROVAL status.");
         }
 
-        // Validate that the requested fallback column is configured as a valid fallback for this transition
-        boolean isValidFallback = transitionRepository.existsByBoardIdAndToColumnIdAndFallbackColumnId(
+        // The fallback must be the one configured on a gated rule into the card's current column
+        boolean isValidFallback = transitionRepository.existsByBoardIdAndToColumnIdAndFallbackColumnIdAndRequiresApprovalTrue(
                 task.getBoard().getId(), task.getColumn().getId(), request.getFallbackColumnId()
         );
 

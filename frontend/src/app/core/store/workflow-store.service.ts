@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, catchError, tap } from 'rxjs';
 import { WorkflowTransitionUpdateRequest } from '../models/workflow.dto';
 import { MessageService } from 'primeng/api';
 
@@ -31,21 +31,24 @@ export class WorkflowStoreService {
       });
   }
 
-  updateTransitions(boardId: number, requests: WorkflowTransitionUpdateRequest[]): void {
-    this.http.put<WorkflowTransitionUpdateRequest[]>(`/api/boards/${boardId}/transitions`, requests)
-      .subscribe({
-        next: updated => {
-          this._transitions$.next(updated);
-          this.transitionsList = updated;
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Workflow Updated',
-            detail: 'State-machine governance rules successfully written.',
-            life: 3000
-          });
-        },
-        error: err => this.showError('Update Failed', err.error?.message || 'Could not save rules matrix.')
-      });
+  /** Emits the saved rules on success; on failure shows the reason and completes without emitting. */
+  updateTransitions(boardId: number, requests: WorkflowTransitionUpdateRequest[]): Observable<WorkflowTransitionUpdateRequest[]> {
+    return this.http.put<WorkflowTransitionUpdateRequest[]>(`/api/boards/${boardId}/transitions`, requests).pipe(
+      tap(updated => {
+        this._transitions$.next(updated);
+        this.transitionsList = updated;
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Workflow Updated',
+          detail: 'State-machine governance rules successfully written.',
+          life: 3000
+        });
+      }),
+      catchError(err => {
+        this.showError('Update Failed', err.error?.message || 'Could not save rules matrix.');
+        return EMPTY;
+      })
+    );
   }
 
   private showError(summary: string, detail: string): void {

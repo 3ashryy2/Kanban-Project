@@ -29,7 +29,7 @@ public class TaskController {
     private final AuditLogService auditLogService;
 
     @PostMapping
-    @PreAuthorize("@boardSecurity.canCreateTaskOnBoard(#request.boardId, principal)")
+    @PreAuthorize("@boardSecurity.canCreateTaskInColumn(#request.boardId, #request.columnId, principal)")
     public ResponseEntity<TaskDto> createTask(
             @Valid @RequestBody TaskCreateRequest request,
             @AuthenticationPrincipal CustomUserDetails currentUser) {

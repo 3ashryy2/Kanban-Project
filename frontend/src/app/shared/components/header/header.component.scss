@@ -2,8 +2,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  background-color: var(--surface-card);
+  border-bottom: 1px solid var(--border);
   padding: 0 20px;
   height: 64px;
   z-index: 100;
@@ -15,12 +15,12 @@
 }
 .logo-icon {
   font-size: 1.5rem;
-  color: #10b981;
+  color: var(--accent);
 }
 .brand-title {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-strong);
   letter-spacing: -0.02em;
 }
 .workspace-selector-box {
@@ -28,22 +28,22 @@
   align-items: center;
   gap: 8px;
   margin-left: 24px;
-  border-left: 1px solid #e2e8f0;
+  border-left: 1px solid var(--border);
   padding-left: 24px;
 }
 .switcher-label {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--text-muted);
   text-transform: uppercase;
 }
 ::ng-deep .workspace-dropdown {
-  border: 1px solid #cbd5e1 !important;
+  border: 1px solid var(--border-strong) !important;
   border-radius: 6px !important;
-  background-color: #f8fafc !important;
+  background-color: var(--surface-subtle) !important;
   min-width: 220px;
 }
 .user-badge {
   font-weight: 600;
-  color: #334155 !important;
+  color: var(--text) !important;
 }

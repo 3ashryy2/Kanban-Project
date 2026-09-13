@@ -16,7 +16,7 @@ public interface WorkflowTransitionRepository extends JpaRepository<WorkflowTran
     @Query(value = "SELECT COUNT(wt.id) > 0 FROM workflow_transitions wt WHERE wt.from_column_id = :columnId OR wt.to_column_id = :columnId OR (wt.fallback_column_id IS NOT NULL AND wt.fallback_column_id = :columnId)", nativeQuery = true)
     boolean existsByFromColumnIdOrToColumnIdOrFallbackColumnId(@Param("columnId") Long columnId);
 
-    boolean existsByBoardIdAndToColumnIdAndFallbackColumnId(Long boardId, Long toColumnId, Long fallbackColumnId);
+    boolean existsByBoardIdAndToColumnIdAndFallbackColumnIdAndRequiresApprovalTrue(Long boardId, Long toColumnId, Long fallbackColumnId);
 
     List<WorkflowTransition> findAllByBoardId(Long boardId);
 }

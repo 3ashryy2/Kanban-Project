@@ -12,6 +12,9 @@ import java.util.Optional;
 public interface ColumnRepository extends JpaRepository<Column, Long> {
     List<Column> findAllByBoardIdOrderByPositionAsc(Long boardId);
 
+    /** The board's leftmost column, where new cards start. */
+    Optional<Column> findFirstByBoardIdOrderByPositionAsc(Long boardId);
+
     @Query("SELECT c FROM Column c WHERE c.id = :columnId AND c.board.id = :boardId")
     Optional<Column> findByIdAndBoardId(@Param("columnId") Long columnId, @Param("boardId") Long boardId);
 }

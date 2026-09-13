@@ -31,6 +31,8 @@ public class Column {
     @jakarta.persistence.Column(nullable = false)
     private double position;
 
+    // True when at least one workflow rule into this column requires approval.
+    // Derived from the rules by WorkflowTransitionService; never set it directly.
     @jakarta.persistence.Column(name = "is_gated", nullable = false)
     @Builder.Default
     private boolean isGated = false;

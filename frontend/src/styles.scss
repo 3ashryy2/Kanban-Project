@@ -1,1 +1,111 @@
-/* You can add global styles to this file, and also import other style files */
+/*
+ * App-wide design tokens. Component styles use these variables instead of raw hex values,
+ * so every page shares one font, one grey scale and one accent colour.
+ * Each text colour is paired with the backgrounds it may sit on; the ratio is its WCAG contrast
+ * (4.5:1 is the minimum for normal text, 3:1 for icons).
+ */
+:root {
+  color-scheme: light;
+
+  /* Type */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+
+  /* Text on light surfaces */
+  --text-strong: #0f172a;   /* headings, names        17.9:1 on white */
+  --text: #334155;          /* body text              10.4:1 */
+  --text-muted: #475569;    /* labels, descriptions    7.6:1, 6.9:1 on --surface-sunken */
+  --text-subtle: #64748b;   /* hints and metadata      4.8:1, only on white or --surface-subtle */
+
+  /* Surfaces and lines */
+  --surface-page: #f8fafc;
+  --surface-card: #ffffff;
+  --surface-subtle: #f8fafc;   /* table headers, info boxes */
+  --surface-sunken: #f1f5f9;   /* kanban columns, neutral badges */
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --divider: #f1f5f9;
+
+  /* Accent: one blue for buttons, links, avatars and the active nav item */
+  --accent: #2563eb;          /* white text on it       5.2:1 */
+  --accent-strong: #1d4ed8;   /* links, accent text     6.7:1 on white, 5.5:1 on --accent-soft */
+  --accent-soft: #dbeafe;
+  --accent-on-dark: #60a5fa;  /* icons and code on the dark chrome  7.0:1 */
+
+  /* Status colours: each text colour is meant for its own soft background */
+  --success-text: #166534;  /* 6.5:1 on --success-soft */
+  --success-soft: #dcfce7;
+  --success-icon: #16a34a;  /* 3.3:1 on white */
+  --warning-text: #92400e;  /* 6.4:1 on --warning-soft */
+  --warning-soft: #fef3c7;
+  --warning-icon: #b45309;  /* 5.0:1 on white, 4.5:1 on --warning-soft */
+  --warning-solid: #f59e0b; /* stripes, borders and badge fills only, never text on white */
+  --danger-text: #b91c1c;   /* 5.3:1 on --danger-soft */
+  --danger-soft: #fee2e2;
+
+  /* Dark chrome: the sidebar, and the backdrop behind sign-in, onboarding and error pages */
+  --chrome-bg: #0f172a;
+  --chrome-text: #f1f5f9;
+  --chrome-text-muted: #94a3b8;  /* 7.0:1 on --chrome-bg */
+  --chrome-border: rgba(255, 255, 255, 0.06);
+  --backdrop: radial-gradient(circle at top right, #1a2238 0%, #0d1222 100%);
+}
+
+/* One font for the whole app. PrimeNG attaches dropdown lists, tooltips, menus and toasts
+   to <body>, so they only match the pages if <body> itself carries the font. */
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--text);
+  background-color: var(--surface-page);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Native form controls don't inherit the page font by default */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--font-mono);
+}
+
+/* Audit action badges: one colour per action type, shared by the audit log and the board's activity feed */
+.action-card_moved {
+  background-color: var(--accent-soft);
+  color: var(--accent-strong);
+}
+.action-gate_requested,
+.action-task_auto_unassigned {
+  background-color: var(--warning-soft);
+  color: var(--warning-text);
+}
+.action-gate_approved,
+.action-task_created {
+  background-color: var(--success-soft);
+  color: var(--success-text);
+}
+.action-gate_rejected,
+.action-task_deleted {
+  background-color: var(--danger-soft);
+  color: var(--danger-text);
+}
+.action-metadata_updated {
+  background-color: var(--surface-sunken);
+  color: var(--text-muted);
+}
+.action-task_assigned {
+  background-color: #f3e8ff;
+  color: #6b21a8;
+}
+.action-admin_override {
+  background-color: #fef2f2;
+  color: #991b1b;
+  box-shadow: inset 0 0 0 1px #fecaca;
+}
