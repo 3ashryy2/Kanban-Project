@@ -1,15 +1,15 @@
 .app-sidebar {
   width: 260px;
-  background-color: #0f172a;
-  color: #94a3b8;
+  background-color: var(--chrome-bg);
+  color: var(--chrome-text-muted);
   display: flex;
   flex-direction: column;
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  border-right: 1px solid var(--chrome-border);
   height: 100%;
 }
 .sidebar-section {
   padding: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--chrome-border);
 }
 .section-title {
   font-size: 0.75rem;
@@ -17,24 +17,24 @@
   letter-spacing: 0.05em;
   text-transform: uppercase;
   margin: 0 0 12px 0;
-  color: #475569;
+  color: var(--chrome-text-muted);
 }
 .active-ws-details {
-  background-color: rgba(30, 41, 59, 0.4);
+  background-color: rgba(30, 41, 59, 0.6);
   padding: 12px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--chrome-border);
 }
 .active-ws-details h4 {
-  color: #f1f5f9;
+  color: var(--chrome-text);
   font-size: 0.95rem;
   font-weight: 600;
   margin: 0 0 6px 0;
 }
 .role-chip {
   display: inline-block;
-  background-color: rgba(16, 185, 129, 0.15);
-  color: #10b981;
+  background-color: rgba(59, 130, 246, 0.18);
+  color: #93c5fd;
   font-size: 0.75rem;
   font-weight: 700;
   padding: 2px 8px;
@@ -54,7 +54,7 @@
   gap: 12px;
   padding: 10px 12px;
   border-radius: 6px;
-  color: #94a3b8;
+  color: var(--chrome-text-muted);
   text-decoration: none;
   cursor: pointer;
   font-size: 0.9rem;
@@ -62,23 +62,40 @@
   transition: all 0.15s ease;
 }
 .nav-list li a:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-  color: #f8fafc;
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--chrome-text);
 }
 .nav-list li.active a {
-  background-color: #3b82f6;
+  background-color: var(--accent);
   color: #ffffff;
   font-weight: 600;
 }
+.count-badge {
+  margin-left: auto;
+  background-color: var(--warning-solid);
+  color: var(--chrome-bg);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 10px;
+}
 .sidebar-fallback {
   font-size: 0.85rem;
-  color: #475569;
+  color: var(--chrome-text-muted);
   font-style: italic;
 }
 .sidebar-footer {
   margin-top: auto;
   padding: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid var(--chrome-border);
+}
+// The theme's red text button is tuned for white backgrounds; lighten it for the dark sidebar
+.sidebar-footer .p-button-danger.p-button-text {
+  color: #f87171;
+
+  &:enabled:hover {
+    background-color: rgba(248, 113, 113, 0.1);
+  }
 }
 .text-left {
   justify-content: flex-start !important;

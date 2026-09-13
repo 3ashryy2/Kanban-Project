@@ -22,7 +22,7 @@ test.describe('F10: Authentication and Session Lifecycle', () => {
     await page.click('button[type="submit"]');
 
     // Verification of redirect and board view
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
 
     // Verify Active Tenant info and role badge
     const activeWsHeader = page.locator('.active-ws-details h4');
@@ -43,22 +43,26 @@ test.describe('F10: Authentication and Session Lifecycle', () => {
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
 
     const roleChip = page.locator('.role-chip');
     await expect(roleChip).toContainText('ROLE_PROJECT_MANAGER');
   });
 
-  test('should login successfully as Admin (with Workspace role ROLE_PROJECT_MANAGER) and see role badge', async ({ page }) => {
+  test('should login successfully as global Admin (no workspace membership) and see ADMIN badge', async ({ page }) => {
     await page.goto('/auth/login');
 
     await page.fill('#email', 'admin@valeo.com');
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
 
     const roleChip = page.locator('.role-chip');
-    await expect(roleChip).toContainText('ROLE_PROJECT_MANAGER');
+    await expect(roleChip).toContainText('ADMIN');
+
+    // Admin-only navigation is available
+    await expect(page.locator('span:has-text("User Onboarding")')).toBeVisible();
+    await expect(page.locator('span:has-text("Global Audit Logs")')).toBeVisible();
   });
 });

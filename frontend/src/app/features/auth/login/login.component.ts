@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthStoreService } from '../../../core/store/auth-store.service';
 import { MessageService } from 'primeng/api';
 
@@ -10,7 +10,6 @@ import { Card } from 'primeng/card';
 import { InputText } from 'primeng/inputtext';
 import { Password } from 'primeng/password';
 import { Button } from 'primeng/button';
-import { Toast } from 'primeng/toast';
 
 @Component({
   selector: 'app-login',
@@ -18,11 +17,11 @@ import { Toast } from 'primeng/toast';
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     Card,
     InputText,
     Password,
-    Button,
-    Toast
+    Button
   ],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
@@ -31,8 +30,10 @@ export class LoginComponent {
   private readonly authStore = inject(AuthStoreService);
   private readonly messageService = inject(MessageService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
-  isRegisterMode = false;
+  // /auth/login and /auth/register share this component; the route's data says which form to show
+  readonly isRegisterMode = this.route.snapshot.data['mode'] === 'register';
   loading = false;
 
   credentials = {
@@ -47,10 +48,6 @@ export class LoginComponent {
     password: ''
   };
 
-  toggleMode(): void {
-    this.isRegisterMode = !this.isRegisterMode;
-  }
-
   onSubmit(): void {
     if (!this.credentials.email || !this.credentials.password) return;
 
@@ -64,7 +61,7 @@ export class LoginComponent {
           detail: 'Session opened successfully. Welcome back!',
           life: 2000
         });
-        setTimeout(() => this.router.navigate(['/']), 1000);
+        setTimeout(() => this.navigateAfterSignIn(), 1000);
       },
       error: err => {
         this.loading = false;
@@ -103,5 +100,12 @@ export class LoginComponent {
         });
       }
     });
+  }
+
+  // Return to the page an expired session was on; only in-app paths are honoured
+  private navigateAfterSignIn(): void {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '';
+    const isInAppPath = returnUrl.startsWith('/') && !returnUrl.startsWith('//');
+    this.router.navigateByUrl(isInAppPath ? returnUrl : '/');
   }
 }

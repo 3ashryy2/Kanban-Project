@@ -7,13 +7,24 @@
   <div class="filter-card shadow-card">
     <div class="filter-bar">
       <div class="filter-left">
-        <span class="filter-label">Filter Action Type:</span>
-        <p-select 
-          [options]="actionTypeOptions" 
+        <span class="filter-label">Workspace:</span>
+        <p-select
+          id="audit-workspace-filter"
+          [options]="workspaceOptions"
           optionLabel="label"
           optionValue="value"
-          [(ngModel)]="selectedActionType" 
-          (onChange)="onActionTypeChange()"
+          [(ngModel)]="selectedWorkspaceId"
+          (onChange)="onFilterChange()"
+          styleClass="filter-select"
+        ></p-select>
+        <span class="filter-label">Action:</span>
+        <p-select
+          id="audit-action-filter"
+          [options]="actionTypeOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="selectedActionType"
+          (onChange)="onFilterChange()"
           styleClass="filter-select"
         ></p-select>
       </div>
@@ -38,18 +49,18 @@
         <tbody>
           <tr *ngFor="let log of page.content" class="ledger-row">
             <td class="log-time font-bold">{{ log.timestamp | date:'yyyy-MM-dd HH:mm:ss' }}</td>
-            <td class="log-id font-mono">#{{ log.id }}</td>
+            <td class="log-id">#{{ log.id }}</td>
             <td class="log-actor font-bold">
               {{ log.actor.firstName }} {{ log.actor.lastName }}
-              <span class="actor-email font-mono">({{ log.actor.email }})</span>
+              <span class="actor-email">({{ log.actor.email }})</span>
             </td>
             <td>
               <span class="action-badge" [class]="'action-' + log.actionType.toLowerCase()">
                 {{ log.actionType }}
               </span>
             </td>
-            <td class="log-tenant font-mono">Workspace #{{ log.workspaceId }}</td>
-            <td class="log-target font-mono">Task #{{ log.taskId }}</td>
+            <td class="log-tenant">{{ workspaceLabel(log.workspaceId) }}</td>
+            <td class="log-target">Task #{{ log.taskId }}</td>
             <td class="log-details font-mono">{{ log.details | parseDetails }}</td>
           </tr>
         </tbody>

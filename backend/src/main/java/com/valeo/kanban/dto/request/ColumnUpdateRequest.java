@@ -13,7 +13,6 @@ public class ColumnUpdateRequest {
     @NotBlank(message = "Column name is required")
     private String name;
 
-    private boolean isGated;
-
+    // No "isGated" here: a column is gated only through the workflow rules into it
     private Integer wipLimit;
 }

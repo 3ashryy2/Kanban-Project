@@ -7,7 +7,14 @@
 ```
 /api
 ├── /auth
-│   └── POST /login
+│   ├── POST /login
+│   └── POST /register
+├── /users
+│   ├── GET /me
+│   ├── GET /me/workspaces
+│   └── GET /search?q=&excludeWorkspaceId=
+├── /admin/users
+│   └── GET /unassigned
 ├── /workspaces
 │   ├── POST /
 │   ├── GET /
@@ -17,13 +24,17 @@
 │   ├── /members
 │   │   ├── GET /{workspaceId}/members
 │   │   ├── POST /{workspaceId}/members
+│   │   ├── PUT /{workspaceId}/members/{userId}
+│   │   ├── PUT /{workspaceId}/members/{userId}/boards
 │   │   └── DELETE /{workspaceId}/members/{userId}
 │   └── /boards
+│       ├── GET /{workspaceId}/boards
 │       └── POST /{workspaceId}/boards
 ├── /boards
 │   ├── GET /{boardId}
 │   ├── PUT /{boardId}
 │   ├── DELETE /{boardId}
+│   ├── GET /{boardId}/members
 │   ├── /columns
 │   │   ├── POST /{boardId}/columns
 │   │   └── PATCH /{boardId}/columns/reorder
@@ -173,17 +184,23 @@
 
 * **Access Level:** `@workspaceSecurity.hasAccess(#workspaceId, principal)`
 
+* **Board chips:** `boards` lists the member's explicit board memberships, limited to boards the *caller* may open. `allBoards` is `true` for Project Managers, who open every board without memberships.
+
 * **Response (HTTP 200 OK):**
 
 ```json
 [
   {
+    "membershipId": 3,
+    "workspaceId": 1,
     "userId": 3,
     "email": "dev@valeo.com",
     "firstName": "Mohanad",
     "lastName": "Emad",
     "role": "ROLE_DEVELOPER",
-    "joinedAt": "2026-08-01T09:00:00Z"
+    "joinedAt": "2026-08-01T09:00:00Z",
+    "allBoards": false,
+    "boards": [ { "id": 1, "title": "Core Platform Roadmap" } ]
   }
 ]
 
@@ -215,17 +232,101 @@
 
 ```
 
+* **Errors:** `409 Conflict` if the user is already a member; `400 Bad Request` for an unknown role.
+
+### `PUT /api/workspaces/{workspaceId}/members/{userId}`
+
+* **Access Level:** Global admin, or a Project Manager of the workspace
+
+* **Request Payload:** `{ "role": "ROLE_VIEWER" }`
+
+* **Side effect:** Demoting a Project Manager removes their access to every board they are not an explicit member of; their tasks on those boards are unassigned.
+
+* **Response (HTTP 200 OK):** a membership change (see below).
+
+### `PUT /api/workspaces/{workspaceId}/members/{userId}/boards`
+
+* **Access Level:** `@workspaceSecurity.isAdmin(#workspaceId, principal)` (global admin or workspace PM)
+
+* **Functional Scope:** Replaces the member's board memberships with exactly the given boards. Tasks assigned to them on boards they lose are unassigned in the same transaction, each with a `TASK_AUTO_UNASSIGNED` audit entry.
+
+* **Request Payload:** `{ "boardIds": [1, 4] }` (an empty list removes every board)
+
+* **Errors:** `400 Bad Request` when the target is a Project Manager (they already see every board) or a board belongs to another workspace.
+
+* **Response (HTTP 200 OK):** a membership change:
+
+```json
+{
+  "member": { "userId": 3, "role": "ROLE_DEVELOPER", "allBoards": false, "boards": [ { "id": 1, "title": "Core Platform Roadmap" } ] },
+  "unassignedTaskCount": 2
+}
+
+```
+
 ### `DELETE /api/workspaces/{workspaceId}/members/{userId}`
 
 * **Access Level:** `@workspaceSecurity.isAdmin(#workspaceId, principal)`
 
-* **Response (HTTP 204 No Content):** Revokes workspace membership.
+* **Functional Scope:** Revokes workspace membership. The user's board memberships in the workspace are removed by the database cascade, and their tasks there are unassigned first.
+
+* **Response (HTTP 200 OK):** `{ "member": null, "unassignedTaskCount": 1 }`
+
+### `GET /api/workspaces/{workspaceId}/boards`
+
+* **Access Level:** `@workspaceSecurity.hasAccess(#workspaceId, principal)`
+
+* **Functional Scope:** Lists only the boards the caller may open: all of them for the global admin and Project Managers, and their board memberships for everyone else. Board summaries carry no columns.
+
+
+
+---
+
+## 3b. Users & Onboarding Endpoints (`/api/users`, `/api/admin/users`, `/api/auth/register`)
+
+### `POST /api/auth/register`
+
+* **Access Level:** Anonymous (Public)
+
+* **Functional Scope:** Creates an account and signs it in. The new user belongs to no workspace until an admin or PM adds them.
+
+### `GET /api/users/me`
+
+* **Access Level:** `isAuthenticated()`
+
+* **Response (HTTP 200 OK):** `{ "id": 3, "email": "dev@valeo.com", "firstName": "Mohanad", "lastName": "Emad", "isAdmin": false }`
+
+### `GET /api/users/me/workspaces`
+
+* **Access Level:** `isAuthenticated()`
+
+* **Functional Scope:** The caller's workspaces with their role in each. The global admin receives every workspace, with `currentUserRole: null` where it is not a member.
+
+### `GET /api/users/search?q={text}&excludeWorkspaceId={id}`
+
+* **Access Level:** `hasRole('ROLE_ADMIN') or (#excludeWorkspaceId != null and @workspaceSecurity.isAdmin(#excludeWorkspaceId, principal))`
+
+* **Functional Scope:** Finds registered users by name or email (at least 2 characters, at most 20 results, LIKE wildcards escaped). Leaves out global admins and, when given, existing members of `excludeWorkspaceId`.
+
+### `GET /api/admin/users/unassigned`
+
+* **Access Level:** `hasRole('ROLE_ADMIN')`
+
+* **Functional Scope:** Registered users with no workspace membership, newest first, for the admin onboarding page.
 
 
 
 ---
 
 ## 4. Board & Column Layout Endpoints (`/api/boards` & `/api/columns`)
+
+> **Board access rule** (`BoardAccessService`): a board can be opened by the global admin, by a Project Manager of its workspace, or by a workspace member with an explicit board membership. `@boardSecurity.canReadBoard`, `canReadTask`, `canCreateTaskOnBoard` and every `@taskSecurity` check apply this rule first.
+
+### `GET /api/boards/{boardId}/members`
+
+* **Access Level:** `@boardSecurity.canReadBoard(#boardId, principal)`
+
+* **Functional Scope:** People who may be assigned tasks on the board: its explicit members plus the workspace's Project Managers. Task creation and assignment reject any other assignee with `400 Bad Request`.
 
 ### `GET /api/boards/{boardId}`
 

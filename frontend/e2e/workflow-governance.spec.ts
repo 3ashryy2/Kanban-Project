@@ -26,7 +26,7 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
 
     // Ensure the board is fully loaded and data is bound to state before performing actions
     const boardTitle = page.locator('.board-title');
@@ -50,6 +50,40 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
     expect(request).toBeDefined();
   });
 
+  test('should add a transition from two dropdowns, and discard it when closed without saving', async ({ page }) => {
+    await page.goto('/auth/login');
+    await page.fill('#email', 'pm@valeo.com');
+    await page.fill('#password input', 'password123');
+    await page.click('button[type="submit"]');
+    await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
+    await expect(page.locator('.board-title')).toHaveText('Core Platform Roadmap', { timeout: 10000 });
+
+    // The dialog lists only the active rules
+    await page.click('button:has-text("Configure Workflow")');
+    const dialog = page.locator('.p-dialog', { hasText: 'Active State-Machine Transition Rules' });
+    const rules = dialog.locator('tr.matrix-row');
+    await expect(rules.first()).toBeVisible({ timeout: 5000 });
+    const listed = await rules.count();
+
+    // Pick a source, then a target: the rule joins the list, marked as new
+    await dialog.locator('button', { hasText: 'Add transition' }).click();
+    await dialog.locator('p-select#new-rule-from').click();
+    await page.locator('.p-select-overlay .p-select-option').first().click();
+    await expect(page.locator('.p-select-overlay')).toHaveCount(0);
+    await dialog.locator('p-select#new-rule-to').click();
+    await page.locator('.p-select-overlay .p-select-option').first().click();
+    await expect(rules).toHaveCount(listed + 1);
+    await expect(dialog.locator('tr.rule-new')).toHaveCount(1);
+
+    // Closing without saving discards it: opening again reads the saved rules
+    await dialog.locator('button', { hasText: 'Cancel' }).last().click();
+    await expect(dialog).toBeHidden();
+    await page.click('button:has-text("Configure Workflow")');
+    await expect(rules.first()).toBeVisible({ timeout: 5000 });
+    await expect(rules).toHaveCount(listed);
+    await expect(dialog.locator('tr.rule-new')).toHaveCount(0);
+  });
+
   test('should enforce gating, lock task, restrict developer edits, and allow PM to approve', async ({ page }) => {
     // 1. Login as Dev
     await page.goto('/auth/login');
@@ -57,24 +91,26 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
 
     // Ensure board is fully loaded
     const boardTitle = page.locator('.board-title');
     await expect(boardTitle).toBeVisible({ timeout: 10000 });
     await expect(boardTitle).toHaveText('Core Platform Roadmap');
 
-    // Create a task in Code Review (column index 2) to prepare for moving to Ready for QA (column index 3)
+    // Developers can only add cards to the first column, so the "+" is missing on later ones
+    const toDoColumn = page.locator('.kanban-column').nth(0);
     const codeReviewColumn = page.locator('.kanban-column').nth(2);
-    const addCardBtn = codeReviewColumn.locator('.col-add-btn');
-    await addCardBtn.click();
+    await expect(codeReviewColumn.locator('.col-add-btn')).toHaveCount(0);
+
+    // Create the task in To-Do (column index 0)
+    await toDoColumn.locator('.col-add-btn').click();
 
     const uniqueTitle = `Gated Task - ${Date.now()}`;
     await page.fill('#new-title', uniqueTitle);
     await page.click('button:has-text("Add Task")');
 
-    // Verify task is added to "Code Review"
-    const taskCard = codeReviewColumn.locator('.task-card', { hasText: uniqueTitle });
+    const taskCard = toDoColumn.locator('.task-card', { hasText: uniqueTitle });
     await expect(taskCard).toBeVisible({ timeout: 5000 });
 
     // Assign task first to satisfy backend assignee validation rule
@@ -86,9 +122,20 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
     // Wait for save & board reload to complete
     const dialog = page.locator('.p-dialog:visible');
     await expect(dialog).not.toBeVisible({ timeout: 5000 });
+    await expect(taskCard.locator('.user-avatar')).toBeVisible({ timeout: 5000 });
+
+    // Walk it through the seeded rules: To-Do -> In Progress -> Code Review, each move confirmed by the server
+    // before the next drag, which needs the card's new version
+    for (const columnIndex of [1, 2]) {
+      const column = page.locator('.kanban-column').nth(columnIndex);
+      const card = page.locator('.task-card', { hasText: uniqueTitle });
+      const moved = page.waitForResponse(res => res.url().includes('/move') && res.request().method() === 'PATCH');
+      await dragCard(page, card, column.locator('.column-card-stack'));
+      expect((await moved).ok()).toBeTruthy();
+      await expect(column.locator('.task-card', { hasText: uniqueTitle })).toBeVisible({ timeout: 5000 });
+    }
 
     const updatedTaskCard = codeReviewColumn.locator('.task-card', { hasText: uniqueTitle });
-    await expect(updatedTaskCard.locator('.user-avatar')).toBeVisible({ timeout: 5000 });
 
     // Drag from Code Review (column index 2) to Ready for QA (column index 3)
     const readyForQaColumn = page.locator('.kanban-column').nth(3);
@@ -131,7 +178,7 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
 
     // Ensure board is fully loaded
     await expect(boardTitle).toBeVisible({ timeout: 10000 });
