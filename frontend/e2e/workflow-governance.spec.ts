@@ -165,8 +165,8 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
     const editDesc = page.locator('#edit-desc');
     await expect(editDesc).toBeDisabled();
 
-    // Close Details as Developer
-    await page.click('button:has-text("Close Details")');
+    // Close the Task Inspector with the ✕ in its header (it has no Close Details button)
+    await page.locator('.p-dialog:visible .p-dialog-header button').click();
     await expect(inspectorHeader).not.toBeVisible();
 
     // Sign out Developer

@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { BehaviorSubject, EMPTY, Observable, Subject } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, Subject, defer } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
 import { BoardDetailsDto } from '../models/board.dto';
@@ -8,6 +8,9 @@ import { ColumnDto } from '../models/column.dto';
 import { TaskDto, TaskMoveRequest, TaskCreateRequest, TaskMetadataRequest, TaskAssigneeRequest, TaskApproveRequest, TaskRejectRequest } from '../models/task.dto';
 import { SimpleUserDto } from '../models/user.dto';
 import { RANK_CALCULATOR_TOKEN } from '../services/rank-calculator.interface';
+
+/** Card details that can be changed on the card itself. */
+export type TaskDetailsChange = Partial<Pick<TaskDto, 'title' | 'priority' | 'dueDate' | 'tags'>>;
 
 @Injectable({
   providedIn: 'root'
@@ -189,6 +192,72 @@ export class BoardStoreService {
     return this.http.post<TaskDto>(`/api/tasks/${taskId}/reject`, request).pipe(
       tap(() => this.loadBoard(boardId))
     );
+  }
+
+  // --- Changes made on the card itself ---
+
+  /**
+   * Saves a change to a card's details made on the card: shown at once, replaced by the server's answer
+   * (with the new version), and undone if the server refuses. Subscribe to run it; it completes either way.
+   */
+  updateTaskInPlace(task: TaskDto, change: TaskDetailsChange): Observable<TaskDto> {
+    const edited: TaskDto = { ...task, ...change };
+    // The metadata call replaces every detail at once, so send the card's current values with the change
+    const request: TaskMetadataRequest = {
+      title: edited.title,
+      description: edited.description,
+      priority: edited.priority,
+      dueDate: edited.dueDate,
+      tags: edited.tags ?? [],
+      version: task.version
+    };
+    return this.saveInPlace(task, edited, this.http.patch<TaskDto>(`/api/tasks/${task.id}/metadata`, request));
+  }
+
+  /** Same as updateTaskInPlace, for the assignee; null unassigns. */
+  assignTaskInPlace(task: TaskDto, assignee: SimpleUserDto | null): Observable<TaskDto> {
+    const request: TaskAssigneeRequest = { assigneeId: assignee?.id, version: task.version };
+    return this.saveInPlace(
+      task,
+      { ...task, assignee: assignee ?? undefined },
+      this.http.patch<TaskDto>(`/api/tasks/${task.id}/assignee`, request)
+    );
+  }
+
+  private saveInPlace(original: TaskDto, shown: TaskDto, request$: Observable<TaskDto>): Observable<TaskDto> {
+    return defer(() => {
+      this.replaceTask(shown);
+      return request$;
+    }).pipe(
+      tap(saved => this.replaceTask(saved)),
+      catchError((error: HttpErrorResponse) => {
+        this.replaceTask(original);
+        const concurrent = error.status === 409;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Change Not Saved',
+          detail: concurrent
+            ? 'Someone else changed this card first. The board has been refreshed.'
+            : error.error?.message || 'Could not save the change.',
+          life: 4000
+        });
+        if (concurrent) {
+          this.loadBoard(original.boardId);
+        }
+        return EMPTY;
+      })
+    );
+  }
+
+  // Swaps one card for a newer copy of itself, leaving every other card untouched
+  private replaceTask(updated: TaskDto): void {
+    const state = this._boardState$.getValue();
+    if (!state) return;
+    const columns = state.columns.map(col => ({
+      ...col,
+      tasks: col.tasks.map(t => t.id === updated.id ? updated : t)
+    }));
+    this._boardState$.next({ ...state, columns });
   }
 
   private syncTaskVersionInStore(updatedTask: TaskDto): void {
