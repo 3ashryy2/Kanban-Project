@@ -110,6 +110,11 @@ public class TaskSecurityEvaluator {
             return true;
         }
 
+        // A card locked for approval is frozen for everyone else, as in canEditCard
+        if (task.getStatus() == TaskStatus.PENDING_APPROVAL) {
+            return false;
+        }
+
         // Allow self-assignment if the task is currently unassigned and user has Developer/QA role
         if (task.getAssignee() == null && (role == WorkspaceRole.ROLE_DEVELOPER || role == WorkspaceRole.ROLE_QA_TESTER)) {
             return request.getAssigneeId() != null && request.getAssigneeId().equals(currentUser.getId());

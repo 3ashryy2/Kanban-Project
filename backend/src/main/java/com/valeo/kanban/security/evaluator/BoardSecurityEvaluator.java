@@ -44,13 +44,15 @@ public class BoardSecurityEvaluator {
                 .orElse(false);
     }
 
-    public boolean canCreateTaskInColumn(Long boardId, Long columnId, CustomUserDetails currentUser) {
+    public boolean canCreateTaskInColumn(Long boardId, Long columnId, Long assigneeId, CustomUserDetails currentUser) {
         if (boardId == null || columnId == null || currentUser == null) return false;
         if (currentUser.isAdmin()) return true;
         // Must be able to open the board, and viewers stay read-only
         Optional<WorkspaceRole> role = boardAccess.roleOnBoard(boardId, currentUser.getId());
         if (role.isEmpty() || role.get() == WorkspaceRole.ROLE_VIEWER) return false;
         if (role.get() == WorkspaceRole.ROLE_PROJECT_MANAGER) return true;
+        // Developers and QA may put only themselves on a new card, as when taking an unassigned one
+        if (assigneeId != null && !assigneeId.equals(currentUser.getId())) return false;
         // Developers and QA start every card in the first column; later stages are reached only through the workflow
         return columnRepository.findFirstByBoardIdOrderByPositionAsc(boardId)
                 .map(first -> first.getId().equals(columnId))

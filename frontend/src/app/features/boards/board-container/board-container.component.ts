@@ -24,6 +24,8 @@ import { TaskDto, TaskCreateRequest, TaskMetadataRequest, TaskAssigneeRequest, T
 import { WorkspaceMemberResponseDto } from '../../../core/models/workspace.dto';
 import { SimpleUserDto } from '../../../core/models/user.dto';
 import { ParseDetailsPipe } from '../../../shared/pipes/parse-details.pipe';
+import { AssigneeChoices, BoardViewer, assigneeChoices, newTaskAssigneeChoices } from '../../../core/utils/task-permissions';
+import { TaskCardComponent } from '../task-card/task-card.component';
 import { WorkflowRulesDialogComponent } from '../workflow-rules-dialog/workflow-rules-dialog.component';
 
 // PrimeNG Standalone Components (v22+)
@@ -55,7 +57,8 @@ import { Tooltip } from 'primeng/tooltip';
     Tooltip,
     ParseDetailsPipe,
     DragDropModule,
-    WorkflowRulesDialogComponent
+    WorkflowRulesDialogComponent,
+    TaskCardComponent
   ],
   // One confirmation host for deleting the board and taking people off it
   providers: [ConfirmationService],
@@ -78,6 +81,10 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
   activeBoardTitle = '';
   activeWorkspaceId: number | null = null;
   currentUserRole = 'ROLE_VIEWER';
+  // Who is looking, for the permission rules the cards and the Task Inspector share
+  viewer: BoardViewer = { userId: null, isAdmin: false, role: 'ROLE_VIEWER' };
+  // The card whose panel is open; it can't be dragged until the panel closes
+  editingTaskId: number | null = null;
   isAdmin = false;
   currentUserId: number | null = null;
 
@@ -150,6 +157,7 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
     tags: []
   };
   newTaskTagsString = '';
+  newTaskAssigneeOptions: SimpleUserDto[] = [];
   selectedColumnIdForNewTask: number | null = null;
 
   // Selected Task Inspector Payload (F3)
@@ -176,6 +184,7 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(isAdmin => {
         this.isAdmin = isAdmin;
+        this.refreshViewer();
       });
 
     // Subscribe to workspace memberships to resolve current user's role (leak-safe)
@@ -185,6 +194,7 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
         if (ws) {
           this.currentUserRole = ws.currentUserRole || 'ROLE_VIEWER';
           this.activeWorkspaceId = ws.id;
+          this.refreshViewer();
         }
       });
 
@@ -284,9 +294,12 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
       description: '',
       priority: 'MEDIUM',
       position: 1000.0,
-      tags: []
+      tags: [],
+      assigneeId: undefined
     };
     this.newTaskTagsString = '';
+    // Same people as for taking an unassigned card: anyone for admins and PMs, themselves for developers and QA
+    this.newTaskAssigneeOptions = newTaskAssigneeChoices(this.viewer, this.assignableMembers);
     this.createTaskDialogVisible = true;
   }
 
@@ -304,6 +317,7 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
       description: this.newTask.description,
       priority: this.newTask.priority,
       position: this.newTask.position || 1000.0,
+      assigneeId: this.newTask.assigneeId ?? undefined,
       tags
     };
 
@@ -650,37 +664,29 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
     return columnId === this.firstColumnId;
   }
 
+  // The Task Inspector follows the same rules as the card (core/utils/task-permissions)
+  private inspectorChoices(task: TaskDto): AssigneeChoices | null {
+    return assigneeChoices(task, this.viewer, this.assignableMembers, task.columnId === this.firstColumnId);
+  }
+
   get canAssignTask(): boolean {
-    if (!this.selectedTask) return false;
+    return !!this.selectedTask && this.inspectorChoices(this.selectedTask) !== null;
+  }
 
-    // Locked pending approval tasks can only be assigned by Managers/Admins
-    if (this.selectedTask.status === 'PENDING_APPROVAL') {
-      return this.isAdmin || this.currentUserRole === 'ROLE_PROJECT_MANAGER';
-    }
-
-    // Admins and PMs can always assign
-    if (this.isAdmin || this.currentUserRole === 'ROLE_PROJECT_MANAGER') {
-      return true;
-    }
-
-    // Unassigned tasks can be assigned by Developers and QA/Testers (they can self-assign)
-    if (!this.selectedTask.assignee) {
-      return this.currentUserRole === 'ROLE_DEVELOPER' || this.currentUserRole === 'ROLE_QA_TESTER';
-    }
-
-    // Already assigned: only the current assignee can change/reassign/unassign it
-    return this.selectedTask.assignee.id === this.currentUserId;
+  /** The assignee field's clear button: only where the server lets a card lose its assignee. */
+  get canClearAssignee(): boolean {
+    return !!this.selectedTask && !!this.inspectorChoices(this.selectedTask)?.canUnassign;
   }
 
   get assigneeOptions(): SimpleUserDto[] {
-    if (this.isAdmin || this.currentUserRole === 'ROLE_PROJECT_MANAGER') {
-      return this.assignableMembers;
-    }
-    // Base roles (Developer / QA) can only assign to themselves (or unassign themselves)
-    if (this.currentUserId) {
-      return this.assignableMembers.filter(m => m.id === this.currentUserId);
-    }
-    return [];
+    const task = this.selectedTask;
+    if (!task) return [];
+    // When the viewer can't change it, still list the current assignee so the disabled field shows who it is
+    return this.inspectorChoices(task)?.people ?? (task.assignee ? [task.assignee] : []);
+  }
+
+  private refreshViewer(): void {
+    this.viewer = { userId: this.currentUserId, isAdmin: this.isAdmin, role: this.currentUserRole };
   }
 
   // Columns arrive sorted by position; unassigned cards anywhere else are flagged "Needs assignee"

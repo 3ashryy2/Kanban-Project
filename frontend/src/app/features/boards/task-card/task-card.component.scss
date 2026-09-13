@@ -1,0 +1,232 @@
+// The card's frame (background, border, drag states) is styled by the board, which owns drag and drop
+
+// Buttons here look like the text they replace; the class rules below restyle them
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.lock-indicator-banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--warning-text);
+}
+.lock-banner-icon {
+  font-size: 0.8rem;
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.priority-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.priority-tag.editable:hover {
+  box-shadow: 0 0 0 2px var(--border-strong);
+}
+.priority-low {
+  background-color: var(--surface-sunken);
+  color: var(--text-muted);
+}
+.priority-medium {
+  background-color: var(--accent-soft);
+  color: var(--accent-strong);
+}
+.priority-high {
+  background-color: #ffedd5;
+  color: #9a3412;
+}
+.priority-urgent {
+  background-color: var(--danger-soft);
+  color: var(--danger-text);
+}
+.task-id-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+.card-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-strong);
+  margin: 0;
+  line-height: 1.4;
+}
+.card-desc {
+  font-size: 0.8rem;
+  color: var(--text-subtle);
+  margin: 0;
+  line-height: 1.5;
+}
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.tag-chip {
+  background-color: var(--surface-subtle);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--divider);
+  padding-top: 10px;
+  margin-top: 4px;
+}
+// The hover background sits just outside the content, so the footer doesn't shift
+.assignee-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 5px;
+  margin: -3px -5px;
+  border-radius: 4px;
+}
+.assignee-button:hover {
+  background-color: var(--surface-sunken);
+}
+.assignee-avatar-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.user-avatar {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--accent);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-transform: uppercase;
+}
+.assignee-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.unassigned-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-subtle);
+  font-size: 0.75rem;
+}
+.unassigned-badge.needs-assignee {
+  color: var(--warning-text);
+  background-color: var(--warning-soft);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.due-date-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--text-subtle);
+}
+
+// Panel contents. They're rendered inside <body>, but still carry this component's style scope
+.popover-body {
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+}
+.popover-title {
+  margin: 0 4px 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+.popover-search {
+  margin: 0 0 6px;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text-strong);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+}
+.popover-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 6px;
+  border-radius: 6px;
+  color: var(--text);
+}
+.popover-option:hover,
+.popover-option:focus-visible {
+  background-color: var(--surface-sunken);
+  outline: none;
+}
+.option-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.option-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+.option-meta {
+  font-size: 0.75rem;
+  color: var(--text-subtle);
+}
+.option-check {
+  margin-left: auto;
+  color: var(--accent-strong);
+}
+.popover-danger {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--divider);
+  border-radius: 0 0 6px 6px;
+  color: var(--danger-text);
+  font-size: 0.85rem;
+}
+.popover-empty {
+  margin: 4px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
