@@ -72,7 +72,9 @@
   </span>
 </div>
 
-<!-- The panels are attached to <body>, so their clicks never reach the card -->
+<!-- The panels are attached to <body>, so their clicks never reach the card.
+     When one opens, PrimeNG focuses the first element in it marked autofocus: the search box when there is one,
+     otherwise the current choice (or the first person), so the arrow keys work straight away. -->
 <p-popover #assigneePanel (onShow)="onPanelShown()" (onHide)="onPanelHidden()" ariaLabel="Choose the assignee">
   <div class="popover-body" (keydown)="moveFocus($event)">
     <p class="popover-title">{{ assigneeHeading }}</p>
@@ -82,6 +84,7 @@
       class="popover-search"
       placeholder="Search people"
       aria-label="Search people"
+      autofocus
       [(ngModel)]="search"
     />
     <button
@@ -90,6 +93,7 @@
       class="popover-option"
       role="menuitemradio"
       [attr.aria-checked]="task.assignee?.id === person.id"
+      [attr.autofocus]="person.id === focusedPersonId ? '' : null"
       (click)="assign(person, assigneePanel)"
     >
       <span class="user-avatar">{{ person.firstName[0] }}{{ person.lastName[0] }}</span>
@@ -100,7 +104,13 @@
       <i class="pi pi-check option-check" *ngIf="task.assignee?.id === person.id"></i>
     </button>
     <p class="popover-empty" *ngIf="showSearch && visiblePeople.length === 0">No one matches "{{ search }}".</p>
-    <button *ngIf="choices?.canUnassign" type="button" class="popover-option popover-danger" (click)="assign(null, assigneePanel)">
+    <button
+      *ngIf="choices?.canUnassign"
+      type="button"
+      class="popover-option popover-danger"
+      [attr.autofocus]="focusedPersonId === null ? '' : null"
+      (click)="assign(null, assigneePanel)"
+    >
       <i class="pi pi-user-minus"></i>
       <span>Unassign</span>
     </button>
@@ -116,6 +126,7 @@
       class="popover-option"
       role="menuitemradio"
       [attr.aria-checked]="task.priority === priority"
+      [attr.autofocus]="task.priority === priority ? '' : null"
       (click)="setPriority(priority, priorityPanel)"
     >
       <span class="priority-tag" [ngClass]="'priority-' + priority.toLowerCase()">{{ priority }}</span>

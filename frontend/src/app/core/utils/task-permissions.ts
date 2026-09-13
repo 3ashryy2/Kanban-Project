@@ -37,15 +37,23 @@ export function newTaskAssigneeChoices(viewer: BoardViewer, members: SimpleUserD
 
 /**
  * The assignee. Admins and PMs choose anyone who can open the board; developers and QA take an
- * unassigned card themselves; only the current assignee hands a card back. Null: not the viewer's to change.
+ * unassigned card themselves; only the current assignee hands a card back. As on the server, a card
+ * loses its assignee only in the first column. Null: not the viewer's to change.
  */
-export function assigneeChoices(task: TaskDto, viewer: BoardViewer, members: SimpleUserDto[]): AssigneeChoices | null {
-  if (isManager(viewer)) return { people: members, canUnassign: !!task.assignee };
+export function assigneeChoices(
+  task: TaskDto,
+  viewer: BoardViewer,
+  members: SimpleUserDto[],
+  inFirstColumn: boolean
+): AssigneeChoices | null {
+  const canUnassign = !!task.assignee && inFirstColumn;
+  if (isManager(viewer)) return { people: members, canUnassign };
   if (task.status === 'PENDING_APPROVAL') return null;
 
   const me = members.filter(m => m.id === viewer.userId);
   if (!task.assignee) {
     return isContributor(viewer) && me.length > 0 ? { people: me, canUnassign: false } : null;
   }
-  return task.assignee.id === viewer.userId ? { people: me, canUnassign: true } : null;
+  // Their own card: handing it back is the only change left, so past the first column there's none
+  return task.assignee.id === viewer.userId && canUnassign ? { people: me, canUnassign } : null;
 }

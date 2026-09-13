@@ -24,7 +24,7 @@ import { TaskDto, TaskCreateRequest, TaskMetadataRequest, TaskAssigneeRequest, T
 import { WorkspaceMemberResponseDto } from '../../../core/models/workspace.dto';
 import { SimpleUserDto } from '../../../core/models/user.dto';
 import { ParseDetailsPipe } from '../../../shared/pipes/parse-details.pipe';
-import { BoardViewer, assigneeChoices, newTaskAssigneeChoices } from '../../../core/utils/task-permissions';
+import { AssigneeChoices, BoardViewer, assigneeChoices, newTaskAssigneeChoices } from '../../../core/utils/task-permissions';
 import { TaskCardComponent } from '../task-card/task-card.component';
 import { WorkflowRulesDialogComponent } from '../workflow-rules-dialog/workflow-rules-dialog.component';
 
@@ -665,16 +665,24 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
   }
 
   // The Task Inspector follows the same rules as the card (core/utils/task-permissions)
+  private inspectorChoices(task: TaskDto): AssigneeChoices | null {
+    return assigneeChoices(task, this.viewer, this.assignableMembers, task.columnId === this.firstColumnId);
+  }
+
   get canAssignTask(): boolean {
-    return !!this.selectedTask && assigneeChoices(this.selectedTask, this.viewer, this.assignableMembers) !== null;
+    return !!this.selectedTask && this.inspectorChoices(this.selectedTask) !== null;
+  }
+
+  /** The assignee field's clear button: only where the server lets a card lose its assignee. */
+  get canClearAssignee(): boolean {
+    return !!this.selectedTask && !!this.inspectorChoices(this.selectedTask)?.canUnassign;
   }
 
   get assigneeOptions(): SimpleUserDto[] {
     const task = this.selectedTask;
     if (!task) return [];
     // When the viewer can't change it, still list the current assignee so the disabled field shows who it is
-    return assigneeChoices(task, this.viewer, this.assignableMembers)?.people
-      ?? (task.assignee ? [task.assignee] : []);
+    return this.inspectorChoices(task)?.people ?? (task.assignee ? [task.assignee] : []);
   }
 
   private refreshViewer(): void {

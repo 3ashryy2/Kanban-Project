@@ -106,4 +106,31 @@ test.describe('Editing a card in place', () => {
     await page.click('button:has-text("Delete Card")');
     await expect(card).toHaveCount(0, { timeout: 5000 });
   });
+
+  test('a panel works from the keyboard alone', async ({ page }) => {
+    await signIn(page, 'pm@valeo.com');
+    const title = `Keys ${Date.now()}`;
+    const card = await createCard(page, title);
+    const tag = card.locator('button.priority-tag');
+
+    // Enter opens the panel with focus on the current priority; the arrow keys move; Enter picks
+    await tag.focus();
+    await page.keyboard.press('Enter');
+    const options = page.locator('.p-popover .popover-option');
+    await expect(options.filter({ hasText: 'MEDIUM' })).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await expect(options.filter({ hasText: 'HIGH' })).toBeFocused();
+    const prioritised = patchTo(page, '/metadata');
+    await page.keyboard.press('Enter');
+    expect((await prioritised).ok()).toBeTruthy();
+    await expect(card.locator('.priority-tag')).toHaveText('HIGH');
+
+    // Once the panel has gone, focus is back on the tag that opened it
+    await expect(page.locator('.p-popover')).toHaveCount(0);
+    await expect(tag).toBeFocused();
+
+    await card.locator('.card-title').click();
+    await page.click('button:has-text("Delete Card")');
+    await expect(card).toHaveCount(0, { timeout: 5000 });
+  });
 });

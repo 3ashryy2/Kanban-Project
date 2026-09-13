@@ -45,11 +45,17 @@ export class TaskCardComponent implements OnChanges {
 
   ngOnChanges(): void {
     this.editable = canEditTask(this.task, this.viewer);
-    this.choices = assigneeChoices(this.task, this.viewer, this.members);
+    this.choices = assigneeChoices(this.task, this.viewer, this.members, this.inFirstColumn);
   }
 
   get showSearch(): boolean {
     return (this.choices?.people.length ?? 0) > SEARCH_THRESHOLD;
+  }
+
+  /** The person whose option takes focus when the panel opens: the current assignee, else the first one listed. */
+  get focusedPersonId(): number | null {
+    const people = this.visiblePeople;
+    return (people.find(p => p.id === this.task.assignee?.id) ?? people[0])?.id ?? null;
   }
 
   get visiblePeople(): SimpleUserDto[] {
@@ -84,8 +90,11 @@ export class TaskCardComponent implements OnChanges {
 
   onPanelHidden(): void {
     this.editingChange.emit(false);
-    // Hand focus back to what opened the panel, unless the user has already moved on
-    if (this.openedFrom && (!document.activeElement || document.activeElement === document.body)) {
+    // Hand focus back to what opened the panel, unless the user has already moved on. The panel is
+    // still on the page when this runs, so focus may be on one of its options.
+    const active = document.activeElement;
+    const movedOn = !!active && active !== document.body && !active.closest('.p-popover');
+    if (this.openedFrom && !movedOn) {
       this.openedFrom.focus();
     }
   }

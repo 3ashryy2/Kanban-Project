@@ -32,6 +32,8 @@ class TaskSecurityEvaluatorTest {
 
     private final CustomUserDetails developer =
             new CustomUserDetails(3L, "dev@valeo.com", "hash", "Mohanad", "Emad", false, List.of());
+    private final CustomUserDetails projectManager =
+            new CustomUserDetails(2L, "pm@valeo.com", "hash", "Project", "Manager", false, List.of());
 
     @Test
     void theCreatorAndAssigneeLosesEveryRightOnceTheyCannotOpenTheBoard() {
@@ -50,6 +52,20 @@ class TaskSecurityEvaluatorTest {
         when(boardAccess.roleOnBoard(10L, 3L)).thenReturn(Optional.of(WorkspaceRole.ROLE_DEVELOPER));
 
         assertThat(taskSecurity.canEditCard(7L, developer)).isTrue();
+    }
+
+    @Test
+    void onlyManagersReassignACardLockedForApproval() {
+        // Before: the assignee could still hand a locked card on through the API, though the UI hid the option
+        Task locked = taskOwnedByDeveloper();
+        locked.setStatus(TaskStatus.PENDING_APPROVAL);
+        when(taskRepository.findById(7L)).thenReturn(Optional.of(locked));
+        when(boardAccess.roleOnBoard(10L, 3L)).thenReturn(Optional.of(WorkspaceRole.ROLE_DEVELOPER));
+        when(boardAccess.roleOnBoard(10L, 2L)).thenReturn(Optional.of(WorkspaceRole.ROLE_PROJECT_MANAGER));
+
+        assertThat(taskSecurity.canAssignCard(7L, new TaskAssigneeRequest(4L, 0L), developer)).isFalse();
+        assertThat(taskSecurity.canAssignCard(7L, new TaskAssigneeRequest(null, 0L), developer)).isFalse();
+        assertThat(taskSecurity.canAssignCard(7L, new TaskAssigneeRequest(4L, 0L), projectManager)).isTrue();
     }
 
     private static Task taskOwnedByDeveloper() {
