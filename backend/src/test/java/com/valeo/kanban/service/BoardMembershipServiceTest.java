@@ -83,6 +83,36 @@ class BoardMembershipServiceTest {
         assertThat(result.getUnassignedTaskCount()).isEqualTo(2);
     }
 
+    @Test
+    void removingSomeoneFromOneBoardKeepsTheirOtherBoardsAndUnassignsTheirTasksThere() {
+        when(boardRepository.findWorkspaceIdById(11L)).thenReturn(Optional.of(1L));
+        when(boardMemberRepository.findBoardIdsByWorkspaceIdAndUserId(1L, 3L)).thenReturn(Set.of(10L, 11L));
+        when(workspaceMemberRepository.findByWorkspaceIdAndUserId(1L, 3L))
+                .thenReturn(Optional.of(member(3L, WorkspaceRole.ROLE_DEVELOPER)));
+        when(boardRepository.findIdsByWorkspaceId(1L)).thenReturn(List.of(10L, 11L));
+        when(revocationService.unassignTasksOnBoards(1L, 3L, Set.of(11L), 1L)).thenReturn(1);
+        when(userRepository.getReferenceById(1L)).thenReturn(User.builder().id(1L).build());
+        when(boardMemberRepository.findAllByWorkspaceIdWithBoard(1L)).thenReturn(List.of());
+
+        MembershipChangeResponseDto result = boardMembershipService.removeFromBoard(11L, 3L, admin);
+
+        verify(boardMemberRepository).deleteByUserIdAndBoardIdIn(3L, Set.of(11L));
+        assertThat(result.getUnassignedTaskCount()).isEqualTo(1);
+    }
+
+    @Test
+    void projectManagersCannotBeTakenOffASingleBoard() {
+        // They see every board by role; there is no board membership to remove
+        when(boardRepository.findWorkspaceIdById(11L)).thenReturn(Optional.of(1L));
+        when(boardMemberRepository.findBoardIdsByWorkspaceIdAndUserId(1L, 2L)).thenReturn(Set.of());
+        when(workspaceMemberRepository.findByWorkspaceIdAndUserId(1L, 2L))
+                .thenReturn(Optional.of(member(2L, WorkspaceRole.ROLE_PROJECT_MANAGER)));
+
+        assertThatThrownBy(() -> boardMembershipService.removeFromBoard(11L, 2L, admin))
+                .isInstanceOf(IllegalArgumentException.class);
+        verifyNoInteractions(revocationService);
+    }
+
     private static WorkspaceMember member(long userId, WorkspaceRole role) {
         User user = User.builder().id(userId).email("user" + userId + "@valeo.com").firstName("First").lastName("Last").passwordHash("hash").build();
         return WorkspaceMember.builder()

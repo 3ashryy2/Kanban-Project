@@ -6,13 +6,7 @@ import { WorkspaceStoreService } from '../../../core/store/workspace-store.servi
 import { AuthStoreService } from '../../../core/store/auth-store.service';
 import { WorkspaceResponseDto } from '../../../core/models/workspace.dto';
 import { lastVisited } from '../../../core/utils/last-visited';
-
-const ROLE_LABELS: Record<string, string> = {
-  ROLE_PROJECT_MANAGER: 'Project Manager',
-  ROLE_DEVELOPER: 'Developer',
-  ROLE_QA_TESTER: 'QA Tester',
-  ROLE_VIEWER: 'Viewer'
-};
+import { ROLE_LABELS } from '../../../core/utils/role-labels';
 
 /**
  * /w/:workspaceId: opens the last-used (or first) board this user may open.

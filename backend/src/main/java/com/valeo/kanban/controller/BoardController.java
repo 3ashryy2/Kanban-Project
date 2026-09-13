@@ -6,7 +6,9 @@ import com.valeo.kanban.dto.request.ColumnReorderRequest;
 import com.valeo.kanban.dto.response.AuditLogResponseDto;
 import com.valeo.kanban.dto.response.BoardDetailsDto;
 import com.valeo.kanban.dto.response.ColumnDto;
+import com.valeo.kanban.dto.response.MembershipChangeResponseDto;
 import com.valeo.kanban.dto.response.TaskDto;
+import com.valeo.kanban.security.CustomUserDetails;
 import com.valeo.kanban.service.AuditLogService;
 import com.valeo.kanban.service.BoardMembershipService;
 import com.valeo.kanban.service.BoardService;
@@ -16,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -35,6 +38,16 @@ public class BoardController {
     @PreAuthorize("@boardSecurity.canReadBoard(#boardId, principal)")
     public ResponseEntity<List<TaskDto.SimpleUserDto>> getBoardMembers(@PathVariable Long boardId) {
         return ResponseEntity.ok(boardMembershipService.getAssignableUsers(boardId));
+    }
+
+    // Takes one member off this board. 200 with a body (not 204): the client shows how many tasks were unassigned
+    @DeleteMapping("/{boardId}/members/{userId}")
+    @PreAuthorize("@boardSecurity.isAdminOrManager(#boardId, principal)")
+    public ResponseEntity<MembershipChangeResponseDto> removeBoardMember(
+            @PathVariable Long boardId,
+            @PathVariable Long userId,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+        return ResponseEntity.ok(boardMembershipService.removeFromBoard(boardId, userId, currentUser));
     }
 
     @GetMapping("/{boardId}")

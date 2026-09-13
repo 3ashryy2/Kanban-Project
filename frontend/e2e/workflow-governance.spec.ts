@@ -50,6 +50,40 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
     expect(request).toBeDefined();
   });
 
+  test('should add a transition from two dropdowns, and discard it when closed without saving', async ({ page }) => {
+    await page.goto('/auth/login');
+    await page.fill('#email', 'pm@valeo.com');
+    await page.fill('#password input', 'password123');
+    await page.click('button[type="submit"]');
+    await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
+    await expect(page.locator('.board-title')).toHaveText('Core Platform Roadmap', { timeout: 10000 });
+
+    // The dialog lists only the active rules
+    await page.click('button:has-text("Configure Workflow")');
+    const dialog = page.locator('.p-dialog', { hasText: 'Active State-Machine Transition Rules' });
+    const rules = dialog.locator('tr.matrix-row');
+    await expect(rules.first()).toBeVisible({ timeout: 5000 });
+    const listed = await rules.count();
+
+    // Pick a source, then a target: the rule joins the list, marked as new
+    await dialog.locator('button', { hasText: 'Add transition' }).click();
+    await dialog.locator('p-select#new-rule-from').click();
+    await page.locator('.p-select-overlay .p-select-option').first().click();
+    await expect(page.locator('.p-select-overlay')).toHaveCount(0);
+    await dialog.locator('p-select#new-rule-to').click();
+    await page.locator('.p-select-overlay .p-select-option').first().click();
+    await expect(rules).toHaveCount(listed + 1);
+    await expect(dialog.locator('tr.rule-new')).toHaveCount(1);
+
+    // Closing without saving discards it: opening again reads the saved rules
+    await dialog.locator('button', { hasText: 'Cancel' }).last().click();
+    await expect(dialog).toBeHidden();
+    await page.click('button:has-text("Configure Workflow")');
+    await expect(rules.first()).toBeVisible({ timeout: 5000 });
+    await expect(rules).toHaveCount(listed);
+    await expect(dialog.locator('tr.rule-new')).toHaveCount(0);
+  });
+
   test('should enforce gating, lock task, restrict developer edits, and allow PM to approve', async ({ page }) => {
     // 1. Login as Dev
     await page.goto('/auth/login');

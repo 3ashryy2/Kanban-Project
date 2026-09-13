@@ -1,0 +1,130 @@
+<p-dialog
+  header="Board Workflow Governance Configuration"
+  [visible]="visible"
+  (visibleChange)="setVisible($event)"
+  [modal]="true"
+  [style]="{ width: '850px' }"
+  [breakpoints]="{ '900px': '95vw' }"
+  styleClass="custom-dialog"
+>
+  <div class="workflow-config-container">
+    <h3>Active State-Machine Transition Rules</h3>
+    <p>Each row is a move cards may make. Any move that isn't listed is refused, except for admins.</p>
+    <p class="matrix-hint">
+      <i class="pi pi-info-circle"></i>
+      A rule that requires approval needs a fallback column: rejected cards go back there.
+    </p>
+
+    <div class="matrix-table-wrapper">
+      <table class="matrix-table">
+        <thead>
+          <tr>
+            <th>From Stage (Source)</th>
+            <th>To Stage (Target)</th>
+            <th>Permit</th>
+            <th>Requires Approval (Gated)</th>
+            <th>Rejection Fallback Column</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="loading">
+            <td colspan="5" class="matrix-empty"><i class="pi pi-spin pi-spinner"></i> Loading the rules…</td>
+          </tr>
+          <tr *ngIf="!loading && rows.length === 0">
+            <td colspan="5" class="matrix-empty">No transitions yet, so only admins can move cards. Add one below.</td>
+          </tr>
+          <tr
+            *ngFor="let rule of rows; trackBy: trackByRule"
+            class="matrix-row"
+            [class.rule-new]="rule.isNew"
+            [class.rule-off]="!rule.permitted"
+          >
+            <td class="col-source">{{ nameOf(rule.fromColumnId) }}</td>
+            <td class="col-target"><i class="pi pi-arrow-right mr-2"></i>{{ nameOf(rule.toColumnId) }}</td>
+            <td>
+              <p-checkbox [binary]="true" [(ngModel)]="rule.permitted"></p-checkbox>
+            </td>
+            <td>
+              <p-checkbox
+                [binary]="true"
+                [(ngModel)]="rule.requiresApproval"
+                [disabled]="!rule.permitted"
+                (onChange)="onApprovalToggled(rule)"
+              ></p-checkbox>
+            </td>
+            <td>
+              <!-- ngModel, not [value]: it re-selects the saved fallback once the options below exist -->
+              <select
+                class="fallback-select"
+                [class.missing-fallback]="needsFallback(rule)"
+                [disabled]="!rule.permitted || !rule.requiresApproval"
+                [ngModel]="rule.fallbackColumnId ?? null"
+                (ngModelChange)="setFallback(rule, $event)"
+              >
+                <option [ngValue]="null">No Fallback</option>
+                <!-- A rejected card has to leave the gated column, so its own target is not an option -->
+                <ng-container *ngFor="let column of columns">
+                  <option *ngIf="column.id !== rule.toColumnId" [ngValue]="column.id">{{ column.name }}</option>
+                </ng-container>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Adding a rule: two pickers that only offer moves that aren't listed yet -->
+    <div class="rule-adder">
+      <ng-container *ngIf="adding; else addButton">
+        <p-select
+          id="new-rule-from"
+          [options]="fromOptions"
+          optionLabel="name"
+          optionValue="id"
+          [(ngModel)]="newFromId"
+          (onChange)="onFromChosen()"
+          placeholder="From stage"
+          appendTo="body"
+          styleClass="adder-select"
+        ></p-select>
+        <i class="pi pi-arrow-right adder-arrow"></i>
+        <p-select
+          id="new-rule-to"
+          [options]="toOptions"
+          optionLabel="name"
+          optionValue="id"
+          [(ngModel)]="newToId"
+          (onChange)="onToChosen()"
+          [disabled]="newFromId === null"
+          placeholder="To stage"
+          appendTo="body"
+          styleClass="adder-select"
+        ></p-select>
+        <p-button label="Cancel" styleClass="p-button-text p-button-secondary p-button-sm" (click)="adding = false"></p-button>
+      </ng-container>
+      <ng-template #addButton>
+        <p-button
+          label="Add transition"
+          icon="pi pi-plus"
+          styleClass="p-button-outlined p-button-sm"
+          [disabled]="loading || !canAddRule"
+          (click)="startAdding()"
+        ></p-button>
+        <span class="adder-hint" *ngIf="!loading && !canAddRule">Every possible transition is already listed.</span>
+      </ng-template>
+    </div>
+  </div>
+
+  <ng-template #footer>
+    <p-button label="Cancel" styleClass="p-button-text p-button-secondary" (click)="setVisible(false)"></p-button>
+    <p-button
+      label="Save Governance Rules"
+      icon="pi pi-check"
+      styleClass="p-button-success"
+      [disabled]="loading || hasRuleMissingFallback"
+      [loading]="saving"
+      [pTooltip]="hasRuleMissingFallback ? 'Pick a fallback column for every rule that requires approval' : ''"
+      (click)="save()"
+    ></p-button>
+  </ng-template>
+</p-dialog>
