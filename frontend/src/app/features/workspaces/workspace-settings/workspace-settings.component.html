@@ -21,12 +21,12 @@
       </div>
     </div>
 
+    <!-- Wide card: a table. Narrow card: each row restacks into a block (see the @container rules) -->
     <div class="roster-list">
       <table class="roster-table">
         <thead>
           <tr>
             <th>Team Member</th>
-            <th>Corporate Email</th>
             <th>Workspace RBAC Role</th>
             <th>Boards</th>
             <th>Joined On</th>
@@ -35,31 +35,35 @@
         </thead>
         <tbody>
           <tr *ngIf="showUnassignedOnly && countWithoutBoards(members) === 0">
-            <td [attr.colspan]="canManageRoles ? 6 : 5" class="empty-filter">Everyone in this workspace has at least one board.</td>
+            <td [attr.colspan]="canManageRoles ? 5 : 4" class="empty-filter">Everyone in this workspace has at least one board.</td>
           </tr>
           <tr *ngFor="let member of visibleMembers(members); trackBy: trackByMemberId" class="roster-row">
-            <td class="member-name font-bold">
-              <div class="member-avatar">
-                {{ member.firstName[0] }}{{ member.lastName[0] }}
+            <td class="member-cell">
+              <div class="identity">
+                <div class="member-avatar">{{ member.firstName[0] }}{{ member.lastName[0] }}</div>
+                <div class="identity-text">
+                  <span class="identity-name">{{ member.firstName }} {{ member.lastName }}</span>
+                  <span class="identity-email">{{ member.email }}</span>
+                </div>
               </div>
-              <span>{{ member.firstName }} {{ member.lastName }}</span>
             </td>
-            <td class="member-email">{{ member.email }}</td>
-            <td>
+            <td class="role-cell">
               <span class="role-badge" [class]="'role-' + member.role.toLowerCase()">
                 {{ member.role.replace('ROLE_', '') }}
               </span>
             </td>
-            <td class="member-boards">
-              <p-tag *ngIf="member.allBoards" value="All boards (PM)" severity="info"></p-tag>
-              <ng-container *ngIf="!member.allBoards">
-                <p-tag *ngFor="let board of member.boards" [value]="board.title" severity="secondary"></p-tag>
-                <p-tag *ngIf="hasNoBoards(member)" value="No boards" severity="warn" icon="pi pi-exclamation-triangle"></p-tag>
-              </ng-container>
+            <td class="boards-cell" data-label="Boards">
+              <div class="board-tags">
+                <p-tag *ngIf="member.allBoards" value="All boards (PM)" severity="info"></p-tag>
+                <ng-container *ngIf="!member.allBoards">
+                  <p-tag *ngFor="let board of member.boards" [value]="board.title" severity="secondary"></p-tag>
+                  <p-tag *ngIf="hasNoBoards(member)" value="No boards" severity="warn" icon="pi pi-exclamation-triangle"></p-tag>
+                </ng-container>
+              </div>
             </td>
-            <td class="member-date">{{ member.joinedAt | date:'MMMM d, yyyy' }}</td>
-            <td *ngIf="canManageRoles" class="text-right">
-              <div style="display: flex; gap: 8px; justify-content: flex-end;">
+            <td class="joined-cell" data-label="Joined On">{{ member.joinedAt | date:'MMMM d, yyyy' }}</td>
+            <td *ngIf="canManageRoles" class="actions-cell text-right">
+              <div class="row-actions">
                 <p-button
                   icon="pi pi-th-large"
                   styleClass="p-button-text p-button-secondary p-button-sm"
@@ -147,7 +151,7 @@
     styleClass="custom-dialog"
   >
     <div class="dialog-form" *ngIf="selectedMemberToEdit">
-      <div style="margin-bottom: 16px; color: #475569; font-size: 0.9rem;">
+      <div class="dialog-intro">
         Updating role for <strong>{{ selectedMemberToEdit.firstName }} {{ selectedMemberToEdit.lastName }}</strong> ({{ selectedMemberToEdit.email }}).
       </div>
       <div class="dialog-field">

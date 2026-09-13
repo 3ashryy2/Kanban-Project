@@ -19,12 +19,13 @@ import com.valeo.kanban.repository.WorkspaceRepository;
 import com.valeo.kanban.security.BoardAccessService;
 import com.valeo.kanban.security.BoardScope;
 import com.valeo.kanban.security.CustomUserDetails;
+import com.valeo.kanban.service.workflow.DefaultWorkflow;
+import com.valeo.kanban.service.workflow.WorkflowTransitionService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,6 +42,7 @@ public class BoardService {
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final BoardMemberRepository boardMemberRepository;
     private final BoardAccessService boardAccessService;
+    private final WorkflowTransitionService workflowTransitionService;
 
     @Transactional(readOnly = true)
     public BoardDetailsDto getBoardAggregate(Long boardId) {
@@ -82,16 +84,20 @@ public class BoardService {
         Board savedBoard = boardRepository.save(board);
 
         // Create standard columns for instant Kanban setup
-        List<Column> defaultColumns = Arrays.asList(
-                Column.builder().board(savedBoard).name("To-Do").position(1000.0).isGated(false).build(),
-                Column.builder().board(savedBoard).name("In Progress").position(2000.0).isGated(false).build(),
-                Column.builder().board(savedBoard).name("Code Review").position(3000.0).isGated(false).build(),
-                Column.builder().board(savedBoard).name("Ready for QA").position(4000.0).isGated(true).build(),
-                Column.builder().board(savedBoard).name("Done").position(5000.0).isGated(false).build()
-        );
+        List<Column> defaultColumns = new ArrayList<>();
+        for (int i = 0; i < DefaultWorkflow.COLUMNS.size(); i++) {
+            defaultColumns.add(Column.builder()
+                    .board(savedBoard)
+                    .name(DefaultWorkflow.COLUMNS.get(i))
+                    .position((i + 1) * 1000.0)
+                    .build());
+        }
 
         List<Column> savedColumns = columnRepository.saveAll(defaultColumns);
         savedColumns.forEach(savedBoard::addColumn);
+
+        // Without rules every non-admin move would be refused, so the board starts with the default workflow
+        workflowTransitionService.applyDefaultWorkflow(savedBoard, savedColumns);
 
         // A PM who creates a board becomes its explicit member, so a later demotion doesn't take it away.
         // The global admin has no workspace membership and needs none.

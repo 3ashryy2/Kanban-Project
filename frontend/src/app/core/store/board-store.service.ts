@@ -65,13 +65,17 @@ export class BoardStoreService {
       });
   }
 
+  /**
+   * Moves the card on screen at once, then asks the server; rolls back if the server refuses.
+   * awaitsApproval: the caller's guess that the server will lock the card (a gated rule, moved by a non-manager).
+   */
   moveTaskOptimistically(
     taskId: number,
     sourceColumnId: number,
     targetColumnId: number,
     targetIndex: number,
     currentVersion: number,
-    adminBypass = false
+    awaitsApproval = false
   ): void {
     const currentState = this._boardState$.getValue();
     if (!currentState) return;
@@ -97,11 +101,12 @@ export class BoardStoreService {
       return col;
     });
 
+    // The server has the final word on status; its reply replaces this guess (syncTaskVersionInStore)
     const movedTask: TaskDto = {
       ...originalTask,
       columnId: targetColumnId,
       position: newPosition,
-      status: targetColumn.isGated && !adminBypass ? 'PENDING_APPROVAL' : 'ACTIVE'
+      status: awaitsApproval ? 'PENDING_APPROVAL' : originalTask.status
     };
 
     const finalColumns = updatedColumns.map(col => {
@@ -116,10 +121,11 @@ export class BoardStoreService {
     this._boardState$.next({ ...currentState, columns: finalColumns });
 
     // 4. Dispatch HTTP payload with version token
+    // The server applies the admin bypass on its own, whatever this flag says
     const payload: TaskMoveRequest = {
       targetColumnId,
       newPosition,
-      adminBypass,
+      adminBypass: false,
       version: currentVersion
     };
 

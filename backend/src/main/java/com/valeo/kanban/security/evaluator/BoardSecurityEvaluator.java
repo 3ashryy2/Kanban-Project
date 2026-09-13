@@ -9,6 +9,7 @@ import com.valeo.kanban.security.BoardAccessService;
 import com.valeo.kanban.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import java.util.Optional;
 
 @Component("boardSecurity")
 @RequiredArgsConstructor
@@ -43,12 +44,16 @@ public class BoardSecurityEvaluator {
                 .orElse(false);
     }
 
-    public boolean canCreateTaskOnBoard(Long boardId, CustomUserDetails currentUser) {
-        if (boardId == null || currentUser == null) return false;
+    public boolean canCreateTaskInColumn(Long boardId, Long columnId, CustomUserDetails currentUser) {
+        if (boardId == null || columnId == null || currentUser == null) return false;
         if (currentUser.isAdmin()) return true;
         // Must be able to open the board, and viewers stay read-only
-        return boardAccess.roleOnBoard(boardId, currentUser.getId())
-                .map(role -> role != WorkspaceRole.ROLE_VIEWER)
+        Optional<WorkspaceRole> role = boardAccess.roleOnBoard(boardId, currentUser.getId());
+        if (role.isEmpty() || role.get() == WorkspaceRole.ROLE_VIEWER) return false;
+        if (role.get() == WorkspaceRole.ROLE_PROJECT_MANAGER) return true;
+        // Developers and QA start every card in the first column; later stages are reached only through the workflow
+        return columnRepository.findFirstByBoardIdOrderByPositionAsc(boardId)
+                .map(first -> first.getId().equals(columnId))
                 .orElse(false);
     }
 

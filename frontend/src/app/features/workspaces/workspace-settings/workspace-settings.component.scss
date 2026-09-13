@@ -1,6 +1,5 @@
 .settings-container {
   padding: 24px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 .settings-header {
   margin-bottom: 24px;
@@ -8,29 +7,33 @@
 .settings-header h2 {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-strong);
   margin: 0 0 6px 0;
   letter-spacing: -0.02em;
 }
 .settings-header p {
   font-size: 0.9rem;
-  color: #64748b;
+  color: var(--text-muted);
   margin: 0;
 }
 .settings-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: var(--surface-card);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 20px;
+  // The roster responds to the card's width, not the window's: the sidebar already takes 260px of the window
+  container: roster-card / inline-size;
 }
 .shadow-card {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 .card-header-bar {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #f1f5f9;
+  gap: 12px;
+  border-bottom: 1px solid var(--divider);
   padding-bottom: 16px;
   margin-bottom: 16px;
 }
@@ -38,34 +41,34 @@
   margin: 0;
   font-size: 1.1rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text-strong);
 }
 .card-header-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
+  gap: 12px 16px;
 }
 .roster-filter {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 0.85rem;
-  color: #475569;
-}
-.member-boards {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  color: var(--text-muted);
 }
 .empty-filter {
   padding: 20px 16px;
   text-align: center;
-  color: #64748b;
+  color: var(--text-muted);
 }
 .dialog-intro {
-  color: #475569;
+  color: var(--text-muted);
   font-size: 0.9rem;
   line-height: 1.5;
+}
+.roster-list {
+  // Last resort: if the columns still can't fit, scroll inside the card instead of spilling past it
+  overflow-x: auto;
 }
 .roster-table {
   width: 100%;
@@ -73,30 +76,35 @@
   font-size: 0.9rem;
 }
 .roster-table th {
-  background-color: #f8fafc;
-  padding: 12px 16px;
+  background-color: var(--surface-subtle);
+  padding: 12px;
   text-align: left;
   font-weight: 600;
-  color: #475569;
-  border-bottom: 2px solid #e2e8f0;
+  color: var(--text-muted);
+  border-bottom: 2px solid var(--border);
 }
 .roster-row td {
-  padding: 12px 16px;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 12px;
+  border-bottom: 1px solid var(--divider);
   vertical-align: middle;
-  color: #334155;
+  color: var(--text);
 }
-.member-name {
+// Keeps the name readable when a member with many boards widens the Boards column
+.member-cell {
+  min-width: 200px;
+}
+// Flex lives on inner divs: display:flex on a <td> stops it behaving as a table cell
+.identity {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #0f172a;
 }
 .member-avatar {
+  flex-shrink: 0;
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background-color: #3b82f6;
+  background-color: var(--accent);
   color: #ffffff;
   font-size: 0.8rem;
   font-weight: 700;
@@ -105,6 +113,34 @@
   align-items: center;
   text-transform: uppercase;
 }
+.identity-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  // A long email may break onto a second line instead of forcing the column wider
+  overflow-wrap: anywhere;
+}
+.identity-name {
+  font-weight: 700;
+  color: var(--text-strong);
+}
+.identity-email {
+  font-size: 0.8rem;
+  color: var(--text-subtle);
+}
+.board-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.joined-cell {
+  white-space: nowrap;
+}
+.row-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
 .role-badge {
   display: inline-block;
   font-size: 0.75rem;
@@ -112,26 +148,27 @@
   padding: 2px 8px;
   border-radius: 12px;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 .role-role_admin {
-  background-color: #fee2e2;
-  color: #b91c1c;
+  background-color: var(--danger-soft);
+  color: var(--danger-text);
 }
 .role-role_project_manager {
-  background-color: #fef3c7;
-  color: #d97706;
+  background-color: var(--warning-soft);
+  color: var(--warning-text);
 }
 .role-role_developer {
-  background-color: #dbeafe;
-  color: #1d4ed8;
+  background-color: var(--accent-soft);
+  color: var(--accent-strong);
 }
 .role-role_qa_tester {
-  background-color: #dcfce7;
-  color: #15803d;
+  background-color: var(--success-soft);
+  color: var(--success-text);
 }
 .role-role_viewer {
-  background-color: #f1f5f9;
-  color: #475569;
+  background-color: var(--surface-sunken);
+  color: var(--text-muted);
 }
 .text-right {
   text-align: right !important;
@@ -150,7 +187,7 @@
 .dialog-field label {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #475569;
+  color: var(--text-muted);
 }
 .loading-state {
   display: flex;
@@ -158,10 +195,87 @@
   justify-content: center;
   align-items: center;
   padding: 40px;
-  color: #64748b;
+  color: var(--text-muted);
 }
 .spinner-icon {
   font-size: 2rem;
-  color: #3b82f6;
+  color: var(--accent);
   margin-bottom: 8px;
+}
+
+// Narrow card: too tight for five columns, so each member becomes a stacked block
+@container roster-card (max-width: 860px) {
+  .roster-list {
+    overflow-x: visible;
+  }
+  .roster-table,
+  .roster-table tbody,
+  .roster-table tr,
+  .roster-table td {
+    display: block;
+  }
+  .roster-table thead {
+    display: none;
+  }
+  .roster-table .roster-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "member role"
+      "boards boards"
+      "joined actions";
+    align-items: center;
+    gap: 12px 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--divider);
+
+    &:first-child {
+      padding-top: 0;
+    }
+  }
+  .roster-row td {
+    padding: 0;
+    border-bottom: 0;
+    min-width: 0;
+  }
+  // The header row is hidden, so each field carries its own label
+  .roster-row td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-subtle);
+  }
+  .member-cell {
+    grid-area: member;
+  }
+  .role-cell {
+    grid-area: role;
+  }
+  .boards-cell {
+    grid-area: boards;
+  }
+  .joined-cell {
+    grid-area: joined;
+  }
+  .actions-cell {
+    grid-area: actions;
+  }
+}
+
+// Very narrow card: the role badge drops under the name so the name keeps the full width
+@container roster-card (max-width: 440px) {
+  .roster-table .roster-row {
+    grid-template-areas:
+      "member member"
+      "role   role"
+      "boards boards"
+      "joined actions";
+  }
+  .roster-row .role-cell {
+    padding-left: 44px;
+  }
 }

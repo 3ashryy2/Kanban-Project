@@ -1,6 +1,5 @@
 .admin-users-container {
   padding: 24px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 .page-header {
   margin-bottom: 24px;
@@ -8,30 +7,34 @@
   h2 {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-strong);
     margin: 0 0 6px 0;
     letter-spacing: -0.02em;
   }
   p {
     font-size: 0.9rem;
-    color: #64748b;
+    color: var(--text-muted);
     margin: 0;
   }
 }
 .users-card {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: var(--surface-card);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 20px;
+  // The list responds to the card's width, not the window's: the sidebar already takes 260px of the window
+  container: users-card / inline-size;
 }
 .shadow-card {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 .card-header-bar {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #f1f5f9;
+  gap: 12px;
+  border-bottom: 1px solid var(--divider);
   padding-bottom: 16px;
   margin-bottom: 16px;
 
@@ -42,16 +45,20 @@
     margin: 0;
     font-size: 1.1rem;
     font-weight: 700;
-    color: #1e293b;
+    color: var(--text-strong);
   }
 }
 .count-pill {
-  background-color: #fef3c7;
-  color: #b45309;
+  background-color: var(--warning-soft);
+  color: var(--warning-text);
   font-size: 0.75rem;
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 12px;
+}
+.users-list {
+  // Last resort: if the columns still can't fit, scroll inside the card instead of spilling past it
+  overflow-x: auto;
 }
 .users-table {
   width: 100%;
@@ -59,32 +66,35 @@
   font-size: 0.9rem;
 
   th {
-    background-color: #f8fafc;
-    padding: 12px 16px;
+    background-color: var(--surface-subtle);
+    padding: 12px;
     text-align: left;
     font-weight: 600;
-    color: #475569;
-    border-bottom: 2px solid #e2e8f0;
+    color: var(--text-muted);
+    border-bottom: 2px solid var(--border);
   }
 }
 .user-row td {
-  padding: 10px 16px;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--divider);
   vertical-align: middle;
-  color: #334155;
+  color: var(--text);
 }
-.user-name {
+.user-cell {
+  min-width: 200px;
+}
+// Flex lives on an inner div: display:flex on a <td> stops it behaving as a table cell
+.identity {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-weight: 600;
-  color: #0f172a;
 }
 .user-avatar {
+  flex-shrink: 0;
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background-color: #64748b;
+  background-color: var(--accent);
   color: #ffffff;
   font-size: 0.8rem;
   font-weight: 700;
@@ -93,12 +103,26 @@
   align-items: center;
   text-transform: uppercase;
 }
-.user-date {
-  color: #64748b;
+.identity-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  // A long email may break onto a second line instead of forcing the column wider
+  overflow-wrap: anywhere;
+}
+.identity-name {
+  font-weight: 600;
+  color: var(--text-strong);
+}
+.identity-email {
+  font-size: 0.8rem;
+  color: var(--text-subtle);
+}
+.date-cell {
   white-space: nowrap;
 }
 .select-cell {
-  min-width: 180px;
+  min-width: 160px;
 }
 .text-right {
   text-align: right !important;
@@ -108,11 +132,11 @@
   flex-direction: column;
   align-items: center;
   padding: 40px;
-  color: #64748b;
+  color: var(--text-muted);
 
   i {
     font-size: 2rem;
-    color: #10b981;
+    color: var(--success-icon);
     margin-bottom: 8px;
   }
   p {
@@ -122,4 +146,84 @@
 ::ng-deep .w-full,
 .w-full {
   width: 100% !important;
+}
+
+// Narrow card: too tight for five columns, so each user becomes a stacked block
+@container users-card (max-width: 900px) {
+  .users-list {
+    overflow-x: visible;
+  }
+  .users-table,
+  .users-table tbody,
+  .users-table tr,
+  .users-table td {
+    display: block;
+  }
+  .users-table thead {
+    display: none;
+  }
+  .users-table .user-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "user      date"
+      "workspace role"
+      "action    action";
+    align-items: center;
+    gap: 12px 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--divider);
+
+    &:first-child {
+      padding-top: 0;
+    }
+  }
+  .user-row td {
+    padding: 0;
+    border-bottom: 0;
+    min-width: 0;
+  }
+  // The header row is hidden, so each field carries its own label
+  .user-row td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-subtle);
+  }
+  .user-cell {
+    grid-area: user;
+  }
+  .date-cell {
+    grid-area: date;
+    text-align: right;
+  }
+  .workspace-cell {
+    grid-area: workspace;
+  }
+  .role-cell {
+    grid-area: role;
+  }
+  .action-cell {
+    grid-area: action;
+  }
+}
+
+// Very narrow card: one field per line
+@container users-card (max-width: 480px) {
+  .users-table .user-row {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "user"
+      "date"
+      "workspace"
+      "role"
+      "action";
+  }
+  .date-cell {
+    text-align: left;
+  }
 }

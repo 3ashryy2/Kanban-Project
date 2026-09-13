@@ -34,7 +34,7 @@
           optionValue="value"
           [(ngModel)]="selectedPriorityFilter"
           (onChange)="onFilterChange()"
-          styleClass="filter-select"
+          styleClass="filter-dropdown"
         ></p-select>
 
         <p-select 
@@ -47,7 +47,7 @@
           optionValue="value"
           [(ngModel)]="selectedStatusFilter"
           (onChange)="onFilterChange()"
-          styleClass="filter-select"
+          styleClass="filter-dropdown"
         ></p-select>
       </div>
     </div>
@@ -68,7 +68,7 @@
       <div class="column-header" [class.gated-column-header]="col.isGated">
         <div class="col-header-left">
           <i class="pi pi-lock-open column-icon" *ngIf="!col.isGated"></i>
-          <i class="pi pi-lock gated-column-icon" *ngIf="col.isGated" pTooltip="Gated Transition Area: Entry requires reviewer approval"></i>
+          <i class="pi pi-lock gated-column-icon" *ngIf="col.isGated" pTooltip="Gated: a workflow rule into this column needs a project manager's approval"></i>
           <span class="column-name">{{ col.name }}</span>
           <span class="card-count-badge">{{ col.tasks.length }}</span>
         </div>
@@ -83,7 +83,8 @@
           >
             WIP: {{ col.tasks.length }}/{{ col.wipLimit }}
           </span>
-          <p-button icon="pi pi-plus" styleClass="p-button-text p-button-secondary col-add-btn" (click)="openCreateTaskDialog(col.id)" pTooltip="Add card to column"></p-button>
+          <!-- New cards enter the workflow at its start; only admins and PMs can place one further along -->
+          <p-button *ngIf="canAddCardTo(col.id)" icon="pi pi-plus" styleClass="p-button-text p-button-secondary col-add-btn" (click)="openCreateTaskDialog(col.id)" pTooltip="Add card to column"></p-button>
         </div>
       </div>
 
@@ -321,15 +322,18 @@
     <div class="dialog-form">
       <div class="dialog-field">
         <label for="fallback-col">Select Rejection Backward Fallback Stage *</label>
-        <p-select 
-          id="fallback-col" 
-          [options]="getFallbackColumnOptions()" 
+        <p-select
+          id="fallback-col"
+          [options]="rejectFallbackOptions"
           optionLabel="label"
           optionValue="value"
-          [(ngModel)]="selectedRejectFallbackColumnId" 
+          [(ngModel)]="selectedRejectFallbackColumnId"
           placeholder="Choose fallback stage..."
           styleClass="w-full"
         ></p-select>
+        <small class="field-error" *ngIf="rejectFallbackOptions.length === 0">
+          No fallback column is set for this gate. Add one in Configure Workflow first.
+        </small>
       </div>
 
       <div class="dialog-field">
@@ -355,6 +359,10 @@
     <div class="workflow-config-container">
       <h3>Active State-Machine Transition Rules</h3>
       <p>Configure permitted progression channels and lock boundaries across your perception roadmap stages.</p>
+      <p class="matrix-hint">
+        <i class="pi pi-info-circle"></i>
+        A rule that requires approval needs a fallback column: rejected cards go back there.
+      </p>
 
       <div class="matrix-table-wrapper">
         <table class="matrix-table">
@@ -389,16 +397,21 @@
                     ></p-checkbox>
                   </td>
                   <td>
-                    <select 
+                    <!-- ngModel, not [value]: it re-selects the saved fallback once the options below exist -->
+                    <select
                       [disabled]="!getTransitionCheckboxValue(fromCol.id, toCol.id) || !getTransitionApprovalValue(fromCol.id, toCol.id)"
-                      [value]="getTransitionFallbackValue(fromCol.id, toCol.id) || ''"
-                      (change)="setTransitionFallback(fromCol.id, toCol.id, $any($event.target).value)"
+                      [ngModel]="getTransitionFallbackValue(fromCol.id, toCol.id)"
+                      (ngModelChange)="setTransitionFallback(fromCol.id, toCol.id, $event)"
                       class="fallback-select"
+                      [class.missing-fallback]="isMissingFallback(fromCol.id, toCol.id)"
                     >
-                      <option value="">No Fallback</option>
-                      <option *ngFor="let fallbackCol of board.columns" [value]="fallbackCol.id">
-                        {{ fallbackCol.name }}
-                      </option>
+                      <option [ngValue]="null">No Fallback</option>
+                      <!-- A rejected card has to leave the gated column, so its own target is not an option -->
+                      <ng-container *ngFor="let fallbackCol of board.columns">
+                        <option *ngIf="fallbackCol.id !== toCol.id" [ngValue]="fallbackCol.id">
+                          {{ fallbackCol.name }}
+                        </option>
+                      </ng-container>
                     </select>
                   </td>
                 </tr>
@@ -411,7 +424,14 @@
 
     <ng-template #footer>
       <p-button label="Cancel" styleClass="p-button-text p-button-secondary" (click)="workflowDialogVisible = false"></p-button>
-      <p-button label="Save Governance Rules" icon="pi pi-check" styleClass="p-button-success" (click)="saveWorkflowTransitions()"></p-button>
+      <p-button
+        label="Save Governance Rules"
+        icon="pi pi-check"
+        styleClass="p-button-success"
+        [disabled]="hasRuleMissingFallback"
+        [pTooltip]="hasRuleMissingFallback ? 'Pick a fallback column for every rule that requires approval' : ''"
+        (click)="saveWorkflowTransitions()"
+      ></p-button>
     </ng-template>
   </p-dialog>
 

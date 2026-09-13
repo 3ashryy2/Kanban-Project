@@ -64,17 +64,19 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
     await expect(boardTitle).toBeVisible({ timeout: 10000 });
     await expect(boardTitle).toHaveText('Core Platform Roadmap');
 
-    // Create a task in Code Review (column index 2) to prepare for moving to Ready for QA (column index 3)
+    // Developers can only add cards to the first column, so the "+" is missing on later ones
+    const toDoColumn = page.locator('.kanban-column').nth(0);
     const codeReviewColumn = page.locator('.kanban-column').nth(2);
-    const addCardBtn = codeReviewColumn.locator('.col-add-btn');
-    await addCardBtn.click();
+    await expect(codeReviewColumn.locator('.col-add-btn')).toHaveCount(0);
+
+    // Create the task in To-Do (column index 0)
+    await toDoColumn.locator('.col-add-btn').click();
 
     const uniqueTitle = `Gated Task - ${Date.now()}`;
     await page.fill('#new-title', uniqueTitle);
     await page.click('button:has-text("Add Task")');
 
-    // Verify task is added to "Code Review"
-    const taskCard = codeReviewColumn.locator('.task-card', { hasText: uniqueTitle });
+    const taskCard = toDoColumn.locator('.task-card', { hasText: uniqueTitle });
     await expect(taskCard).toBeVisible({ timeout: 5000 });
 
     // Assign task first to satisfy backend assignee validation rule
@@ -86,9 +88,20 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
     // Wait for save & board reload to complete
     const dialog = page.locator('.p-dialog:visible');
     await expect(dialog).not.toBeVisible({ timeout: 5000 });
+    await expect(taskCard.locator('.user-avatar')).toBeVisible({ timeout: 5000 });
+
+    // Walk it through the seeded rules: To-Do -> In Progress -> Code Review, each move confirmed by the server
+    // before the next drag, which needs the card's new version
+    for (const columnIndex of [1, 2]) {
+      const column = page.locator('.kanban-column').nth(columnIndex);
+      const card = page.locator('.task-card', { hasText: uniqueTitle });
+      const moved = page.waitForResponse(res => res.url().includes('/move') && res.request().method() === 'PATCH');
+      await dragCard(page, card, column.locator('.column-card-stack'));
+      expect((await moved).ok()).toBeTruthy();
+      await expect(column.locator('.task-card', { hasText: uniqueTitle })).toBeVisible({ timeout: 5000 });
+    }
 
     const updatedTaskCard = codeReviewColumn.locator('.task-card', { hasText: uniqueTitle });
-    await expect(updatedTaskCard.locator('.user-avatar')).toBeVisible({ timeout: 5000 });
 
     // Drag from Code Review (column index 2) to Ready for QA (column index 3)
     const readyForQaColumn = page.locator('.kanban-column').nth(3);

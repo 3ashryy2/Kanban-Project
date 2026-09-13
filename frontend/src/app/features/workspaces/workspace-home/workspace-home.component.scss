@@ -2,13 +2,12 @@
   display: flex;
   justify-content: center;
   padding: 64px 24px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 .empty-card {
   width: 100%;
   max-width: 480px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: var(--surface-card);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 32px;
   display: flex;
@@ -19,7 +18,7 @@
   h2 {
     font-size: 1.3rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-strong);
     margin: 0;
     letter-spacing: -0.02em;
   }
@@ -27,10 +26,10 @@
     margin: 0;
     font-size: 0.95rem;
     line-height: 1.55;
-    color: #334155;
+    color: var(--text);
   }
   .muted {
-    color: #64748b;
+    color: var(--text-subtle);
     font-size: 0.88rem;
   }
 }
@@ -41,13 +40,13 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #dbeafe;
-  color: #1d4ed8;
+  background-color: var(--accent-soft);
+  color: var(--accent-strong);
   font-size: 1.3rem;
 
   &.waiting {
-    background-color: #fef3c7;
-    color: #d97706;
+    background-color: var(--warning-soft);
+    color: var(--warning-icon);
   }
 }
 .members-link {
@@ -56,7 +55,7 @@
   align-items: center;
   gap: 8px;
   margin-top: 4px;
-  color: #1d4ed8;
+  color: var(--accent-strong);
   font-weight: 600;
   font-size: 0.9rem;
   text-decoration: none;
