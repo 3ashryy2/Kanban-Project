@@ -98,6 +98,66 @@
     </div>
   </ng-template>
 
+  <!-- Deleting the whole workspace: global admin only -->
+  <section class="danger-zone" *ngIf="isAdmin && (workspaceStore.activeWorkspace$ | async) as ws">
+    <div class="danger-text">
+      <h3>Delete this workspace</h3>
+      <p>
+        Permanently deletes <strong>{{ ws.name }}</strong>: its {{ ws.boardCount }} {{ ws.boardCount === 1 ? 'board' : 'boards' }},
+        every card on them, and its member list. People keep their accounts. This can't be undone.
+      </p>
+    </div>
+    <p-button
+      label="Delete Workspace"
+      icon="pi pi-trash"
+      styleClass="p-button-danger p-button-outlined"
+      (onClick)="openDeleteWorkspaceDialog()"
+    ></p-button>
+  </section>
+
+  <!-- Delete Workspace Modal -->
+  <p-dialog
+    header="Delete Workspace"
+    [(visible)]="deleteWorkspaceVisible"
+    [modal]="true"
+    [style]="{ width: '440px' }"
+    [breakpoints]="{ '575px': '92vw' }"
+    styleClass="custom-dialog"
+  >
+    <div class="dialog-form" *ngIf="workspaceStore.activeWorkspace$ | async as ws">
+      <div class="dialog-intro">
+        This deletes <strong>{{ ws.name }}</strong> with its {{ ws.boardCount }} {{ ws.boardCount === 1 ? 'board' : 'boards' }}
+        and every card on them, and removes its {{ ws.memberCount }} {{ ws.memberCount === 1 ? 'member' : 'members' }} from it.
+        Their accounts stay.
+      </div>
+      <div class="dialog-field">
+        <label for="confirm-workspace-name">Type <strong>{{ ws.name }}</strong> to confirm</label>
+        <input
+          id="confirm-workspace-name"
+          name="confirmWorkspaceName"
+          type="text"
+          pInputText
+          autocomplete="off"
+          [(ngModel)]="deleteWorkspaceConfirmation"
+          (keydown.enter)="deleteWorkspace()"
+          class="w-full"
+        />
+      </div>
+    </div>
+
+    <ng-template #footer>
+      <p-button label="Cancel" styleClass="p-button-text p-button-secondary" (click)="deleteWorkspaceVisible = false"></p-button>
+      <p-button
+        label="Delete Workspace"
+        icon="pi pi-trash"
+        styleClass="p-button-danger"
+        [disabled]="!workspaceNameConfirmed"
+        [loading]="deletingWorkspace"
+        (onClick)="deleteWorkspace()"
+      ></p-button>
+    </ng-template>
+  </p-dialog>
+
   <!-- Add Member Modal -->
   <p-dialog 
     header="Provision New Workspace Access" 

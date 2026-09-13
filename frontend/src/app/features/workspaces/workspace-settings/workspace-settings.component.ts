@@ -2,9 +2,11 @@ import { Component, OnInit, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ConfirmationService } from 'primeng/api';
 import { WorkspaceStoreService } from '../../../core/store/workspace-store.service';
 import { AuthStoreService } from '../../../core/store/auth-store.service';
+import { UserDirectoryStoreService } from '../../../core/store/user-directory-store.service';
 import { WorkspaceMemberResponseDto } from '../../../core/models/workspace.dto';
 import { UserSearchSelectComponent } from '../../../shared/components/user-search-select/user-search-select.component';
 
@@ -13,6 +15,7 @@ import { Button } from 'primeng/button';
 import { Checkbox } from 'primeng/checkbox';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 import { Dialog } from 'primeng/dialog';
+import { InputText } from 'primeng/inputtext';
 import { MultiSelect } from 'primeng/multiselect';
 import { Select } from 'primeng/select';
 import { Tag } from 'primeng/tag';
@@ -32,6 +35,7 @@ export interface SelectItem {
     Checkbox,
     ConfirmDialog,
     Dialog,
+    InputText,
     MultiSelect,
     Select,
     Tag,
@@ -46,6 +50,8 @@ export class WorkspaceSettingsComponent implements OnInit {
   readonly workspaceStore = inject(WorkspaceStoreService);
   private readonly authStore = inject(AuthStoreService);
   private readonly confirmationService = inject(ConfirmationService);
+  private readonly userDirectory = inject(UserDirectoryStoreService);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   isAdmin = false;
@@ -64,6 +70,11 @@ export class WorkspaceSettingsComponent implements OnInit {
   memberForBoards: WorkspaceMemberResponseDto | null = null;
   selectedBoardIds: number[] = [];
   savingBoards = false;
+
+  // Delete-workspace dialog: the admin types the workspace's name to confirm
+  deleteWorkspaceVisible = false;
+  deleteWorkspaceConfirmation = '';
+  deletingWorkspace = false;
 
   newMemberPayload: { userId: number | null; role: string } = {
     userId: null,
@@ -228,6 +239,34 @@ export class WorkspaceSettingsComponent implements OnInit {
       return;
     }
     update();
+  }
+
+  openDeleteWorkspaceDialog(): void {
+    this.deleteWorkspaceConfirmation = '';
+    this.deleteWorkspaceVisible = true;
+  }
+
+  get workspaceNameConfirmed(): boolean {
+    const workspace = this.workspaceStore.getActiveWorkspace();
+    return !!workspace && this.deleteWorkspaceConfirmation.trim() === workspace.name;
+  }
+
+  deleteWorkspace(): void {
+    const workspace = this.workspaceStore.getActiveWorkspace();
+    if (!workspace || !this.workspaceNameConfirmed || this.deletingWorkspace) return;
+
+    this.deletingWorkspace = true;
+    this.workspaceStore.deleteWorkspace(workspace.id).subscribe({
+      next: () => {
+        this.deletingWorkspace = false;
+        this.deleteWorkspaceVisible = false;
+        // Members left without any workspace return to the onboarding queue; refresh its count
+        this.userDirectory.loadUnassignedUsers();
+        // "/" opens another workspace, or onboarding when none are left
+        this.router.navigate(['/']);
+      },
+      error: () => this.deletingWorkspace = false // the store already shows the reason
+    });
   }
 
   trackByMemberId(index: number, member: WorkspaceMemberResponseDto): number {

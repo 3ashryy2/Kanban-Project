@@ -248,6 +248,73 @@ export class WorkspaceStoreService {
       });
   }
 
+  /** Takes a member off one board, keeping their other boards; their tasks there are unassigned. */
+  removeMemberFromBoard(boardId: number, userId: number): Observable<MembershipChangeResponseDto> {
+    return this.http.delete<MembershipChangeResponseDto>(`/api/boards/${boardId}/members/${userId}`).pipe(
+      tap({
+        next: change => {
+          if (change.member) {
+            this.replaceMember(change.member);
+          }
+          const name = change.member ? `${change.member.firstName} ${change.member.lastName}` : 'The member';
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Removed from Board',
+            detail: `${name} no longer has access to this board.${unassignedNote(change.unassignedTaskCount)}`
+          });
+        },
+        error: err => this.showError('Removal Failed', err.error?.message || 'Could not remove the member from this board.')
+      })
+    );
+  }
+
+  /** Deletes a board of the active workspace with its columns, cards and workflow rules. */
+  deleteBoard(boardId: number): Observable<void> {
+    return this.http.delete<void>(`/api/boards/${boardId}`).pipe(
+      tap({
+        next: () => {
+          const board = this._boards$.getValue().find(b => b.id === boardId);
+          this._boards$.next(this._boards$.getValue().filter(b => b.id !== boardId));
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Board Deleted',
+            detail: board ? `"${board.title}" and its cards were deleted.` : 'The board was deleted.'
+          });
+        },
+        error: err => this.showError('Delete Failed', err.error?.message || 'Could not delete the board.')
+      })
+    );
+  }
+
+  /** Deletes a workspace with its boards, cards and member list (global admin only). */
+  deleteWorkspace(workspaceId: number): Observable<void> {
+    return this.http.delete<void>(`/api/workspaces/${workspaceId}`).pipe(
+      tap({
+        next: () => {
+          const workspace = this._workspaces$.getValue().find(w => w.id === workspaceId);
+          this.forgetWorkspace(workspaceId);
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Workspace Deleted',
+            detail: workspace ? `"${workspace.name}" and everything in it were deleted.` : 'The workspace was deleted.'
+          });
+        },
+        error: err => this.showError('Delete Failed', err.error?.message || 'Could not delete the workspace.')
+      })
+    );
+  }
+
+  // Drops a deleted workspace from the lists; the "/" redirect then picks another one, or onboarding
+  private forgetWorkspace(workspaceId: number): void {
+    if (this._activeWorkspace$.getValue()?.id === workspaceId) {
+      this._activeWorkspace$.next(null);
+      this._activeWorkspaceMembers$.next([]);
+      this._boards$.next([]);
+      this.boardsRequest = null;
+    }
+    this._workspaces$.next(this._workspaces$.getValue().filter(w => w.id !== workspaceId));
+  }
+
   private replaceMember(updated: WorkspaceMemberResponseDto): void {
     const current = this._activeWorkspaceMembers$.getValue();
     this._activeWorkspaceMembers$.next(current.map(m => m.userId === updated.userId ? updated : m));

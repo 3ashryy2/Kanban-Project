@@ -2,13 +2,13 @@ import { Component, OnInit, OnDestroy, inject, DestroyRef } from '@angular/core'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
 import { Subject, Subscription, combineLatest, debounceTime, distinctUntilChanged, map, BehaviorSubject, Observable } from 'rxjs';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { findRouteParam } from '../../../core/utils/route-params';
 import { lastVisited } from '../../../core/utils/last-visited';
+import { ROLE_LABELS } from '../../../core/utils/role-labels';
 
 // Stores & Services
 import { BoardStoreService } from '../../../core/store/board-store.service';
@@ -21,9 +21,10 @@ import { ActivityStoreService } from '../../../core/store/activity-store.service
 import { BoardDetailsDto } from '../../../core/models/board.dto';
 import { ColumnDto, ColumnCreateRequest } from '../../../core/models/column.dto';
 import { TaskDto, TaskCreateRequest, TaskMetadataRequest, TaskAssigneeRequest, TaskApproveRequest, TaskRejectRequest } from '../../../core/models/task.dto';
-import { WorkflowTransitionUpdateRequest } from '../../../core/models/workflow.dto';
+import { WorkspaceMemberResponseDto } from '../../../core/models/workspace.dto';
 import { SimpleUserDto } from '../../../core/models/user.dto';
 import { ParseDetailsPipe } from '../../../shared/pipes/parse-details.pipe';
+import { WorkflowRulesDialogComponent } from '../workflow-rules-dialog/workflow-rules-dialog.component';
 
 // PrimeNG Standalone Components (v22+)
 import { Dialog } from 'primeng/dialog';
@@ -32,7 +33,8 @@ import { InputText } from 'primeng/inputtext';
 import { Textarea } from 'primeng/textarea';
 import { Select } from 'primeng/select';
 import { Drawer } from 'primeng/drawer';
-import { Checkbox } from 'primeng/checkbox';
+import { ConfirmDialog } from 'primeng/confirmdialog';
+import { Tag } from 'primeng/tag';
 import { Tooltip } from 'primeng/tooltip';
 
 @Component({
@@ -41,33 +43,39 @@ import { Tooltip } from 'primeng/tooltip';
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     Dialog,
     Button,
     InputText,
     Textarea,
     Select,
     Drawer,
-    Checkbox,
+    ConfirmDialog,
+    Tag,
     Tooltip,
     ParseDetailsPipe,
-    DragDropModule
+    DragDropModule,
+    WorkflowRulesDialogComponent
   ],
+  // One confirmation host for deleting the board and taking people off it
+  providers: [ConfirmationService],
   templateUrl: './board-container.component.html',
   styleUrls: ['./board-container.component.scss']
 })
 export class BoardContainerComponent implements OnInit, OnDestroy {
-  readonly http = inject(HttpClient);
   readonly boardStore = inject(BoardStoreService);
   readonly authStore = inject(AuthStoreService);
   readonly workspaceStore = inject(WorkspaceStoreService);
   readonly workflowStore = inject(WorkflowStoreService);
   readonly activityStore = inject(ActivityStoreService);
   readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   activeBoardId: number | null = null;
+  activeBoardTitle = '';
   activeWorkspaceId: number | null = null;
   currentUserRole = 'ROLE_VIEWER';
   isAdmin = false;
@@ -115,12 +123,23 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
     })
   );
 
+  // Who can open this board, for the Members dialog: its explicit members plus the workspace's PMs, PMs first
+  readonly peopleOnBoard$: Observable<WorkspaceMemberResponseDto[]> = combineLatest([
+    this.workspaceStore.activeWorkspaceMembers$,
+    this.boardStore.boardState$
+  ]).pipe(
+    map(([members, board]) => !board ? [] : members
+      .filter(m => m.allBoards || m.boards.some(b => b.id === board.id))
+      .sort((a, b) => Number(b.allBoards) - Number(a.allBoards) || a.firstName.localeCompare(b.firstName)))
+  );
+
   // Dialog & Sidebar visibility states
   createTaskDialogVisible = false;
   taskDetailsDialogVisible = false;
   workflowDialogVisible = false;
   activitySidebarVisible = false;
   rejectDialogVisible = false;
+  boardMembersVisible = false;
 
   // New Task Payload
   newTask: Partial<TaskCreateRequest> = {
@@ -140,9 +159,6 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
   rejectionReasonPrompt = '';
   selectedRejectFallbackColumnId: number | null = null;
   rejectFallbackOptions: { label: string; value: number }[] = [];
-
-  // Workflow Governance Rules Matrix State (F2)
-  transitionsList: WorkflowTransitionUpdateRequest[] = [];
 
   // Assignee choices: people who can open this board (its members plus the workspace's PMs)
   assignableMembers: SimpleUserDto[] = [];
@@ -220,11 +236,8 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
     this.boardStore.boardState$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(board => {
-        if (board) {
-          this.activeBoardId = board.id;
-        } else {
-          this.activeBoardId = null;
-        }
+        this.activeBoardId = board?.id ?? null;
+        this.activeBoardTitle = board?.title ?? '';
       });
   }
 
@@ -552,77 +565,10 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
       });
   }
 
-  // --- Dynamic State Machine Settings Matrix (F2) ---
+  // --- Workflow rules (F2): WorkflowRulesDialogComponent reads, edits and saves them ---
 
   openWorkflowDialog(): void {
-    this.transitionsList = [];
-    this.http.get<WorkflowTransitionUpdateRequest[]>(`/api/boards/${this.activeBoardId}/transitions`)
-      .subscribe(list => {
-        this.transitionsList = list;
-        this.workflowDialogVisible = true;
-      });
-  }
-
-  getTransitionCheckboxValue(fromColId: number, toColId: number): boolean {
-    return this.transitionsList.some(t => t.fromColumnId === fromColId && t.toColumnId === toColId);
-  }
-
-  toggleTransition(fromColId: number, toColId: number): void {
-    const idx = this.transitionsList.findIndex(t => t.fromColumnId === fromColId && t.toColumnId === toColId);
-    if (idx > -1) {
-      this.transitionsList.splice(idx, 1);
-    } else {
-      this.transitionsList.push({
-        fromColumnId: fromColId,
-        toColumnId: toColId,
-        requiresApproval: false
-      });
-    }
-  }
-
-  getTransitionApprovalValue(fromColId: number, toColId: number): boolean {
-    return this.transitionsList.some(t => t.fromColumnId === fromColId && t.toColumnId === toColId && t.requiresApproval);
-  }
-
-  toggleTransitionApproval(fromColId: number, toColId: number): void {
-    const t = this.transitionsList.find(x => x.fromColumnId === fromColId && x.toColumnId === toColId);
-    if (t) {
-      t.requiresApproval = !t.requiresApproval;
-      // A gate needs somewhere to send rejected cards: start with the column the card came from
-      t.fallbackColumnId = t.requiresApproval ? (t.fallbackColumnId ?? fromColId) : undefined;
-    }
-  }
-
-  /** A rule that requires approval but has no fallback column; the server refuses to save one. */
-  isMissingFallback(fromColId: number, toColId: number): boolean {
-    return this.transitionsList.some(t =>
-      t.fromColumnId === fromColId && t.toColumnId === toColId && t.requiresApproval && !t.fallbackColumnId);
-  }
-
-  get hasRuleMissingFallback(): boolean {
-    return this.transitionsList.some(t => t.requiresApproval && !t.fallbackColumnId);
-  }
-
-  getTransitionFallbackValue(fromColId: number, toColId: number): number | null {
-    const t = this.transitionsList.find(x => x.fromColumnId === fromColId && x.toColumnId === toColId);
-    return t ? t.fallbackColumnId || null : null;
-  }
-
-  setTransitionFallback(fromColId: number, toColId: number, fallbackColId: number | null): void {
-    const t = this.transitionsList.find(x => x.fromColumnId === fromColId && x.toColumnId === toColId);
-    if (t) {
-      t.fallbackColumnId = fallbackColId ?? undefined;
-    }
-  }
-
-  saveWorkflowTransitions(): void {
-    const boardId = this.activeBoardId!;
-    // On failure the store shows the reason and the dialog stays open, so the rules can be fixed
-    this.workflowStore.updateTransitions(boardId, this.transitionsList).subscribe(() => {
-      this.workflowDialogVisible = false;
-      // Column lock icons follow the rules, so fetch the board again for the recomputed flags
-      this.boardStore.loadBoard(boardId);
-    });
+    this.workflowDialogVisible = true;
   }
 
   // --- Contextual Activity Side panel (F9) ---
@@ -630,6 +576,65 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
   openActivitySidebar(): void {
     this.activityStore.loadBoardActivity(this.activeBoardId!);
     this.activitySidebarVisible = true;
+  }
+
+  // --- Board members and deleting the board (Admins and PMs) ---
+
+  confirmRemoveFromBoard(member: WorkspaceMemberResponseDto): void {
+    const boardId = this.activeBoardId;
+    if (!boardId) return;
+
+    this.confirmationService.confirm({
+      header: 'Remove from board?',
+      message: `${member.firstName} ${member.lastName} will lose access to ${this.activeBoardTitle}. ` +
+        'Any of their tasks on it will be unassigned.',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Remove from board',
+      rejectLabel: 'Cancel',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-text p-button-secondary',
+      accept: () => this.workspaceStore.removeMemberFromBoard(boardId, member.userId).subscribe({
+        next: () => {
+          // Their cards here are now unassigned, and they leave the assignee list
+          this.boardStore.loadBoard(boardId);
+          this.boardStore.loadBoardMembers(boardId);
+        },
+        error: () => {} // the store already shows the reason
+      })
+    });
+  }
+
+  confirmDeleteBoard(): void {
+    const boardId = this.activeBoardId;
+    if (!boardId) return;
+    const cardCount = this.allColumns.reduce((total, col) => total + col.tasks.length, 0);
+
+    this.confirmationService.confirm({
+      header: 'Delete this board?',
+      message: `"${this.activeBoardTitle}" will be deleted for good, with its ${this.allColumns.length} columns, ` +
+        `${cardCount} ${cardCount === 1 ? 'card' : 'cards'} and workflow rules. This can't be undone.`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Delete board',
+      rejectLabel: 'Cancel',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-text p-button-secondary',
+      accept: () => {
+        const workspaceId = this.currentWorkspaceId();
+        this.workspaceStore.deleteBoard(boardId).subscribe({
+          // The workspace home opens another board, or explains that none are left
+          next: () => this.router.navigate(['/w', workspaceId]),
+          error: () => {} // the store already shows the reason
+        });
+      }
+    });
+  }
+
+  roleLabel(role: string): string {
+    return ROLE_LABELS[role] ?? role;
+  }
+
+  trackByUserId(index: number, member: WorkspaceMemberResponseDto): number {
+    return member.userId;
   }
 
   // --- Security Helpers ---

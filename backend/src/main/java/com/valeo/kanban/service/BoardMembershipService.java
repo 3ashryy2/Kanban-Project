@@ -116,6 +116,20 @@ public class BoardMembershipService {
                 .build();
     }
 
+    /**
+     * Takes one member off one board, keeping their other boards.
+     * Goes through setMemberBoards, so their tasks there are unassigned and the change is reported the same way.
+     */
+    @Transactional
+    public MembershipChangeResponseDto removeFromBoard(Long boardId, Long userId, CustomUserDetails actor) {
+        Long workspaceId = boardRepository.findWorkspaceIdById(boardId)
+                .orElseThrow(() -> new EntityNotFoundException("Board not found with ID: " + boardId));
+
+        Set<Long> remaining = new HashSet<>(boardMemberRepository.findBoardIdsByWorkspaceIdAndUserId(workspaceId, userId));
+        remaining.remove(boardId);
+        return setMemberBoards(workspaceId, userId, remaining, actor);
+    }
+
     private static Set<Long> difference(Set<Long> from, Set<Long> minus) {
         Set<Long> result = new HashSet<>(from);
         result.removeAll(minus);
