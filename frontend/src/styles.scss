@@ -76,6 +76,13 @@ pre {
   font-family: var(--font-mono);
 }
 
+/* The paginator under a user list (User Onboarding and the workspace roster), set apart from the rows above it */
+.list-pager {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--divider);
+}
+
 /* Audit action badges: one colour per action type, shared by the audit log and the board's activity feed */
 .action-card_moved {
   background-color: var(--accent-soft);

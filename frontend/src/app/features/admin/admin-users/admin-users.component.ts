@@ -5,8 +5,10 @@ import { FormsModule } from '@angular/forms';
 import { UserDirectoryStoreService } from '../../../core/store/user-directory-store.service';
 import { WorkspaceStoreService } from '../../../core/store/workspace-store.service';
 import { UserSummaryDto } from '../../../core/models/user.dto';
+import { ListPager } from '../../../core/utils/list-pager';
 
 import { Button } from 'primeng/button';
+import { Paginator } from 'primeng/paginator';
 import { Select } from 'primeng/select';
 
 interface AccessSelection {
@@ -17,7 +19,7 @@ interface AccessSelection {
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [CommonModule, FormsModule, Button, Select],
+  imports: [CommonModule, FormsModule, Button, Paginator, Select],
   templateUrl: './admin-users.component.html',
   styleUrls: ['./admin-users.component.scss']
 })
@@ -26,9 +28,10 @@ export class AdminUsersComponent implements OnInit {
   readonly workspaceStore = inject(WorkspaceStoreService);
   private readonly destroyRef = inject(DestroyRef);
 
-  // Workspace + role picked on each row, keyed by user id
+  // Workspace + role picked on each row, keyed by user id, so picks survive paging
   selections: Record<number, AccessSelection> = {};
   assigningUserId: number | null = null;
+  readonly pager = new ListPager();
 
   readonly roleOptions = [
     { label: 'Project Manager', value: 'ROLE_PROJECT_MANAGER' },
@@ -38,13 +41,15 @@ export class AdminUsersComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    // Subscribed before the template's async pipe, so every row has a selection when it renders
+    // Subscribed before the template's async pipe, so every row has a selection, and the page
+    // still has rows, when the list renders (granting access takes a user off the list)
     this.userDirectory.unassignedUsers$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(users => {
         for (const user of users) {
           this.selections[user.id] ??= { workspaceId: null, role: 'ROLE_DEVELOPER' };
         }
+        this.pager.fit(users.length);
       });
 
     this.userDirectory.loadUnassignedUsers();
