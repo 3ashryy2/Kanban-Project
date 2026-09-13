@@ -4,58 +4,85 @@
     <p>Manage access levels, project team memberships, and RBAC roles for the workspace <strong>{{ ws.name }}</strong>.</p>
   </div>
 
-  <div class="settings-card shadow-card">
+  <div class="settings-card shadow-card" *ngIf="workspaceStore.activeWorkspaceMembers$ | async as members; else loadingMembers">
     <div class="card-header-bar">
       <h3>Active Project Roster</h3>
-      <p-button 
-        *ngIf="canManageRoles" 
-        label="Add Member" 
-        icon="pi pi-user-plus" 
-        styleClass="p-button-success p-button-sm"
-        (onClick)="openAddMemberDialog()"
-      ></p-button>
+      <div class="card-header-actions" *ngIf="canManageRoles">
+        <div class="roster-filter">
+          <p-checkbox inputId="unassigned-only" [binary]="true" [(ngModel)]="showUnassignedOnly"></p-checkbox>
+          <label for="unassigned-only">Without boards ({{ countWithoutBoards(members) }})</label>
+        </div>
+        <p-button
+          label="Add Member"
+          icon="pi pi-user-plus"
+          styleClass="p-button-success p-button-sm"
+          (onClick)="openAddMemberDialog()"
+        ></p-button>
+      </div>
     </div>
 
-    <div class="roster-list" *ngIf="workspaceStore.activeWorkspaceMembers$ | async as members; else loadingMembers">
+    <!-- Wide card: a table. Narrow card: each row restacks into a block (see the @container rules) -->
+    <div class="roster-list">
       <table class="roster-table">
         <thead>
           <tr>
             <th>Team Member</th>
-            <th>Corporate Email</th>
             <th>Workspace RBAC Role</th>
+            <th>Boards</th>
             <th>Joined On</th>
             <th *ngIf="canManageRoles" class="text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let member of members; trackBy: trackByMemberId" class="roster-row">
-            <td class="member-name font-bold">
-              <div class="member-avatar">
-                {{ member.firstName[0] }}{{ member.lastName[0] }}
+          <tr *ngIf="showUnassignedOnly && countWithoutBoards(members) === 0">
+            <td [attr.colspan]="canManageRoles ? 5 : 4" class="empty-filter">Everyone in this workspace has at least one board.</td>
+          </tr>
+          <tr *ngFor="let member of visibleMembers(members); trackBy: trackByMemberId" class="roster-row">
+            <td class="member-cell">
+              <div class="identity">
+                <div class="member-avatar">{{ member.firstName[0] }}{{ member.lastName[0] }}</div>
+                <div class="identity-text">
+                  <span class="identity-name">{{ member.firstName }} {{ member.lastName }}</span>
+                  <span class="identity-email">{{ member.email }}</span>
+                </div>
               </div>
-              <span>{{ member.firstName }} {{ member.lastName }}</span>
             </td>
-            <td class="member-email">{{ member.email }}</td>
-            <td>
+            <td class="role-cell">
               <span class="role-badge" [class]="'role-' + member.role.toLowerCase()">
                 {{ member.role.replace('ROLE_', '') }}
               </span>
             </td>
-            <td class="member-date">{{ member.joinedAt | date:'MMMM d, yyyy' }}</td>
-            <td *ngIf="canManageRoles" class="text-right">
-              <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                <p-button 
-                  icon="pi pi-user-edit" 
-                  styleClass="p-button-text p-button-success p-button-sm" 
+            <td class="boards-cell" data-label="Boards">
+              <div class="board-tags">
+                <p-tag *ngIf="member.allBoards" value="All boards (PM)" severity="info"></p-tag>
+                <ng-container *ngIf="!member.allBoards">
+                  <p-tag *ngFor="let board of member.boards" [value]="board.title" severity="secondary"></p-tag>
+                  <p-tag *ngIf="hasNoBoards(member)" value="No boards" severity="warn" icon="pi pi-exclamation-triangle"></p-tag>
+                </ng-container>
+              </div>
+            </td>
+            <td class="joined-cell" data-label="Joined On">{{ member.joinedAt | date:'MMMM d, yyyy' }}</td>
+            <td *ngIf="canManageRoles" class="actions-cell text-right">
+              <div class="row-actions">
+                <p-button
+                  icon="pi pi-th-large"
+                  styleClass="p-button-text p-button-secondary p-button-sm"
+                  [title]="member.allBoards ? 'Project Managers see every board' : 'Manage boards'"
+                  [disabled]="member.allBoards"
+                  (onClick)="openBoardsDialog(member)"
+                ></p-button>
+                <p-button
+                  icon="pi pi-user-edit"
+                  styleClass="p-button-text p-button-success p-button-sm"
                   title="Modify member role"
                   [disabled]="isRoleEditDisabled(member)"
                   (onClick)="openEditRoleDialog(member)"
                 ></p-button>
-                <p-button 
-                  icon="pi pi-user-minus" 
-                  styleClass="p-button-text p-button-danger p-button-sm" 
+                <p-button
+                  icon="pi pi-user-minus"
+                  styleClass="p-button-text p-button-danger p-button-sm"
                   title="Remove member"
-                  (onClick)="removeMember(member.userId)"
+                  (onClick)="removeMember(member)"
                 ></p-button>
               </div>
             </td>
@@ -63,13 +90,73 @@
         </tbody>
       </table>
     </div>
-    <ng-template #loadingMembers>
-      <div class="loading-state">
-        <i class="pi pi-spin pi-spinner spinner-icon"></i>
-        <p>Loading active project roster details...</p>
-      </div>
-    </ng-template>
   </div>
+  <ng-template #loadingMembers>
+    <div class="settings-card shadow-card loading-state">
+      <i class="pi pi-spin pi-spinner spinner-icon"></i>
+      <p>Loading active project roster details...</p>
+    </div>
+  </ng-template>
+
+  <!-- Deleting the whole workspace: global admin only -->
+  <section class="danger-zone" *ngIf="isAdmin && (workspaceStore.activeWorkspace$ | async) as ws">
+    <div class="danger-text">
+      <h3>Delete this workspace</h3>
+      <p>
+        Permanently deletes <strong>{{ ws.name }}</strong>: its {{ ws.boardCount }} {{ ws.boardCount === 1 ? 'board' : 'boards' }},
+        every card on them, and its member list. People keep their accounts. This can't be undone.
+      </p>
+    </div>
+    <p-button
+      label="Delete Workspace"
+      icon="pi pi-trash"
+      styleClass="p-button-danger p-button-outlined"
+      (onClick)="openDeleteWorkspaceDialog()"
+    ></p-button>
+  </section>
+
+  <!-- Delete Workspace Modal -->
+  <p-dialog
+    header="Delete Workspace"
+    [(visible)]="deleteWorkspaceVisible"
+    [modal]="true"
+    [style]="{ width: '440px' }"
+    [breakpoints]="{ '575px': '92vw' }"
+    styleClass="custom-dialog"
+  >
+    <div class="dialog-form" *ngIf="workspaceStore.activeWorkspace$ | async as ws">
+      <div class="dialog-intro">
+        This deletes <strong>{{ ws.name }}</strong> with its {{ ws.boardCount }} {{ ws.boardCount === 1 ? 'board' : 'boards' }}
+        and every card on them, and removes its {{ ws.memberCount }} {{ ws.memberCount === 1 ? 'member' : 'members' }} from it.
+        Their accounts stay.
+      </div>
+      <div class="dialog-field">
+        <label for="confirm-workspace-name">Type <strong>{{ ws.name }}</strong> to confirm</label>
+        <input
+          id="confirm-workspace-name"
+          name="confirmWorkspaceName"
+          type="text"
+          pInputText
+          autocomplete="off"
+          [(ngModel)]="deleteWorkspaceConfirmation"
+          (keydown.enter)="deleteWorkspace()"
+          class="w-full"
+        />
+      </div>
+    </div>
+
+    <ng-template #footer>
+      <p-button label="Cancel" styleClass="p-button-text p-button-secondary" (click)="deleteWorkspaceVisible = false"></p-button>
+      <p-button
+        label="Delete Workspace"
+        icon="pi pi-trash"
+        styleClass="p-button-danger"
+        [disabled]="!workspaceNameConfirmed"
+        [loading]="deletingWorkspace"
+        (onClick)="deleteWorkspace()"
+      ></p-button>
+    </ng-template>
+  </p-dialog>
 
   <!-- Add Member Modal -->
   <p-dialog 
@@ -82,17 +169,12 @@
     <div class="dialog-form">
       <div class="dialog-field">
         <label for="new-member-select">Search System Users *</label>
-        <p-select 
-          id="new-member-select" 
-          [options]="userOptions" 
-          optionLabel="label"
-          optionValue="value"
-          [filter]="true"
-          filterBy="label,email"
-          [(ngModel)]="newMemberPayload.userId" 
+        <app-user-search-select
+          inputId="new-member-select"
           placeholder="Select user by name or email"
-          styleClass="w-full"
-        ></p-select>
+          [excludeWorkspaceId]="activeWorkspaceId"
+          [(value)]="newMemberPayload.userId"
+        ></app-user-search-select>
       </div>
 
       <div class="dialog-field">
@@ -129,7 +211,7 @@
     styleClass="custom-dialog"
   >
     <div class="dialog-form" *ngIf="selectedMemberToEdit">
-      <div style="margin-bottom: 16px; color: #475569; font-size: 0.9rem;">
+      <div class="dialog-intro">
         Updating role for <strong>{{ selectedMemberToEdit.firstName }} {{ selectedMemberToEdit.lastName }}</strong> ({{ selectedMemberToEdit.email }}).
       </div>
       <div class="dialog-field">
@@ -156,4 +238,50 @@
       ></p-button>
     </ng-template>
   </p-dialog>
+
+  <!-- Manage Boards Modal -->
+  <p-dialog
+    header="Board Access"
+    [(visible)]="boardsDialogVisible"
+    [modal]="true"
+    [style]="{ width: '440px' }"
+    styleClass="custom-dialog"
+  >
+    <div class="dialog-form" *ngIf="memberForBoards">
+      <div class="dialog-intro">
+        Choose the boards <strong>{{ memberForBoards.firstName }} {{ memberForBoards.lastName }}</strong> works on.
+        They only see these boards in the sidebar.
+      </div>
+      <div class="dialog-field">
+        <label for="member-boards-select">Boards</label>
+        <p-multiselect
+          id="member-boards"
+          inputId="member-boards-select"
+          [options]="(workspaceStore.boards$ | async) ?? []"
+          optionLabel="title"
+          optionValue="id"
+          [(ngModel)]="selectedBoardIds"
+          display="chip"
+          [filter]="true"
+          filterPlaceholder="Search boards"
+          placeholder="No boards"
+          styleClass="w-full"
+          appendTo="body"
+        ></p-multiselect>
+      </div>
+    </div>
+
+    <ng-template #footer>
+      <p-button label="Cancel" styleClass="p-button-text p-button-secondary" (click)="boardsDialogVisible = false"></p-button>
+      <p-button
+        label="Save Boards"
+        icon="pi pi-check"
+        styleClass="p-button-success"
+        [loading]="savingBoards"
+        (onClick)="saveMemberBoards()"
+      ></p-button>
+    </ng-template>
+  </p-dialog>
+
+  <p-confirmdialog [style]="{ width: '440px' }"></p-confirmdialog>
 </div>

@@ -1,0 +1,97 @@
+.workflow-config-container h3 {
+  margin: 0 0 4px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+.workflow-config-container p {
+  margin: 0 0 20px 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.workflow-config-container .matrix-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: -12px;
+}
+.matrix-table-wrapper {
+  max-height: 380px;
+  overflow-y: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+}
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.matrix-table th {
+  background-color: var(--surface-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 2px solid var(--border);
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.matrix-row td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.col-source {
+  font-weight: 600;
+  color: var(--text-strong);
+}
+.col-target {
+  color: var(--text-muted);
+}
+// Added in this dialog and not saved yet
+.rule-new td {
+  background-color: rgba(37, 99, 235, 0.06);
+}
+// Unticked: still listed so it can be ticked again, but Save leaves it out
+.rule-off td {
+  color: var(--text-subtle);
+}
+.rule-off .col-source,
+.rule-off .col-target {
+  text-decoration: line-through;
+}
+.matrix-empty {
+  padding: 20px 14px;
+  text-align: center;
+  color: var(--text-muted);
+}
+.fallback-select {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border-strong);
+  background-color: var(--surface-card);
+  font-size: 0.8rem;
+  color: var(--text-strong);
+}
+// A rule that requires approval but has nowhere to send rejected cards; saving is blocked until it has one
+.fallback-select.missing-fallback {
+  border-color: var(--danger-text);
+  box-shadow: 0 0 0 1px var(--danger-text);
+}
+.rule-adder {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.adder-arrow {
+  color: var(--text-subtle);
+}
+:host ::ng-deep .adder-select {
+  min-width: 190px;
+}
+.adder-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}

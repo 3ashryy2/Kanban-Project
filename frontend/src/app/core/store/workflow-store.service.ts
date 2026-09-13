@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, catchError, tap } from 'rxjs';
 import { WorkflowTransitionUpdateRequest } from '../models/workflow.dto';
 import { MessageService } from 'primeng/api';
 
@@ -21,31 +21,41 @@ export class WorkflowStoreService {
   }
 
   loadTransitions(boardId: number): void {
-    this.http.get<WorkflowTransitionUpdateRequest[]>(`/api/boards/${boardId}/transitions`)
-      .subscribe({
+    // Errors are already surfaced as toasts by fetchTransitions
+    this.fetchTransitions(boardId).subscribe({ error: () => {} });
+  }
+
+  /** Reads the board's rules from the server, keeps them here, and hands them to the caller. */
+  fetchTransitions(boardId: number): Observable<WorkflowTransitionUpdateRequest[]> {
+    return this.http.get<WorkflowTransitionUpdateRequest[]>(`/api/boards/${boardId}/transitions`).pipe(
+      tap({
         next: list => {
           this._transitions$.next(list);
           this.transitionsList = list;
         },
         error: () => this.showError('Load Transitions Failed', 'Could not load state machine transitions.')
-      });
+      })
+    );
   }
 
-  updateTransitions(boardId: number, requests: WorkflowTransitionUpdateRequest[]): void {
-    this.http.put<WorkflowTransitionUpdateRequest[]>(`/api/boards/${boardId}/transitions`, requests)
-      .subscribe({
-        next: updated => {
-          this._transitions$.next(updated);
-          this.transitionsList = updated;
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Workflow Updated',
-            detail: 'State-machine governance rules successfully written.',
-            life: 3000
-          });
-        },
-        error: err => this.showError('Update Failed', err.error?.message || 'Could not save rules matrix.')
-      });
+  /** Emits the saved rules on success; on failure shows the reason and completes without emitting. */
+  updateTransitions(boardId: number, requests: WorkflowTransitionUpdateRequest[]): Observable<WorkflowTransitionUpdateRequest[]> {
+    return this.http.put<WorkflowTransitionUpdateRequest[]>(`/api/boards/${boardId}/transitions`, requests).pipe(
+      tap(updated => {
+        this._transitions$.next(updated);
+        this.transitionsList = updated;
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Workflow Updated',
+          detail: 'State-machine governance rules successfully written.',
+          life: 3000
+        });
+      }),
+      catchError(err => {
+        this.showError('Update Failed', err.error?.message || 'Could not save rules matrix.');
+        return EMPTY;
+      })
+    );
   }
 
   private showError(summary: string, detail: string): void {

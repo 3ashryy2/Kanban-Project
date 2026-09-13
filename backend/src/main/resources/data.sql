@@ -1,19 +1,18 @@
 -- 1. Seed Users (Bcrypt hashed password: 'password123')
 INSERT INTO users (id, email, password_hash, first_name, last_name, is_admin) VALUES
 (1, 'admin@valeo.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Admin', 'User', true),
-(2, 'pm@valeo.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Project', 'Manager'),
-(3, 'dev@valeo.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Mohanad', 'Emad'),
-(4, 'qa@valeo.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Sarah', 'Tester'),
-(5, 'viewer@valeo.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Guest', 'Viewer')
+(2, 'pm@valeo.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Project', 'Manager', false),
+(3, 'dev@valeo.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Mohanad', 'Emad', false),
+(4, 'qa@valeo.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Sarah', 'Tester', false),
+(5, 'viewer@valeo.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Guest', 'Viewer', false)
 ON CONFLICT (id) DO NOTHING;
 
--- 2. Seed Workspace & Member Roles
+-- 2. Seed Workspace & Member Roles (the global admin needs no membership: it can access every workspace)
 INSERT INTO workspaces (id, name, slug, description, created_by_id) VALUES
 (1, 'Driving Assistance Research', 'valeo-dar', 'ADAS & Autonomous Vision Platforms', 1)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO workspace_members (workspace_id, user_id, role) VALUES
-(1, 1, 'ROLE_PROJECT_MANAGER'),
 (1, 2, 'ROLE_PROJECT_MANAGER'),
 (1, 3, 'ROLE_DEVELOPER'),
 (1, 4, 'ROLE_QA_TESTER'),
@@ -25,13 +24,21 @@ INSERT INTO boards (id, workspace_id, title, description, created_by_id) VALUES
 (1, 1, 'Core Platform Roadmap', 'Q3 Engineering Deliverables', 1)
 ON CONFLICT (id) DO NOTHING;
 
+-- is_gated mirrors the rules in step 4: true when a rule into the column requires approval
 INSERT INTO columns (id, board_id, name, position, is_gated) VALUES
 (1, 1, 'To-Do', 1000.0, false),
 (2, 1, 'In Progress', 2000.0, false),
 (3, 1, 'Code Review', 3000.0, false),
 (4, 1, 'Ready for QA', 4000.0, true),
-(5, 1, 'Done', 5000.0, false)
+(5, 1, 'Done', 5000.0, true)
 ON CONFLICT (id) DO NOTHING;
+
+-- 3b. Board membership: Developer, QA and Viewer work on board 1 (PMs and the admin see every board)
+INSERT INTO board_members (board_id, workspace_id, user_id, added_by_id) VALUES
+(1, 1, 3, 2),
+(1, 1, 4, 2),
+(1, 1, 5, 2)
+ON CONFLICT (board_id, user_id) DO NOTHING;
 
 -- 4. Seed Dynamic Workflow Transitions (with Gating & Fallbacks)
 INSERT INTO workflow_transitions (board_id, from_column_id, to_column_id, fallback_column_id, requires_approval) VALUES

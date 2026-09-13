@@ -17,7 +17,6 @@ public class ColumnCreateRequest {
     @NotNull(message = "Column position is required")
     private Double position;
 
-    private boolean isGated;
-
+    // No "isGated" here: a column is gated only through the workflow rules into it
     private Integer wipLimit;
 }

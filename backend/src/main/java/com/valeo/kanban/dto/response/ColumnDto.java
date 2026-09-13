@@ -1,5 +1,6 @@
 package com.valeo.kanban.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,7 +16,10 @@ public class ColumnDto {
     private Long id;
     private String name;
     private double position;
-    private boolean isGated;
+    // Read-only summary of the workflow rules: true when a rule into this column requires approval.
+    // Named "gated" so Lombok's isGated() getter and the field share one Jackson property
+    @JsonProperty("isGated")
+    private boolean gated;
     private Integer wipLimit;
     @Builder.Default
     private List<TaskDto> tasks = new ArrayList<>();

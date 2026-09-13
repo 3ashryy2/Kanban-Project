@@ -1,0 +1,36 @@
+<div class="workspace-home" *ngIf="state$ | async as state">
+  <ng-container *ngIf="state.boards.length === 0">
+    <section class="empty-card" *ngIf="workspaceStore.activeWorkspace$ | async as ws">
+
+      <!-- Admin or PM: the workspace simply has no boards yet -->
+      <ng-container *ngIf="canManageBoards(ws); else waitingForBoards">
+        <div class="empty-icon">
+          <i class="pi pi-th-large"></i>
+        </div>
+        <h2>No boards in {{ ws.name }} yet</h2>
+        <p>Create the first one with <strong>New Board</strong> in the sidebar.</p>
+        <p class="muted">
+          Developers, QA testers and viewers only see the boards you give them.
+          Choose each person's boards on the members page.
+        </p>
+        <a class="members-link" [routerLink]="['/w', ws.id, 'members']">
+          <i class="pi pi-users"></i>
+          <span>Open members page</span>
+        </a>
+      </ng-container>
+
+      <!-- Everyone else: a member of the workspace, not yet of any board -->
+      <ng-template #waitingForBoards>
+        <div class="empty-icon waiting">
+          <i class="pi pi-hourglass"></i>
+        </div>
+        <h2>You haven't been added to a board yet</h2>
+        <p>
+          You're a <strong>{{ roleLabel(ws.currentUserRole) }}</strong> in {{ ws.name }}.
+          A project manager decides which boards each member works on.
+        </p>
+        <p class="muted">As soon as they add you, the board appears in the sidebar.</p>
+      </ng-template>
+    </section>
+  </ng-container>
+</div>

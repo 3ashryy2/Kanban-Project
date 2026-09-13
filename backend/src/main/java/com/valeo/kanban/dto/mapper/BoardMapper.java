@@ -12,6 +12,17 @@ import java.util.stream.Collectors;
 
 public class BoardMapper {
 
+    // For board lists (sidebar, workspace home): no columns, so no per-board column query
+    public static BoardDetailsDto toSummaryDto(Board board) {
+        if (board == null) return null;
+        return BoardDetailsDto.builder()
+                .id(board.getId())
+                .workspaceId(board.getWorkspace().getId())
+                .title(board.getTitle())
+                .description(board.getDescription())
+                .build();
+    }
+
     public static BoardDetailsDto toAggregateDto(Board board, List<Task> tasks) {
         if (board == null) return null;
 

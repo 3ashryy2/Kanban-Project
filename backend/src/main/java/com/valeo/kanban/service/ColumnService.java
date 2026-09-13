@@ -31,11 +31,11 @@ public class ColumnService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new EntityNotFoundException("Board not found with ID: " + boardId));
 
+        // A new column has no workflow rules yet, so it starts ungated
         Column column = Column.builder()
                 .board(board)
                 .name(request.getName())
                 .position(request.getPosition())
-                .isGated(request.isGated())
                 .wipLimit(request.getWipLimit())
                 .build();
 
@@ -49,7 +49,6 @@ public class ColumnService {
                 .orElseThrow(() -> new EntityNotFoundException("Column not found with ID: " + columnId));
 
         column.setName(request.getName());
-        column.setGated(request.isGated());
         column.setWipLimit(request.getWipLimit());
 
         Column updatedColumn = columnRepository.save(column);
