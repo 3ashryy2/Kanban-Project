@@ -10,9 +10,18 @@
     <div class="card-header-bar">
       <h3>Active Project Roster</h3>
       <div class="card-header-actions" *ngIf="canManageRoles">
-        <div class="roster-filter">
-          <p-checkbox inputId="unassigned-only" [binary]="true" [(ngModel)]="showUnassignedOnly" (ngModelChange)="pager.reset()"></p-checkbox>
-          <label for="unassigned-only">Without boards ({{ countWithoutBoards(members) }})</label>
+        <div class="roster-filter" style="display: flex; align-items: center; gap: 12px;">
+          <p-button
+            *ngIf="selectedMembersToRemove.length > 0"
+            [label]="'Remove Selected (' + selectedMembersToRemove.length + ')'"
+            icon="pi pi-user-minus"
+            styleClass="p-button-danger p-button-sm p-button-outlined"
+            (onClick)="removeSelectedWorkspaceMembers()"
+          ></p-button>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <p-checkbox inputId="unassigned-only" [binary]="true" [(ngModel)]="showUnassignedOnly" (ngModelChange)="pager.reset()"></p-checkbox>
+            <label for="unassigned-only">Without boards ({{ countWithoutBoards(members) }})</label>
+          </div>
         </div>
         <p-button
           label="Add Member"
@@ -28,6 +37,13 @@
       <table class="roster-table">
         <thead>
           <tr>
+            <th *ngIf="canManageRoles" style="width: 40px;">
+              <p-checkbox 
+                [binary]="true" 
+                [ngModel]="shown.length > 0 && selectedMembersToRemove.length === shown.length" 
+                (onChange)="toggleAllWorkspaceMembersChecked(shown, $event.checked)"
+              ></p-checkbox>
+            </th>
             <th>Team Member</th>
             <th>Workspace RBAC Role</th>
             <th>Boards</th>
@@ -37,9 +53,16 @@
         </thead>
         <tbody>
           <tr *ngIf="showUnassignedOnly && countWithoutBoards(members) === 0">
-            <td [attr.colspan]="canManageRoles ? 5 : 4" class="empty-filter">Everyone in this workspace has at least one board.</td>
+            <td [attr.colspan]="canManageRoles ? 6 : 4" class="empty-filter">Everyone in this workspace has at least one board.</td>
           </tr>
           <tr *ngFor="let member of shown | slice:pager.first:(pager.first + pager.rows); trackBy: trackByMemberId" class="roster-row">
+            <td *ngIf="canManageRoles">
+              <p-checkbox 
+                [binary]="true" 
+                [ngModel]="isWorkspaceMemberChecked(member)" 
+                (onChange)="toggleWorkspaceMemberChecked(member, $event.checked)"
+              ></p-checkbox>
+            </td>
             <td class="member-cell">
               <div class="identity">
                 <div class="member-avatar">{{ member.firstName[0] }}{{ member.lastName[0] }}</div>
@@ -187,10 +210,22 @@
         <label for="new-member-select">Search System Users *</label>
         <app-user-search-select
           inputId="new-member-select"
-          placeholder="Select user by name or email"
+          placeholder="Search user to add..."
           [excludeWorkspaceId]="activeWorkspaceId"
-          [(value)]="newMemberPayload.userId"
+          [(value)]="selectedUserToProvisionId"
+          (userSelected)="addUserToProvisioningList($event)"
         ></app-user-search-select>
+      </div>
+
+      <!-- Selected users bulk queue -->
+      <div class="bulk-add-list" *ngIf="bulkUsersToAdd.length > 0" style="margin-top: 8px; margin-bottom: 16px; background-color: var(--surface-subtle); padding: 10px; border-radius: 6px; border: 1px solid var(--border);">
+        <p style="font-weight: 600; font-size: 0.8rem; margin: 0 0 6px 0; color: var(--text);">Selected Users ({{ bulkUsersToAdd.length }}):</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <span *ngFor="let u of bulkUsersToAdd" class="tag-chip" style="display: inline-flex; align-items: center; gap: 6px; background-color: var(--accent-soft); color: var(--accent-strong); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">
+            {{ u.firstName }} {{ u.lastName }}
+            <i class="pi pi-times" style="cursor: pointer; font-size: 0.7rem;" (click)="removeUserFromProvisioningList(u)"></i>
+          </span>
+        </div>
       </div>
 
       <div class="dialog-field">
@@ -213,7 +248,7 @@
         label="Grant Access" 
         icon="pi pi-check" 
         styleClass="p-button-success" 
-        [disabled]="!newMemberPayload.userId || !newMemberPayload.role" 
+        [disabled]="bulkUsersToAdd.length === 0 || !newMemberPayload.role" 
         (click)="addMember()"
       ></p-button>
     </ng-template>

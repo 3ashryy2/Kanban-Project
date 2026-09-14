@@ -52,11 +52,13 @@ export class UserSearchSelectComponent implements OnInit {
   @Input() excludeWorkspaceId: number | null = null;
   @Input() value: number | null = null;
   @Output() valueChange = new EventEmitter<number | null>();
+  @Output() userSelected = new EventEmitter<UserSummaryDto | null>();
 
   readonly search$ = new Subject<string>();
   options: UserOption[] = [];
   emptyMessage = `Type at least ${USER_SEARCH_MIN_LENGTH} characters`;
   private selected: UserOption | null = null;
+  private lastResults: UserSummaryDto[] = [];
 
   ngOnInit(): void {
     this.search$.pipe(
@@ -69,6 +71,7 @@ export class UserSearchSelectComponent implements OnInit {
       switchMap(query => this.userDirectory.searchUsers(query, this.excludeWorkspaceId)),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(users => {
+      this.lastResults = users;
       const results = users.map(toOption);
       // Keep the current choice in the list so the select can still render its label
       const selected = this.selected;
@@ -82,5 +85,8 @@ export class UserSearchSelectComponent implements OnInit {
     this.selected = this.options.find(o => o.value === userId) ?? null;
     this.value = userId;
     this.valueChange.emit(userId);
+    
+    const rawUser = this.lastResults.find(u => u.id === userId) || null;
+    this.userSelected.emit(rawUser);
   }
 }

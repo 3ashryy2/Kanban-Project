@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, EMPTY, Observable, map, shareReplay, tap } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, map, shareReplay, tap, forkJoin, of, catchError } from 'rxjs';
 import {
   WorkspaceResponseDto,
   WorkspaceMemberResponseDto,
@@ -264,6 +264,139 @@ export class WorkspaceStoreService {
           });
         },
         error: err => this.showError('Removal Failed', err.error?.message || 'Could not remove the member from this board.')
+      })
+    );
+  }
+
+  /** Adds multiple members to a workspace in bulk. */
+  addMembersBulk(workspaceId: number, userIds: number[], role: string): Observable<any> {
+    if (userIds.length === 0) return of([]);
+
+    const requests = userIds.map(userId => 
+      this.http.post<WorkspaceMemberResponseDto>(`/api/workspaces/${workspaceId}/members`, { userId, role }).pipe(
+        catchError(err => {
+          this.showError('Addition Failed', `Could not add user ID ${userId}: ${err.error?.message || 'Error'}`);
+          return of(null);
+        })
+      )
+    );
+
+    return forkJoin(requests).pipe(
+      tap(results => {
+        const added = results.filter(r => r !== null) as WorkspaceMemberResponseDto[];
+        if (added.length > 0) {
+          if (this._activeWorkspace$.getValue()?.id === workspaceId) {
+            this._activeWorkspaceMembers$.next([...this._activeWorkspaceMembers$.getValue(), ...added]);
+          }
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Bulk Members Added',
+            detail: `${added.length} users successfully added with role ${role.replace('ROLE_', '')}.`
+          });
+        }
+      })
+    );
+  }
+
+  /** Removes multiple members from the active workspace in bulk. */
+  removeMembersBulk(userIds: number[]): Observable<any> {
+    const activeWs = this._activeWorkspace$.getValue();
+    if (!activeWs || userIds.length === 0) return of([]);
+
+    const requests = userIds.map(userId => 
+      this.http.delete<MembershipChangeResponseDto>(`/api/workspaces/${activeWs.id}/members/${userId}`).pipe(
+        map(change => ({ userId, change })),
+        catchError(err => {
+          this.showError('Removal Failed', `Could not remove user ID ${userId}: ${err.error?.message || 'Error'}`);
+          return of(null);
+        })
+      )
+    );
+
+    return forkJoin(requests).pipe(
+      tap(results => {
+        const removed = results.filter(r => r !== null) as { userId: number, change: MembershipChangeResponseDto }[];
+        if (removed.length > 0) {
+          const removedIds = removed.map(r => r.userId);
+          const current = this._activeWorkspaceMembers$.getValue();
+          this._activeWorkspaceMembers$.next(current.filter(m => !removedIds.includes(m.userId)));
+
+          const totalUnassigned = removed.reduce((sum, r) => sum + r.change.unassignedTaskCount, 0);
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Bulk Members Removed',
+            detail: `${removed.length} users removed from the workspace.${unassignedNote(totalUnassigned)}`
+          });
+        }
+      })
+    );
+  }
+
+  /** Adds multiple members to a board in bulk. */
+  addMembersToBoardBulk(boardId: number, membersToAdd: any[]): Observable<any> {
+    const activeWs = this._activeWorkspace$.getValue();
+    if (!activeWs || membersToAdd.length === 0) return of([]);
+
+    const requests = membersToAdd.map(m => {
+      const currentBoardIds = m.boards ? m.boards.map((b: any) => b.id) : [];
+      const newBoardIds = Array.from(new Set([...currentBoardIds, boardId]));
+      return this.http.put<MembershipChangeResponseDto>(`/api/workspaces/${activeWs.id}/members/${m.userId}/boards`, { boardIds: newBoardIds }).pipe(
+        tap(change => {
+          if (change.member) {
+            this.replaceMember(change.member);
+          }
+        }),
+        catchError(err => {
+          this.showError('Update Failed', `Could not add ${m.firstName} to board: ${err.error?.message || 'Error'}`);
+          return of(null);
+        })
+      );
+    });
+
+    return forkJoin(requests).pipe(
+      tap(results => {
+        const successes = results.filter(r => r !== null);
+        if (successes.length > 0) {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Bulk Board Access Granted',
+            detail: `Successfully granted board access to ${successes.length} members.`
+          });
+        }
+      })
+    );
+  }
+
+  /** Removes multiple members from a board in bulk. */
+  removeMembersFromBoardBulk(boardId: number, membersToRemove: any[]): Observable<any> {
+    const activeWs = this._activeWorkspace$.getValue();
+    if (!activeWs || membersToRemove.length === 0) return of([]);
+
+    const requests = membersToRemove.map(m => {
+      return this.http.delete<MembershipChangeResponseDto>(`/api/boards/${boardId}/members/${m.userId}`).pipe(
+        tap(change => {
+          if (change.member) {
+            this.replaceMember(change.member);
+          }
+        }),
+        catchError(err => {
+          this.showError('Removal Failed', `Could not remove ${m.firstName} from board: ${err.error?.message || 'Error'}`);
+          return of(null);
+        })
+      );
+    });
+
+    return forkJoin(requests).pipe(
+      tap(results => {
+        const successes = results.filter(r => r !== null) as MembershipChangeResponseDto[];
+        if (successes.length > 0) {
+          const totalUnassigned = successes.reduce((sum, s) => sum + s.unassignedTaskCount, 0);
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Bulk Board Access Revoked',
+            detail: `Successfully removed ${successes.length} members from the board.${unassignedNote(totalUnassigned)}`
+          });
+        }
       })
     );
   }

@@ -10,6 +10,7 @@ import { ListPager } from '../../../core/utils/list-pager';
 import { Button } from 'primeng/button';
 import { Paginator } from 'primeng/paginator';
 import { Select } from 'primeng/select';
+import { Checkbox } from 'primeng/checkbox';
 
 interface AccessSelection {
   workspaceId: number | null;
@@ -19,7 +20,7 @@ interface AccessSelection {
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [CommonModule, FormsModule, Button, Paginator, Select],
+  imports: [CommonModule, FormsModule, Button, Paginator, Select, Checkbox],
   templateUrl: './admin-users.component.html',
   styleUrls: ['./admin-users.component.scss']
 })
@@ -32,6 +33,12 @@ export class AdminUsersComponent implements OnInit {
   selections: Record<number, AccessSelection> = {};
   assigningUserId: number | null = null;
   readonly pager = new ListPager();
+
+  // Bulk Provisioning State
+  selectedUsers: UserSummaryDto[] = [];
+  bulkWorkspaceId: number | null = null;
+  bulkRole = 'ROLE_DEVELOPER';
+  bulkAssigning = false;
 
   readonly roleOptions = [
     { label: 'Project Manager', value: 'ROLE_PROJECT_MANAGER' },
@@ -53,6 +60,51 @@ export class AdminUsersComponent implements OnInit {
       });
 
     this.userDirectory.loadUnassignedUsers();
+  }
+
+  isUserChecked(user: UserSummaryDto): boolean {
+    return this.selectedUsers.some(u => u.id === user.id);
+  }
+
+  toggleUserChecked(user: UserSummaryDto, checked: boolean): void {
+    if (checked) {
+      if (!this.selectedUsers.some(u => u.id === user.id)) {
+        this.selectedUsers.push(user);
+      }
+    } else {
+      this.selectedUsers = this.selectedUsers.filter(u => u.id !== user.id);
+    }
+  }
+
+  toggleAllUsersChecked(users: UserSummaryDto[], checked: boolean): void {
+    if (checked) {
+      this.selectedUsers = [...users];
+    } else {
+      this.selectedUsers = [];
+    }
+  }
+
+  grantAccessBulk(): void {
+    if (!this.bulkWorkspaceId || this.selectedUsers.length === 0 || this.bulkAssigning) return;
+    this.bulkAssigning = true;
+
+    const workspaceId = this.bulkWorkspaceId;
+    const role = this.bulkRole;
+    const userIds = this.selectedUsers.map(u => u.id);
+
+    this.workspaceStore.addMembersBulk(workspaceId, userIds, role).subscribe({
+      next: () => {
+        this.bulkAssigning = false;
+        // Mark all successfully assigned users as assigned in the directory store
+        userIds.forEach(id => {
+          this.userDirectory.markAssigned(id);
+          delete this.selections[id];
+        });
+        this.selectedUsers = [];
+        this.bulkWorkspaceId = null;
+      },
+      error: () => this.bulkAssigning = false
+    });
   }
 
   grantAccess(user: UserSummaryDto): void {

@@ -149,23 +149,99 @@ export class WorkspaceSettingsComponent implements OnInit {
     return false;
   }
 
+  // Selection and Bulk lists
+  selectedMembersToRemove: WorkspaceMemberResponseDto[] = [];
+  bulkUsersToAdd: any[] = [];
+  selectedUserToProvisionId: number | null = null;
+
+  isWorkspaceMemberChecked(member: WorkspaceMemberResponseDto): boolean {
+    return this.selectedMembersToRemove.some(m => m.userId === member.userId);
+  }
+
+  toggleWorkspaceMemberChecked(member: WorkspaceMemberResponseDto, checked: boolean): void {
+    if (checked) {
+      if (!this.selectedMembersToRemove.some(m => m.userId === member.userId)) {
+        this.selectedMembersToRemove.push(member);
+      }
+    } else {
+      this.selectedMembersToRemove = this.selectedMembersToRemove.filter(m => m.userId !== member.userId);
+    }
+  }
+
+  toggleAllWorkspaceMembersChecked(members: WorkspaceMemberResponseDto[], checked: boolean): void {
+    if (checked) {
+      this.selectedMembersToRemove = [...members];
+    } else {
+      this.selectedMembersToRemove = [];
+    }
+  }
+
+  removeSelectedWorkspaceMembers(): void {
+    if (this.selectedMembersToRemove.length === 0) return;
+
+    this.confirmationService.confirm({
+      header: 'Bulk Remove Members?',
+      message: `Are you sure you want to remove these ${this.selectedMembersToRemove.length} member(s) from this workspace? ` +
+        'Any tasks assigned to them here will be unassigned.',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Remove Selected',
+      rejectLabel: 'Cancel',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-text p-button-secondary',
+      accept: () => {
+        const userIds = this.selectedMembersToRemove.map(m => m.userId);
+        this.workspaceStore.removeMembersBulk(userIds).subscribe({
+          next: () => {
+            this.selectedMembersToRemove = [];
+          }
+        });
+      }
+    });
+  }
+
+  addUserToProvisioningList(user: any | null): void {
+    if (!user) return;
+    if (!this.bulkUsersToAdd.some(u => u.id === user.id)) {
+      this.bulkUsersToAdd.push(user);
+    }
+    this.selectedUserToProvisionId = null; // clear search input selection
+  }
+
+  removeUserFromProvisioningList(user: any): void {
+    this.bulkUsersToAdd = this.bulkUsersToAdd.filter(u => u.id !== user.id);
+  }
+
   openAddMemberDialog(): void {
     // Candidates come from the server-side directory search, which already excludes current members
     this.newMemberPayload = {
       userId: null,
       role: 'ROLE_DEVELOPER'
     };
+    this.bulkUsersToAdd = [];
+    this.selectedUserToProvisionId = null;
     this.addMemberDialogVisible = true;
   }
 
   addMember(): void {
-    if (!this.newMemberPayload.userId || !this.newMemberPayload.role) return;
+    const activeWs = this.workspaceStore.getActiveWorkspace();
+    if (!activeWs || !this.newMemberPayload.role) return;
 
-    this.workspaceStore.addMemberToActiveWorkspace({
-      userId: this.newMemberPayload.userId,
-      role: this.newMemberPayload.role
-    });
-    this.addMemberDialogVisible = false;
+    if (this.bulkUsersToAdd.length > 0) {
+      const userIds = this.bulkUsersToAdd.map(u => u.id);
+      this.workspaceStore.addMembersBulk(activeWs.id, userIds, this.newMemberPayload.role).subscribe({
+        next: () => {
+          this.addMemberDialogVisible = false;
+          this.bulkUsersToAdd = [];
+        }
+      });
+    } else {
+      if (!this.newMemberPayload.userId) return;
+      this.workspaceStore.addMemberToActiveWorkspace({
+        userId: this.newMemberPayload.userId,
+        role: this.newMemberPayload.role
+      });
+      this.addMemberDialogVisible = false;
+    }
   }
 
   openBoardsDialog(member: WorkspaceMemberResponseDto): void {

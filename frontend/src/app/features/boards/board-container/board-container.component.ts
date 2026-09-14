@@ -38,6 +38,8 @@ import { Drawer } from 'primeng/drawer';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 import { Tag } from 'primeng/tag';
 import { Tooltip } from 'primeng/tooltip';
+import { MultiSelect } from 'primeng/multiselect';
+import { Checkbox } from 'primeng/checkbox';
 
 @Component({
   selector: 'app-board-container',
@@ -55,6 +57,8 @@ import { Tooltip } from 'primeng/tooltip';
     ConfirmDialog,
     Tag,
     Tooltip,
+    MultiSelect,
+    Checkbox,
     ParseDetailsPipe,
     DragDropModule,
     WorkflowRulesDialogComponent,
@@ -147,6 +151,81 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
   activitySidebarVisible = false;
   rejectDialogVisible = false;
   boardMembersVisible = false;
+
+  // MultiSelect and Selection lists for Bulk Board Members management
+  selectedMembersToAdd: WorkspaceMemberResponseDto[] = [];
+  selectedMembersToRemove: WorkspaceMemberResponseDto[] = [];
+
+  get assignableWorkspaceMembers$(): Observable<WorkspaceMemberResponseDto[]> {
+    return combineLatest([
+      this.workspaceStore.activeWorkspaceMembers$,
+      this.boardStore.boardState$
+    ]).pipe(
+      map(([members, board]) => {
+        if (!board) return [];
+        return members.filter(m => !m.allBoards && !m.boards.some(b => b.id === board.id));
+      })
+    );
+  }
+
+  addSelectedMembersToBoard(): void {
+    const boardId = this.activeBoardId;
+    if (this.selectedMembersToAdd.length === 0 || !boardId) return;
+    this.workspaceStore.addMembersToBoardBulk(boardId, this.selectedMembersToAdd).subscribe({
+      next: () => {
+        this.selectedMembersToAdd = [];
+        this.boardStore.loadBoard(boardId);
+        this.boardStore.loadBoardMembers(boardId);
+      }
+    });
+  }
+
+  isToRemoveChecked(person: WorkspaceMemberResponseDto): boolean {
+    return this.selectedMembersToRemove.some(m => m.userId === person.userId);
+  }
+
+  toggleToRemoveChecked(person: WorkspaceMemberResponseDto, checked: boolean): void {
+    if (checked) {
+      if (!this.selectedMembersToRemove.some(m => m.userId === person.userId)) {
+        this.selectedMembersToRemove.push(person);
+      }
+    } else {
+      this.selectedMembersToRemove = this.selectedMembersToRemove.filter(m => m.userId !== person.userId);
+    }
+  }
+
+  toggleAllToRemoveChecked(people: WorkspaceMemberResponseDto[], checked: boolean): void {
+    if (checked) {
+      this.selectedMembersToRemove = people.filter(p => !p.allBoards);
+    } else {
+      this.selectedMembersToRemove = [];
+    }
+  }
+
+  removeSelectedMembersFromBoard(): void {
+    const boardId = this.activeBoardId;
+    if (this.selectedMembersToRemove.length === 0 || !boardId) return;
+
+    this.confirmationService.confirm({
+      header: 'Bulk Board Revocation',
+      message: `Are you sure you want to revoke board access for these ${this.selectedMembersToRemove.length} member(s)? ` +
+        'Any of their tasks on this board will be unassigned.',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Revoke Access',
+      rejectLabel: 'Cancel',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-text p-button-secondary',
+      accept: () => {
+        this.workspaceStore.removeMembersFromBoardBulk(boardId, this.selectedMembersToRemove).subscribe({
+          next: () => {
+            this.selectedMembersToRemove = [];
+            this.boardStore.loadBoard(boardId);
+            this.boardStore.loadBoardMembers(boardId);
+          }
+        });
+      }
+    });
+  }
 
   // New Task Payload
   newTask: Partial<TaskCreateRequest> = {

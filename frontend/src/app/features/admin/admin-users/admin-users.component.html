@@ -19,11 +19,50 @@
     </div>
 
     <ng-container *ngIf="users.length > 0; else noPendingUsers">
+      <!-- Bulk Onboard Selected Users Bar -->
+      <div class="bulk-provision-bar" *ngIf="selectedUsers.length > 0" style="display: flex; gap: 12px; align-items: center; padding: 12px 16px; margin: 0 16px 16px 16px; background-color: var(--surface-subtle); border: 1px solid var(--border); border-radius: 6px; flex-wrap: wrap;">
+        <span style="font-weight: 600; font-size: 0.85rem; color: var(--text);">Onboard Selected ({{ selectedUsers.length }}):</span>
+        <p-select
+          id="bulk-workspace"
+          [options]="(workspaceStore.workspaces$ | async) ?? []"
+          optionLabel="name"
+          optionValue="id"
+          [(ngModel)]="bulkWorkspaceId"
+          placeholder="Choose target workspace"
+          style="min-width: 200px;"
+          appendTo="body"
+        ></p-select>
+        <p-select
+          id="bulk-role"
+          [options]="roleOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="bulkRole"
+          style="min-width: 160px;"
+          appendTo="body"
+        ></p-select>
+        <p-button
+          label="Grant Access in Bulk"
+          icon="pi pi-check"
+          styleClass="p-button-success p-button-sm"
+          [disabled]="!bulkWorkspaceId"
+          [loading]="bulkAssigning"
+          (onClick)="grantAccessBulk()"
+        ></p-button>
+      </div>
+
       <!-- Wide card: a table. Narrow card: each row restacks into a block (see the @container rules) -->
       <div class="users-list">
         <table class="users-table">
           <thead>
             <tr>
+              <th style="width: 40px;">
+                <p-checkbox 
+                  [binary]="true" 
+                  [ngModel]="users.length > 0 && selectedUsers.length === users.length" 
+                  (onChange)="toggleAllUsersChecked(users, $event.checked)"
+                ></p-checkbox>
+              </th>
               <th>User</th>
               <th>Registered</th>
               <th>Workspace</th>
@@ -33,6 +72,13 @@
           </thead>
           <tbody>
             <tr *ngFor="let u of users | slice:pager.first:(pager.first + pager.rows); trackBy: trackByUserId" class="user-row">
+              <td>
+                <p-checkbox 
+                  [binary]="true" 
+                  [ngModel]="isUserChecked(u)" 
+                  (onChange)="toggleUserChecked(u, $event.checked)"
+                ></p-checkbox>
+              </td>
               <td class="user-cell">
                 <div class="identity">
                   <div class="user-avatar">{{ u.firstName[0] }}{{ u.lastName[0] }}</div>

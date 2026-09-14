@@ -367,26 +367,84 @@
   >
     <div class="dialog-form">
       <p class="people-intro">People who can open <strong>{{ board.title }}</strong>.</p>
-      <ul class="people-list" *ngIf="peopleOnBoard$ | async as people">
-        <li class="person-row" *ngFor="let person of people; trackBy: trackByUserId">
-          <div class="user-avatar">{{ person.firstName[0] }}{{ person.lastName[0] }}</div>
-          <div class="person-text">
-            <span class="person-name">{{ person.firstName }} {{ person.lastName }}</span>
-            <span class="person-meta">{{ person.email }} · {{ roleLabel(person.role) }}</span>
-          </div>
-          <!-- PMs open every board by role, so there is no board membership to remove -->
-          <p-tag *ngIf="person.allBoards" value="All boards (PM)" severity="info"></p-tag>
+      
+      <!-- Grant Board Access (Bulk Add) -->
+      <div class="bulk-add-section" *ngIf="canEditAndConfigure" style="margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--divider);">
+        <label class="font-semibold text-sm" style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.85rem;">Grant Board Access (Bulk)</label>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <p-multiselect
+            [options]="(assignableWorkspaceMembers$ | async) ?? []"
+            optionLabel="email"
+            [(ngModel)]="selectedMembersToAdd"
+            placeholder="Select workspace members..."
+            styleClass="w-full flex-1"
+            appendTo="body"
+          >
+            <ng-template let-m pTemplate="item">
+              <div style="display: flex; flex-direction: column; gap: 2px;">
+                <span style="font-weight: 600; font-size: 0.85rem;">{{ m.firstName }} {{ m.lastName }}</span>
+                <span style="font-size: 0.75rem; color: var(--text-subtle);">{{ m.email }} · {{ roleLabel(m.role) }}</span>
+              </div>
+            </ng-template>
+          </p-multiselect>
           <p-button
-            *ngIf="!person.allBoards"
-            icon="pi pi-user-minus"
-            label="Remove"
-            styleClass="p-button-text p-button-danger p-button-sm"
-            (click)="confirmRemoveFromBoard(person)"
+            label="Grant Access"
+            icon="pi pi-plus"
+            styleClass="p-button-success p-button-sm"
+            [disabled]="selectedMembersToAdd.length === 0"
+            (onClick)="addSelectedMembersToBoard()"
           ></p-button>
-        </li>
-        <li class="people-hint" *ngIf="people.length === 0">Only admins can open this board so far.</li>
-      </ul>
-      <p class="people-hint">
+        </div>
+      </div>
+
+      <div *ngIf="peopleOnBoard$ | async as people">
+        <!-- Bulk Remove Control Header -->
+        <div class="bulk-remove-header" *ngIf="canEditAndConfigure && people.filter(p => !p.allBoards).length > 0" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background-color: var(--surface-subtle); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);">
+          <p-checkbox
+            [binary]="true"
+            [ngModel]="people.filter(p => !p.allBoards).length > 0 && selectedMembersToRemove.length === people.filter(p => !p.allBoards).length"
+            (onChange)="toggleAllToRemoveChecked(people, $event.checked)"
+            label="Select All"
+          ></p-checkbox>
+          <p-button
+            label="Remove Selected"
+            icon="pi pi-user-minus"
+            styleClass="p-button-danger p-button-sm p-button-text"
+            [disabled]="selectedMembersToRemove.length === 0"
+            (onClick)="removeSelectedMembersFromBoard()"
+          ></p-button>
+        </div>
+
+        <ul class="people-list">
+          <li class="person-row" *ngFor="let person of people; trackBy: trackByUserId">
+            <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+              <p-checkbox
+                *ngIf="canEditAndConfigure && !person.allBoards"
+                [binary]="true"
+                [ngModel]="isToRemoveChecked(person)"
+                (onChange)="toggleToRemoveChecked(person, $event.checked)"
+              ></p-checkbox>
+              <div class="user-avatar">{{ person.firstName[0] }}{{ person.lastName[0] }}</div>
+              <div class="person-text" style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <span class="person-name">{{ person.firstName }} {{ person.lastName }}</span>
+                <span class="person-meta" style="font-size: 0.75rem; color: var(--text-subtle); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ person.email }} · {{ roleLabel(person.role) }}</span>
+              </div>
+            </div>
+            <!-- PMs open every board by role, so there is no board membership to remove -->
+            <p-tag *ngIf="person.allBoards" value="All boards (PM)" severity="info"></p-tag>
+            <p-button
+              *ngIf="!person.allBoards"
+              icon="pi pi-user-minus"
+              label="Remove"
+              styleClass="p-button-text p-button-danger p-button-sm"
+              (click)="confirmRemoveFromBoard(person)"
+            ></p-button>
+          </li>
+          <li class="people-hint" *ngIf="people.length === 0">Only admins can open this board so far.</li>
+        </ul>
+      </div>
+
+      <p class="people-hint" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--divider);">
         To give someone access, use <strong>Manage boards</strong> on the
         <a [routerLink]="['/w', board.workspaceId, 'members']">Workspace Members</a> page.
       </p>
