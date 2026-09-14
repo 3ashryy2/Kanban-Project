@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { Popover } from 'primeng/popover';
+import { Button } from 'primeng/button';
+import { Select } from 'primeng/select';
 import { BoardStoreService } from '../../../core/store/board-store.service';
 import { WorkflowStoreService } from '../../../core/store/workflow-store.service';
 import { TaskDto } from '../../../core/models/task.dto';
 import { SimpleUserDto } from '../../../core/models/user.dto';
-import { AssigneeChoices, BoardViewer, assigneeChoices, canEditTask } from '../../../core/utils/task-permissions';
+import { AssigneeChoices, BoardViewer, assigneeChoices, canEditTask, canApproveTask } from '../../../core/utils/task-permissions';
 
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
 
@@ -21,7 +23,7 @@ const SEARCH_THRESHOLD = 6;
 @Component({
   selector: 'app-task-card',
   standalone: true,
-  imports: [CommonModule, FormsModule, Popover],
+  imports: [CommonModule, FormsModule, Popover, Button, Select],
   templateUrl: './task-card.component.html',
   styleUrls: ['./task-card.component.scss']
 })
@@ -45,6 +47,11 @@ export class TaskCardComponent implements OnChanges {
   private saving = false;
   private openedFrom: HTMLElement | null = null;
 
+  // Direct approval/rejection properties
+  rejectionReason = '';
+  selectedFallbackColumnId: number | null = null;
+  panelOpen = false;
+
   ngOnChanges(): void {
     this.editable = canEditTask(this.task, this.viewer);
     this.choices = assigneeChoices(this.task, this.viewer, this.members, this.inFirstColumn);
@@ -57,6 +64,45 @@ export class TaskCardComponent implements OnChanges {
 
   get columnsList(): any[] {
     return this.boardStore.currentColumns;
+  }
+
+  get canApprove(): boolean {
+    return canApproveTask(this.task, this.viewer, this.boardStore.currentColumns);
+  }
+
+  get rejectFallbackOptions(): { label: string; value: number }[] {
+    const fallbackIds = new Set(this.workflowStore.transitionsList
+      .filter(t => t.toColumnId === this.task.columnId && t.requiresApproval && t.fallbackColumnId != null)
+      .map(t => t.fallbackColumnId));
+
+    return this.boardStore.currentColumns
+      .filter(col => fallbackIds.has(col.id))
+      .map(col => ({ label: col.name, value: col.id }));
+  }
+
+  approveDirect(event: Event): void {
+    event.stopPropagation(); // prevent opening Task Inspector details
+    const req = { version: this.task.version };
+    this.boardStore.approveTask(this.task.id, req, this.task.boardId).subscribe();
+  }
+
+  openRejectPanel(event: Event, panel: Popover): void {
+    event.stopPropagation(); // prevent opening Task Inspector details
+    this.rejectionReason = '';
+    const fallbacks = this.rejectFallbackOptions;
+    this.selectedFallbackColumnId = fallbacks.length === 1 ? fallbacks[0].value : null;
+    panel.show(event);
+  }
+
+  submitRejectDirect(panel: Popover): void {
+    if (!this.selectedFallbackColumnId || !this.rejectionReason) return;
+    const req = {
+      fallbackColumnId: this.selectedFallbackColumnId,
+      rejectionReason: this.rejectionReason,
+      version: this.task.version
+    };
+    panel.hide(); // Close panel instantly for great user experience!
+    this.boardStore.rejectTask(this.task.id, req, this.task.boardId).subscribe();
   }
 
   moveTaskToColumn(targetColumnId: number, panel: Popover): void {
@@ -120,10 +166,12 @@ export class TaskCardComponent implements OnChanges {
   }
 
   onPanelShown(): void {
+    this.panelOpen = true;
     this.editingChange.emit(true);
   }
 
   onPanelHidden(): void {
+    this.panelOpen = false;
     this.editingChange.emit(false);
     // Hand focus back to what opened the panel, unless the user has already moved on. The panel is
     // still on the page when this runs, so focus may be on one of its options.

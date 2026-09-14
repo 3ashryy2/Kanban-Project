@@ -1,7 +1,26 @@
-<!-- Locked Padlock Gating Overlay (F6) -->
-<div class="lock-indicator-banner" *ngIf="task.status === 'PENDING_APPROVAL'">
-  <i class="pi pi-lock lock-banner-icon"></i>
-  <span>LOCKED PENDING APPROVAL</span>
+<!-- Locked Padlock Gating Overlay (F6) with Direct Approve/Reject Buttons if Authorized -->
+<div class="lock-indicator-banner" *ngIf="task.status === 'PENDING_APPROVAL'" style="display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; padding: 6px 12px; min-height: 48px;">
+  <div style="display: flex; align-items: center; gap: 6px;">
+    <i class="pi pi-lock lock-banner-icon"></i>
+    <span>LOCKED PENDING APPROVAL</span>
+  </div>
+  
+  <div class="direct-gate-actions" *ngIf="canApprove && !panelOpen" style="display: flex; gap: 8px; margin-top: 4px;">
+    <p-button
+      label="Approve"
+      icon="pi pi-check"
+      styleClass="p-button-success"
+      [style]="{ padding: '2px 8px', height: '22px', fontSize: '0.75rem' }"
+      (click)="approveDirect($event)"
+    ></p-button>
+    <p-button
+      label="Reject"
+      icon="pi pi-times"
+      styleClass="p-button-danger"
+      [style]="{ padding: '2px 8px', height: '22px', fontSize: '0.75rem' }"
+      (click)="openRejectPanel($event, cardRejectPanel)"
+    ></p-button>
+  </div>
 </div>
 
 <!-- Card Header & Priority/Status Tags (F16): tags are buttons when the viewer may change them -->
@@ -166,5 +185,54 @@
       </span>
       <i class="pi pi-check option-check" *ngIf="task.columnId === col.id"></i>
     </button>
+  </div>
+</p-popover>
+
+<p-popover #cardRejectPanel (onShow)="onPanelShown()" (onHide)="onPanelHidden()" ariaLabel="Review rejection memo" appendTo="body">
+  <div class="popover-body" (keydown)="moveFocus($event)" style="padding: 12px; width: 280px; display: flex; flex-direction: column; gap: 8px;">
+    <p class="popover-title" style="margin: 0; font-weight: 600; font-size: 0.85rem; color: var(--text-strong);">Review Rejection Memo</p>
+    
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+      <label for="direct-fallback-col" style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">Rejection Fallback Column *</label>
+      <p-select
+        id="direct-fallback-col"
+        [options]="rejectFallbackOptions"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="selectedFallbackColumnId"
+        placeholder="Choose fallback stage..."
+        styleClass="w-full"
+        appendTo="body"
+        (click)="$event.stopPropagation()"
+      ></p-select>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+      <label for="direct-reject-reason" style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted);">Rejection Reason *</label>
+      <textarea
+        id="direct-reject-reason"
+        rows="3"
+        [(ngModel)]="rejectionReason"
+        placeholder="State why this block failed..."
+        style="width: 100%; font-size: 0.8rem; padding: 6px; border: 1px solid var(--border-strong); border-radius: 4px; resize: none; background-color: var(--surface-card); color: var(--text);"
+        (click)="$event.stopPropagation()"
+      ></textarea>
+    </div>
+
+    <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px;">
+      <p-button
+        label="Cancel"
+        styleClass="p-button-text p-button-secondary"
+        [style]="{ padding: '2px 8px', height: '24px', fontSize: '0.75rem' }"
+        (click)="cardRejectPanel.hide(); $event.stopPropagation();"
+      ></p-button>
+      <p-button
+        label="Confirm Reject"
+        styleClass="p-button-danger"
+        [style]="{ padding: '2px 8px', height: '24px', fontSize: '0.75rem' }"
+        [disabled]="!selectedFallbackColumnId || !rejectionReason"
+        (click)="submitRejectDirect(cardRejectPanel); $event.stopPropagation();"
+      ></p-button>
+    </div>
   </div>
 </p-popover>

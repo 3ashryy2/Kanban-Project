@@ -24,7 +24,7 @@ import { TaskDto, TaskCreateRequest, TaskMetadataRequest, TaskAssigneeRequest, T
 import { WorkspaceMemberResponseDto } from '../../../core/models/workspace.dto';
 import { SimpleUserDto } from '../../../core/models/user.dto';
 import { ParseDetailsPipe } from '../../../shared/pipes/parse-details.pipe';
-import { AssigneeChoices, BoardViewer, assigneeChoices, newTaskAssigneeChoices } from '../../../core/utils/task-permissions';
+import { AssigneeChoices, BoardViewer, assigneeChoices, newTaskAssigneeChoices, canApproveTask } from '../../../core/utils/task-permissions';
 import { TaskCardComponent } from '../task-card/task-card.component';
 import { WorkflowRulesDialogComponent } from '../workflow-rules-dialog/workflow-rules-dialog.component';
 
@@ -736,9 +736,14 @@ export class BoardContainerComponent implements OnInit, OnDestroy {
     return this.isAdmin || this.currentUserRole === 'ROLE_PROJECT_MANAGER';
   }
 
-  /** Admins and PMs add cards anywhere; developers and QA start them in the first column; viewers never. */
+  get canApproveSelectedTask(): boolean {
+    if (!this.selectedTask) return false;
+    return canApproveTask(this.selectedTask, this.viewer, this.allColumns);
+  }
+
+  /** Admins add cards anywhere; PMs, developers and QA start them in the first column; viewers never. */
   canAddCardTo(columnId: number): boolean {
-    if (this.canEditAndConfigure) return true;
+    if (this.isAdmin) return true;
     if (this.currentUserRole === 'ROLE_VIEWER') return false;
     return columnId === this.firstColumnId;
   }

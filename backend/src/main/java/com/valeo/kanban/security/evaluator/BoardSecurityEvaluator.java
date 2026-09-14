@@ -62,12 +62,22 @@ public class BoardSecurityEvaluator {
     public boolean canApproveTask(Long taskId, CustomUserDetails currentUser) {
         if (taskId == null || currentUser == null) return false;
         if (currentUser.isAdmin()) return true;
-        return taskRepository.findById(taskId)
+        return taskRepository.findByIdWithHierarchy(taskId)
                 .map(t -> {
+                    String columnName = t.getColumn().getName();
+                    boolean isQAGate = columnName != null && columnName.toUpperCase().contains("QA");
+
                     Long workspaceId = t.getBoard().getWorkspace().getId();
                     return workspaceMemberRepository
                             .findByWorkspaceIdAndUserId(workspaceId, currentUser.getId())
-                            .map(m -> m.getRole() == WorkspaceRole.ROLE_PROJECT_MANAGER)
+                            .map(m -> {
+                                WorkspaceRole role = m.getRole();
+                                if (isQAGate) {
+                                    return role == WorkspaceRole.ROLE_PROJECT_MANAGER || role == WorkspaceRole.ROLE_QA_TESTER;
+                                } else {
+                                    return role == WorkspaceRole.ROLE_PROJECT_MANAGER;
+                                }
+                            })
                             .orElse(false);
                 })
                 .orElse(false);

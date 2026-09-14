@@ -255,7 +255,7 @@
       </div>
 
       <!-- Human-In-The-Loop Approval Gates Action Bar (F7) -->
-      <div class="approval-action-block" *ngIf="selectedTask.status === 'PENDING_APPROVAL' && canEditAndConfigure">
+      <div class="approval-action-block" *ngIf="selectedTask.status === 'PENDING_APPROVAL' && canApproveSelectedTask">
         <h4>GATE REVIEW REQUIRED</h4>
         <p>Review the deliverables of this perception roadmap before granting progression permissions.</p>
         <div class="approval-btn-group">

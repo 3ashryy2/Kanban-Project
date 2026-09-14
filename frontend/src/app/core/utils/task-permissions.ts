@@ -57,3 +57,21 @@ export function assigneeChoices(
   // Their own card: handing it back is the only change left, so past the first column there's none
   return task.assignee.id === viewer.userId && canUnassign ? { people: me, canUnassign } : null;
 }
+
+/**
+ * Decision maker for approval gates:
+ * - Project Manager or Admin can approve any gated transition.
+ * - QA Tester can approve gated transitions if the target column contains 'QA' (case-insensitive).
+ */
+export function canApproveTask(
+  task: TaskDto,
+  viewer: BoardViewer,
+  columns: { id: number, name: string }[]
+): boolean {
+  if (viewer.isAdmin || viewer.role === 'ROLE_PROJECT_MANAGER') return true;
+  if (viewer.role === 'ROLE_QA_TESTER') {
+    const col = columns.find(c => c.id === task.columnId);
+    return !!col && !!col.name && col.name.toUpperCase().includes('QA');
+  }
+  return false;
+}

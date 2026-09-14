@@ -1,6 +1,6 @@
 import { TaskDto } from '../models/task.dto';
 import { SimpleUserDto } from '../models/user.dto';
-import { BoardViewer, assigneeChoices, canEditTask, newTaskAssigneeChoices } from './task-permissions';
+import { BoardViewer, assigneeChoices, canEditTask, newTaskAssigneeChoices, canApproveTask } from './task-permissions';
 
 const pm: SimpleUserDto = { id: 2, email: 'pm@valeo.com', firstName: 'Project', lastName: 'Manager' };
 const dev: SimpleUserDto = { id: 3, email: 'dev@valeo.com', firstName: 'Mohanad', lastName: 'Emad' };
@@ -68,5 +68,42 @@ describe('task permissions', () => {
   it('lets developers and QA edit the details of an active card', () => {
     expect(canEditTask(task(), viewerFor(dev, 'ROLE_DEVELOPER'))).toBe(true);
     expect(canEditTask(task(), viewerFor(qa, 'ROLE_QA_TESTER'))).toBe(true);
+  });
+
+  describe('canApproveTask', () => {
+    const columns = [
+      { id: 1, name: 'To-Do' },
+      { id: 2, name: 'Ready for QA' },
+      { id: 3, name: 'QA Verification' },
+      { id: 4, name: 'Done' }
+    ];
+
+    it('allows PMs and admins to approve any gated transition', () => {
+      const taskTodo = task({ columnId: 1 });
+      const taskDone = task({ columnId: 4 });
+      
+      expect(canApproveTask(taskTodo, viewerFor(pm, 'ROLE_PROJECT_MANAGER'), columns)).toBe(true);
+      expect(canApproveTask(taskDone, viewerFor(pm, 'ROLE_PROJECT_MANAGER'), columns)).toBe(true);
+      expect(canApproveTask(taskTodo, viewerFor(null, 'ROLE_VIEWER', true), columns)).toBe(true);
+    });
+
+    it('allows QA Testers to approve only QA column gates', () => {
+      const taskQA1 = task({ columnId: 2 }); // 'Ready for QA'
+      const taskQA2 = task({ columnId: 3 }); // 'QA Verification'
+      const taskDone = task({ columnId: 4 }); // 'Done'
+
+      expect(canApproveTask(taskQA1, viewerFor(qa, 'ROLE_QA_TESTER'), columns)).toBe(true);
+      expect(canApproveTask(taskQA2, viewerFor(qa, 'ROLE_QA_TESTER'), columns)).toBe(true);
+      expect(canApproveTask(taskDone, viewerFor(qa, 'ROLE_QA_TESTER'), columns)).toBe(false);
+    });
+
+    it('rejects developers and viewers on all gates', () => {
+      const taskQA = task({ columnId: 2 });
+      const taskDone = task({ columnId: 4 });
+
+      expect(canApproveTask(taskQA, viewerFor(dev, 'ROLE_DEVELOPER'), columns)).toBe(false);
+      expect(canApproveTask(taskDone, viewerFor(dev, 'ROLE_DEVELOPER'), columns)).toBe(false);
+      expect(canApproveTask(taskQA, viewerFor({ ...dev, id: 5 }, 'ROLE_VIEWER'), columns)).toBe(false);
+    });
   });
 });

@@ -72,6 +72,71 @@ class BoardSecurityEvaluatorTest {
         assertThat(boardSecurity.canCreateTaskInColumn(10L, 1L, null, viewer)).isFalse();
     }
 
+    @Test
+    void canApproveTask_QAGate_PM_Admin_QATester_Allowed() {
+        com.valeo.kanban.model.entity.Task mockTask = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.Task.class);
+        com.valeo.kanban.model.entity.Board mockBoard = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.Board.class);
+        com.valeo.kanban.model.entity.Workspace mockWorkspace = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.Workspace.class);
+        com.valeo.kanban.model.entity.Column mockColumn = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.Column.class);
+        com.valeo.kanban.model.entity.WorkspaceMember mockMemberQA = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.WorkspaceMember.class);
+        com.valeo.kanban.model.entity.WorkspaceMember mockMemberPM = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.WorkspaceMember.class);
+
+        when(mockTask.getColumn()).thenReturn(mockColumn);
+        when(mockTask.getBoard()).thenReturn(mockBoard);
+        when(mockBoard.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getId()).thenReturn(100L);
+        when(mockColumn.getName()).thenReturn("Ready for QA");
+
+        when(taskRepository.findByIdWithHierarchy(1L)).thenReturn(Optional.of(mockTask));
+
+        CustomUserDetails qaTester = user(4L, "qa@valeo.com");
+        when(mockMemberQA.getRole()).thenReturn(WorkspaceRole.ROLE_QA_TESTER);
+        when(workspaceMemberRepository.findByWorkspaceIdAndUserId(100L, 4L)).thenReturn(Optional.of(mockMemberQA));
+
+        when(mockMemberPM.getRole()).thenReturn(WorkspaceRole.ROLE_PROJECT_MANAGER);
+        when(workspaceMemberRepository.findByWorkspaceIdAndUserId(100L, projectManager.getId())).thenReturn(Optional.of(mockMemberPM));
+
+        CustomUserDetails admin = new CustomUserDetails(99L, "admin@valeo.com", "hash", "Admin", "User", true, List.of());
+
+        assertThat(boardSecurity.canApproveTask(1L, qaTester)).isTrue();
+        assertThat(boardSecurity.canApproveTask(1L, projectManager)).isTrue();
+        assertThat(boardSecurity.canApproveTask(1L, admin)).isTrue();
+
+        when(workspaceMemberRepository.findByWorkspaceIdAndUserId(100L, developer.getId())).thenReturn(Optional.empty());
+        assertThat(boardSecurity.canApproveTask(1L, developer)).isFalse();
+    }
+
+    @Test
+    void canApproveTask_DoneGate_OnlyPM_Admin_Allowed() {
+        com.valeo.kanban.model.entity.Task mockTask = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.Task.class);
+        com.valeo.kanban.model.entity.Board mockBoard = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.Board.class);
+        com.valeo.kanban.model.entity.Workspace mockWorkspace = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.Workspace.class);
+        com.valeo.kanban.model.entity.Column mockColumn = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.Column.class);
+        com.valeo.kanban.model.entity.WorkspaceMember mockMemberQA = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.WorkspaceMember.class);
+        com.valeo.kanban.model.entity.WorkspaceMember mockMemberPM = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.WorkspaceMember.class);
+
+        when(mockTask.getColumn()).thenReturn(mockColumn);
+        when(mockTask.getBoard()).thenReturn(mockBoard);
+        when(mockBoard.getWorkspace()).thenReturn(mockWorkspace);
+        when(mockWorkspace.getId()).thenReturn(100L);
+        when(mockColumn.getName()).thenReturn("Done");
+
+        when(taskRepository.findByIdWithHierarchy(1L)).thenReturn(Optional.of(mockTask));
+
+        CustomUserDetails qaTester = user(4L, "qa@valeo.com");
+        when(mockMemberQA.getRole()).thenReturn(WorkspaceRole.ROLE_QA_TESTER);
+        when(workspaceMemberRepository.findByWorkspaceIdAndUserId(100L, 4L)).thenReturn(Optional.of(mockMemberQA));
+
+        when(mockMemberPM.getRole()).thenReturn(WorkspaceRole.ROLE_PROJECT_MANAGER);
+        when(workspaceMemberRepository.findByWorkspaceIdAndUserId(100L, projectManager.getId())).thenReturn(Optional.of(mockMemberPM));
+
+        CustomUserDetails admin = new CustomUserDetails(99L, "admin@valeo.com", "hash", "Admin", "User", true, List.of());
+
+        assertThat(boardSecurity.canApproveTask(1L, qaTester)).isFalse();
+        assertThat(boardSecurity.canApproveTask(1L, projectManager)).isTrue();
+        assertThat(boardSecurity.canApproveTask(1L, admin)).isTrue();
+    }
+
     private static CustomUserDetails user(long id, String email) {
         return new CustomUserDetails(id, email, "hash", "First", "Last", false, List.of());
     }
