@@ -12,6 +12,7 @@ import com.valeo.kanban.model.entity.Task;
 import com.valeo.kanban.model.entity.User;
 import com.valeo.kanban.model.enums.TaskPriority;
 import com.valeo.kanban.model.enums.TaskStatus;
+import com.valeo.kanban.model.enums.WorkspaceRole;
 import com.valeo.kanban.repository.BoardRepository;
 import com.valeo.kanban.repository.ColumnRepository;
 import com.valeo.kanban.repository.TaskRepository;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -197,10 +199,19 @@ public class TaskService {
         taskRepository.delete(task);
     }
 
-    // A task may only be assigned to someone who can open its board
+    // A task may only be assigned to someone who can open its board and is NOT a viewer
     private void requireBoardAccess(Long assigneeId, Long boardId) {
-        if (!boardAccessService.userCanAccessBoard(assigneeId, boardId)) {
+        boolean isAdmin = userRepository.findById(assigneeId).map(User::isAdmin).orElse(false);
+        if (isAdmin) {
+            return; // Admins can always be assigned
+        }
+
+        Optional<WorkspaceRole> role = boardAccessService.roleOnBoard(boardId, assigneeId);
+        if (role.isEmpty()) {
             throw new IllegalArgumentException("The assignee must be a member of this board.");
+        }
+        if (role.get() == WorkspaceRole.ROLE_VIEWER) {
+            throw new IllegalArgumentException("A task cannot be assigned to a viewer.");
         }
     }
 }

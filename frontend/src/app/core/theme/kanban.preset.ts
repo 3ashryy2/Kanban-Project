@@ -11,17 +11,17 @@ import Aura from '@primeng/themes/aura';
 export const KanbanPreset = definePreset(Aura, {
   semantic: {
     primary: {
-      50: '{blue.50}',
-      100: '{blue.100}',
-      200: '{blue.200}',
-      300: '{blue.300}',
-      400: '{blue.400}',
-      500: '{blue.500}',
-      600: '{blue.600}',
-      700: '{blue.700}',
-      800: '{blue.800}',
-      900: '{blue.900}',
-      950: '{blue.950}'
+      50: '#F0F8FC',
+      100: '#E0F1F7',
+      200: '#BCE3F0',
+      300: '#8ED1EA',
+      400: '#54C0E8', // Light blue
+      500: '#1DA2CE',
+      600: '#0075A9', // Mid blue
+      700: '#005988',
+      800: '#003B71', // Dark blue
+      900: '#002E65',
+      950: '#001A4C'
     },
     colorScheme: {
       light: {

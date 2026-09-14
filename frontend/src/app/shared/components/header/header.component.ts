@@ -2,7 +2,7 @@ import { Component, OnInit, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthStoreService } from '../../../core/store/auth-store.service';
 import { WorkspaceStoreService } from '../../../core/store/workspace-store.service';
 import { UserSearchSelectComponent } from '../user-search-select/user-search-select.component';
@@ -23,6 +23,7 @@ import { Tooltip } from 'primeng/tooltip';
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     Select,
     Button,
     Menu,

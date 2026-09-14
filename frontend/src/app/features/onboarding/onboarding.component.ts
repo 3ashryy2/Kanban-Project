@@ -2,7 +2,7 @@ import { Component, DestroyRef, HostListener, OnInit, inject } from '@angular/co
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { AuthStoreService } from '../../core/store/auth-store.service';
 import { WorkspaceStoreService } from '../../core/store/workspace-store.service';
@@ -18,7 +18,7 @@ const FOCUS_RECHECK_MS = 10_000;
 @Component({
   selector: 'app-onboarding',
   standalone: true,
-  imports: [CommonModule, FormsModule, Button, InputText, Textarea],
+  imports: [CommonModule, FormsModule, RouterLink, Button, InputText, Textarea],
   templateUrl: './onboarding.component.html',
   styleUrls: ['./onboarding.component.scss']
 })

@@ -38,17 +38,31 @@ public class BoardMembershipService {
     private final UserRepository userRepository;
     private final BoardAccessRevocationService revocationService;
 
-    /** Everyone who may be assigned a task on the board: its explicit members plus the workspace's PMs. */
+    /** Everyone who may be assigned a task on the board: its explicit members plus the workspace's PMs. ROLE_VIEWER is excluded. */
     @Transactional(readOnly = true)
     public List<TaskDto.SimpleUserDto> getAssignableUsers(Long boardId) {
         Long workspaceId = boardRepository.findWorkspaceIdById(boardId)
                 .orElseThrow(() -> new EntityNotFoundException("Board not found with ID: " + boardId));
 
         Map<Long, User> users = new LinkedHashMap<>();
-        workspaceMemberRepository.findAllByWorkspaceIdWithUser(workspaceId).stream()
+        
+        List<WorkspaceMember> workspaceMembers = workspaceMemberRepository.findAllByWorkspaceIdWithUser(workspaceId);
+        Map<Long, WorkspaceRole> userRoles = workspaceMembers.stream()
+                .collect(Collectors.toMap(
+                        m -> m.getUser().getId(),
+                        WorkspaceMember::getRole,
+                        (r1, r2) -> r1
+                ));
+
+        workspaceMembers.stream()
                 .filter(m -> m.getRole() == WorkspaceRole.ROLE_PROJECT_MANAGER)
                 .forEach(m -> users.put(m.getUser().getId(), m.getUser()));
-        boardMemberRepository.findAllByBoardIdWithUser(boardId)
+
+        boardMemberRepository.findAllByBoardIdWithUser(boardId).stream()
+                .filter(bm -> {
+                    WorkspaceRole role = userRoles.get(bm.getUser().getId());
+                    return role != WorkspaceRole.ROLE_VIEWER;
+                })
                 .forEach(bm -> users.putIfAbsent(bm.getUser().getId(), bm.getUser()));
 
         return users.values().stream()

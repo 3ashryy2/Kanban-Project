@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { Popover } from 'primeng/popover';
 import { BoardStoreService } from '../../../core/store/board-store.service';
+import { WorkflowStoreService } from '../../../core/store/workflow-store.service';
 import { TaskDto } from '../../../core/models/task.dto';
 import { SimpleUserDto } from '../../../core/models/user.dto';
 import { AssigneeChoices, BoardViewer, assigneeChoices, canEditTask } from '../../../core/utils/task-permissions';
@@ -26,6 +27,7 @@ const SEARCH_THRESHOLD = 6;
 })
 export class TaskCardComponent implements OnChanges {
   private readonly boardStore = inject(BoardStoreService);
+  private readonly workflowStore = inject(WorkflowStoreService);
 
   @Input({ required: true }) task!: TaskDto;
   @Input({ required: true }) viewer!: BoardViewer;
@@ -46,6 +48,39 @@ export class TaskCardComponent implements OnChanges {
   ngOnChanges(): void {
     this.editable = canEditTask(this.task, this.viewer);
     this.choices = assigneeChoices(this.task, this.viewer, this.members, this.inFirstColumn);
+  }
+
+  get columnName(): string {
+    const col = this.boardStore.currentColumns.find(c => c.id === this.task.columnId);
+    return col ? col.name : 'Unknown Status';
+  }
+
+  get columnsList(): any[] {
+    return this.boardStore.currentColumns;
+  }
+
+  moveTaskToColumn(targetColumnId: number, panel: Popover): void {
+    panel.hide();
+    if (targetColumnId === this.task.columnId) return;
+
+    const sourceColumnId = this.task.columnId;
+    const rule = this.workflowStore.transitionsList
+      .find(t => t.fromColumnId === sourceColumnId && t.toColumnId === targetColumnId);
+
+    const isManager = this.viewer.isAdmin || this.viewer.role === 'ROLE_PROJECT_MANAGER';
+    const awaitsApproval = sourceColumnId !== targetColumnId && !!rule?.requiresApproval && !isManager;
+
+    const targetColumn = this.boardStore.currentColumns.find(c => c.id === targetColumnId);
+    const targetIndex = targetColumn ? targetColumn.tasks.length : 0;
+
+    this.boardStore.moveTaskOptimistically(
+      this.task.id,
+      sourceColumnId,
+      targetColumnId,
+      targetIndex,
+      this.task.version,
+      awaitsApproval
+    );
   }
 
   get showSearch(): boolean {

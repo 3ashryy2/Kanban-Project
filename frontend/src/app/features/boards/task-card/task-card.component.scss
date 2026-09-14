@@ -60,6 +60,19 @@ button:focus-visible {
   background-color: var(--danger-soft);
   color: var(--danger-text);
 }
+.status-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background-color: var(--surface-subtle);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.status-tag.editable:hover {
+  box-shadow: 0 0 0 2px var(--border-strong);
+}
 .task-id-badge {
   font-size: 0.75rem;
   font-weight: 600;

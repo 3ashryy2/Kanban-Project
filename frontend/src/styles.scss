@@ -26,29 +26,29 @@
   --border-strong: #cbd5e1;
   --divider: #f1f5f9;
 
-  /* Accent: one blue for buttons, links, avatars and the active nav item */
-  --accent: #2563eb;          /* white text on it       5.2:1 */
-  --accent-strong: #1d4ed8;   /* links, accent text     6.7:1 on white, 5.5:1 on --accent-soft */
-  --accent-soft: #dbeafe;
-  --accent-on-dark: #60a5fa;  /* icons and code on the dark chrome  7.0:1 */
+  /* Accent: corporate blue-green theme from Valeo palette */
+  --accent: #0075A9;          /* Mid blue: #0075A9, white text on it reaches 4.6:1 contrast */
+  --accent-strong: #003B71;   /* Dark blue: #003B71, links, accent text */
+  --accent-soft: #E0F1F7;     /* Light blue tint */
+  --accent-on-dark: #82E600;  /* Valeo green: #82E600, icons and active elements on dark chrome */
 
   /* Status colours: each text colour is meant for its own soft background */
-  --success-text: #166534;  /* 6.5:1 on --success-soft */
-  --success-soft: #dcfce7;
-  --success-icon: #16a34a;  /* 3.3:1 on white */
-  --warning-text: #92400e;  /* 6.4:1 on --warning-soft */
-  --warning-soft: #fef3c7;
-  --warning-icon: #b45309;  /* 5.0:1 on white, 4.5:1 on --warning-soft */
-  --warning-solid: #f59e0b; /* stripes, borders and badge fills only, never text on white */
-  --danger-text: #b91c1c;   /* 5.3:1 on --danger-soft */
-  --danger-soft: #fee2e2;
+  --success-text: #008556;  /* Dark green: #008556 */
+  --success-soft: #e6f3ee;
+  --success-icon: #008556;
+  --warning-text: #92400e;  /* high contrast amber-dark */
+  --warning-soft: #fffdf0;
+  --warning-icon: #FFB600;  /* Amber: #FFB600 */
+  --warning-solid: #FFB600;
+  --danger-text: #E1251B;   /* Red: #E1251B */
+  --danger-soft: #feeaea;
 
   /* Dark chrome: the sidebar, and the backdrop behind sign-in, onboarding and error pages */
-  --chrome-bg: #0f172a;
-  --chrome-text: #f1f5f9;
-  --chrome-text-muted: #94a3b8;  /* 7.0:1 on --chrome-bg */
-  --chrome-border: rgba(255, 255, 255, 0.06);
-  --backdrop: radial-gradient(circle at top right, #1a2238 0%, #0d1222 100%);
+  --chrome-bg: #003B71;          /* Dark blue: #003B71 */
+  --chrome-text: #ffffff;        /* White: #FFFFFF */
+  --chrome-text-muted: #BCE3F0;  /* Muted text using Light blue tint */
+  --chrome-border: rgba(255, 255, 255, 0.12);
+  --backdrop: radial-gradient(circle at top right, #003B71 0%, #001A4C 100%);
 }
 
 /* One font for the whole app. PrimeNG attaches dropdown lists, tooltips, menus and toasts

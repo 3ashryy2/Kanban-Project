@@ -1,7 +1,9 @@
 <header class="app-header">
   <div class="header-left">
-    <i class="pi pi-clone logo-icon"></i>
-    <span class="brand-title">Valeo Perception PM</span>
+    <a routerLink="/" class="logo-link" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit;">
+      <img src="/valeo-logo.png" alt="Valeo Logo" class="logo-img" style="height: 36px; width: 36px; object-fit: contain;" />
+      <span class="brand-title">Valeo Perception PM</span>
+    </a>
     
     <div class="workspace-selector-box" *ngIf="workspaceStore.workspaces$ | async as workspaces">
       <ng-container *ngIf="workspaces.length > 0">

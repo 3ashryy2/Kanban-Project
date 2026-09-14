@@ -1,9 +1,9 @@
 <div class="onboarding-wrapper" *ngIf="authStore.currentUser$ | async as user">
   <header class="onboarding-topbar">
-    <div class="brand">
-      <i class="pi pi-clone"></i>
+    <a routerLink="/" class="brand" style="text-decoration: none; display: flex; align-items: center; gap: 8px; color: inherit;">
+      <img src="/valeo-logo.png" alt="Valeo Logo" style="height: 28px; width: 28px; object-fit: contain;" />
       <span>Valeo Perception PM</span>
-    </div>
+    </a>
     <div class="session">
       <span class="session-email">{{ user.email }}</span>
       <p-button label="Sign Out" icon="pi pi-power-off" styleClass="p-button-text p-button-sm session-signout" (onClick)="signOut()"></p-button>

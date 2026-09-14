@@ -27,6 +27,10 @@ export class BoardStoreService {
     map(board => board?.columns ?? [])
   );
 
+  get currentColumns(): ColumnDto[] {
+    return this._boardState$.getValue()?.columns ?? [];
+  }
+
   // People who may be assigned tasks on the open board (its members plus the workspace's PMs)
   private readonly _boardMembers$ = new BehaviorSubject<SimpleUserDto[]>([]);
   readonly boardMembers$ = this._boardMembers$.asObservable();
