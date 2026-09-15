@@ -1,8 +1,8 @@
-package com.valeo.kanban.dto;
+package com.example.kanban.dto;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.valeo.kanban.dto.response.AuthResponse;
-import com.valeo.kanban.dto.response.ColumnDto;
+import com.example.kanban.dto.response.AuthResponse;
+import com.example.kanban.dto.response.ColumnDto;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,7 +14,7 @@ class JsonContractTest {
 
     @Test
     void authUserSerializesIsAdmin() throws Exception {
-        AuthResponse.UserDetails user = AuthResponse.UserDetails.builder().id(1L).email("admin@valeo.com").admin(true).build();
+        AuthResponse.UserDetails user = AuthResponse.UserDetails.builder().id(1L).email("admin@example.com").admin(true).build();
 
         String json = objectMapper.writeValueAsString(user);
 

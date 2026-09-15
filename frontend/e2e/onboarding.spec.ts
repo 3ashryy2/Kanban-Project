@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('F15: Onboarding newly registered users', () => {
 
   test('new user waits on onboarding until an admin grants workspace access', async ({ page, browser }) => {
-    const email = `joiner.${Date.now()}@valeo.com`;
+    const email = `joiner.${Date.now()}@example.com`;
 
     // 1. Register: with no workspace the user lands on the onboarding page
     await page.goto('/auth/login');
@@ -23,7 +23,7 @@ test.describe('F15: Onboarding newly registered users', () => {
     const adminContext = await browser.newContext();
     const admin = await adminContext.newPage();
     await admin.goto('/auth/login');
-    await admin.fill('#email', 'admin@valeo.com');
+    await admin.fill('#email', 'admin@example.com');
     await admin.fill('#password input', 'password123');
     await admin.click('button[type="submit"]');
     await expect(admin).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
@@ -49,7 +49,7 @@ test.describe('F15: Onboarding newly registered users', () => {
 
   test('a user with a workspace is sent away from the onboarding page', async ({ page }) => {
     await page.goto('/auth/login');
-    await page.fill('#email', 'dev@valeo.com');
+    await page.fill('#email', 'dev@example.com');
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });

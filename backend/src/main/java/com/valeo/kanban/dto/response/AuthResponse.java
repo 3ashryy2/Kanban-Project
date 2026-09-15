@@ -1,4 +1,4 @@
-package com.valeo.kanban.dto.response;
+package com.example.kanban.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

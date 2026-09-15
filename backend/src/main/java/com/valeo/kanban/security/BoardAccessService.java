@@ -1,12 +1,12 @@
-package com.valeo.kanban.security;
+package com.example.kanban.security;
 
-import com.valeo.kanban.model.entity.User;
-import com.valeo.kanban.model.entity.WorkspaceMember;
-import com.valeo.kanban.model.enums.WorkspaceRole;
-import com.valeo.kanban.repository.BoardMemberRepository;
-import com.valeo.kanban.repository.BoardRepository;
-import com.valeo.kanban.repository.UserRepository;
-import com.valeo.kanban.repository.WorkspaceMemberRepository;
+import com.example.kanban.model.entity.User;
+import com.example.kanban.model.entity.WorkspaceMember;
+import com.example.kanban.model.enums.WorkspaceRole;
+import com.example.kanban.repository.BoardMemberRepository;
+import com.example.kanban.repository.BoardRepository;
+import com.example.kanban.repository.UserRepository;
+import com.example.kanban.repository.WorkspaceMemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,23 +1,23 @@
-package com.valeo.kanban.service;
+package com.example.kanban.service;
 
-import com.valeo.kanban.dto.request.WorkspaceCreateRequest;
-import com.valeo.kanban.dto.request.WorkspaceMemberCreateRequest;
-import com.valeo.kanban.dto.request.WorkspaceMemberUpdateRequest;
-import com.valeo.kanban.dto.response.MembershipChangeResponseDto;
-import com.valeo.kanban.dto.response.WorkspaceResponseDto;
-import com.valeo.kanban.exception.custom.ConflictException;
-import com.valeo.kanban.model.entity.User;
-import com.valeo.kanban.model.entity.Workspace;
-import com.valeo.kanban.model.entity.WorkspaceMember;
-import com.valeo.kanban.model.enums.WorkspaceRole;
-import com.valeo.kanban.repository.BoardMemberRepository;
-import com.valeo.kanban.repository.BoardRepository;
-import com.valeo.kanban.repository.UserRepository;
-import com.valeo.kanban.repository.WorkspaceMemberRepository;
-import com.valeo.kanban.repository.WorkspaceRepository;
-import com.valeo.kanban.security.BoardAccessService;
-import com.valeo.kanban.security.BoardScope;
-import com.valeo.kanban.security.CustomUserDetails;
+import com.example.kanban.dto.request.WorkspaceCreateRequest;
+import com.example.kanban.dto.request.WorkspaceMemberCreateRequest;
+import com.example.kanban.dto.request.WorkspaceMemberUpdateRequest;
+import com.example.kanban.dto.response.MembershipChangeResponseDto;
+import com.example.kanban.dto.response.WorkspaceResponseDto;
+import com.example.kanban.exception.custom.ConflictException;
+import com.example.kanban.model.entity.User;
+import com.example.kanban.model.entity.Workspace;
+import com.example.kanban.model.entity.WorkspaceMember;
+import com.example.kanban.model.enums.WorkspaceRole;
+import com.example.kanban.repository.BoardMemberRepository;
+import com.example.kanban.repository.BoardRepository;
+import com.example.kanban.repository.UserRepository;
+import com.example.kanban.repository.WorkspaceMemberRepository;
+import com.example.kanban.repository.WorkspaceRepository;
+import com.example.kanban.security.BoardAccessService;
+import com.example.kanban.security.BoardScope;
+import com.example.kanban.security.CustomUserDetails;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -186,11 +186,11 @@ class WorkspaceServiceTest {
     }
 
     private static CustomUserDetails principal(long id, boolean admin) {
-        return new CustomUserDetails(id, "user" + id + "@valeo.com", "hash", "First", "Last", admin, List.of());
+        return new CustomUserDetails(id, "user" + id + "@example.com", "hash", "First", "Last", admin, List.of());
     }
 
     private static User user(long id) {
-        return User.builder().id(id).email("user" + id + "@valeo.com").firstName("First").lastName("Last").passwordHash("hash").build();
+        return User.builder().id(id).email("user" + id + "@example.com").firstName("First").lastName("Last").passwordHash("hash").build();
     }
 
     private static Workspace workspace(long id, String name) {

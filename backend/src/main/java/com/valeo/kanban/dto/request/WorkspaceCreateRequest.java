@@ -1,4 +1,4 @@
-package com.valeo.kanban.dto.request;
+package com.example.kanban.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

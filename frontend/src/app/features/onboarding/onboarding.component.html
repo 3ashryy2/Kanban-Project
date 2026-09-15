@@ -1,8 +1,8 @@
 <div class="onboarding-wrapper" *ngIf="authStore.currentUser$ | async as user">
   <header class="onboarding-topbar">
     <a routerLink="/" class="brand" style="text-decoration: none; display: flex; align-items: center; gap: 8px; color: inherit;">
-      <img src="/valeo-logo.png" alt="Valeo Logo" style="height: 28px; width: 28px; object-fit: contain;" />
-      <span>Valeo Perception PM</span>
+      <img src="/example-logo.png" alt="example Logo" style="height: 28px; width: 28px; object-fit: contain;" />
+      <span>example Perception PM</span>
     </a>
     <div class="session">
       <span class="session-email">{{ user.email }}</span>

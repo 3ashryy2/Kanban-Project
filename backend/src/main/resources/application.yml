@@ -30,11 +30,11 @@ app:
     secret: ${JWT_SECRET:9a4f2c8d3e1b7f6a5c8d3e1b7f6a5c8d3e1b7f6a5c8d3e1b7f6a5c8d3e1b7f6a}
     expiration-ms: 86400000 # 24 hours
   seed:
-    admin-emails: admin@valeo.com
+    admin-emails: admin@example.com
     admin-default-password: ${ADMIN_DEFAULT_PASSWORD:password123}
 
 logging:
   level:
     org.springframework.security: INFO
     org.hibernate.SQL: DEBUG
-    com.valeo.kanban: DEBUG
+    com.example.kanban: DEBUG

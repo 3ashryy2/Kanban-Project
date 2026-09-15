@@ -2,9 +2,9 @@ import { TaskDto } from '../models/task.dto';
 import { SimpleUserDto } from '../models/user.dto';
 import { BoardViewer, assigneeChoices, canEditTask, newTaskAssigneeChoices, canApproveTask } from './task-permissions';
 
-const pm: SimpleUserDto = { id: 2, email: 'pm@valeo.com', firstName: 'Project', lastName: 'Manager' };
-const dev: SimpleUserDto = { id: 3, email: 'dev@valeo.com', firstName: 'Mohanad', lastName: 'Emad' };
-const qa: SimpleUserDto = { id: 4, email: 'qa@valeo.com', firstName: 'Sarah', lastName: 'Tester' };
+const pm: SimpleUserDto = { id: 2, email: 'pm@example.com', firstName: 'Project', lastName: 'Manager' };
+const dev: SimpleUserDto = { id: 3, email: 'dev@example.com', firstName: 'Mohanad', lastName: 'Emad' };
+const qa: SimpleUserDto = { id: 4, email: 'qa@example.com', firstName: 'Sarah', lastName: 'Tester' };
 const members = [pm, dev, qa];
 
 const viewerFor = (user: SimpleUserDto | null, role: string, isAdmin = false): BoardViewer =>

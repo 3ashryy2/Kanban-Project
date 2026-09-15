@@ -1,8 +1,8 @@
-package com.valeo.kanban.repository;
+package com.example.kanban.repository;
 
-import com.valeo.kanban.dto.response.WorkspaceCountProjection;
-import com.valeo.kanban.model.entity.WorkspaceMember;
-import com.valeo.kanban.model.enums.WorkspaceRole;
+import com.example.kanban.dto.response.WorkspaceCountProjection;
+import com.example.kanban.model.entity.WorkspaceMember;
+import com.example.kanban.model.enums.WorkspaceRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

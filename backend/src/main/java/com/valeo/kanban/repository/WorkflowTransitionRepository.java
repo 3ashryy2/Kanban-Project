@@ -1,6 +1,6 @@
-package com.valeo.kanban.repository;
+package com.example.kanban.repository;
 
-import com.valeo.kanban.model.entity.WorkflowTransition;
+import com.example.kanban.model.entity.WorkflowTransition;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

@@ -1,7 +1,7 @@
-package com.valeo.kanban.exception;
+package com.example.kanban.exception;
 
-import com.valeo.kanban.dto.response.ApiErrorResponse;
-import com.valeo.kanban.exception.custom.*;
+import com.example.kanban.dto.response.ApiErrorResponse;
+import com.example.kanban.exception.custom.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;

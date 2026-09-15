@@ -5,7 +5,7 @@ test.describe('F10: Authentication and Session Lifecycle', () => {
   test('should fail login with invalid credentials and show error toast', async ({ page }) => {
     await page.goto('/auth/login');
 
-    await page.fill('#email', 'nonexistent@valeo.com');
+    await page.fill('#email', 'nonexistent@example.com');
     await page.fill('#password input', 'wrongpassword');
     await page.click('button[type="submit"]');
 
@@ -17,7 +17,7 @@ test.describe('F10: Authentication and Session Lifecycle', () => {
   test('should login successfully as ROLE_DEVELOPER, see role badge, and sign out', async ({ page }) => {
     await page.goto('/auth/login');
 
-    await page.fill('#email', 'dev@valeo.com');
+    await page.fill('#email', 'dev@example.com');
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
@@ -39,7 +39,7 @@ test.describe('F10: Authentication and Session Lifecycle', () => {
   test('should login successfully as ROLE_PROJECT_MANAGER and see role badge', async ({ page }) => {
     await page.goto('/auth/login');
 
-    await page.fill('#email', 'pm@valeo.com');
+    await page.fill('#email', 'pm@example.com');
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
@@ -52,7 +52,7 @@ test.describe('F10: Authentication and Session Lifecycle', () => {
   test('should login successfully as global Admin (no workspace membership) and see ADMIN badge', async ({ page }) => {
     await page.goto('/auth/login');
 
-    await page.fill('#email', 'admin@valeo.com');
+    await page.fill('#email', 'admin@example.com');
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 

@@ -1,24 +1,24 @@
-package com.valeo.kanban.service;
+package com.example.kanban.service;
 
-import com.valeo.kanban.dto.request.TaskCreateRequest;
-import com.valeo.kanban.dto.request.TaskMetadataRequest;
-import com.valeo.kanban.dto.request.TaskAssigneeRequest;
-import com.valeo.kanban.dto.response.TaskDto;
-import com.valeo.kanban.dto.mapper.TaskMapper;
-import com.valeo.kanban.event.model.TaskGenericAuditEvent;
-import com.valeo.kanban.model.entity.Board;
-import com.valeo.kanban.model.entity.Column;
-import com.valeo.kanban.model.entity.Task;
-import com.valeo.kanban.model.entity.User;
-import com.valeo.kanban.model.enums.TaskPriority;
-import com.valeo.kanban.model.enums.TaskStatus;
-import com.valeo.kanban.model.enums.WorkspaceRole;
-import com.valeo.kanban.repository.BoardRepository;
-import com.valeo.kanban.repository.ColumnRepository;
-import com.valeo.kanban.repository.TaskRepository;
-import com.valeo.kanban.repository.UserRepository;
-import com.valeo.kanban.security.BoardAccessService;
-import com.valeo.kanban.security.CustomUserDetails;
+import com.example.kanban.dto.request.TaskCreateRequest;
+import com.example.kanban.dto.request.TaskMetadataRequest;
+import com.example.kanban.dto.request.TaskAssigneeRequest;
+import com.example.kanban.dto.response.TaskDto;
+import com.example.kanban.dto.mapper.TaskMapper;
+import com.example.kanban.event.model.TaskGenericAuditEvent;
+import com.example.kanban.model.entity.Board;
+import com.example.kanban.model.entity.Column;
+import com.example.kanban.model.entity.Task;
+import com.example.kanban.model.entity.User;
+import com.example.kanban.model.enums.TaskPriority;
+import com.example.kanban.model.enums.TaskStatus;
+import com.example.kanban.model.enums.WorkspaceRole;
+import com.example.kanban.repository.BoardRepository;
+import com.example.kanban.repository.ColumnRepository;
+import com.example.kanban.repository.TaskRepository;
+import com.example.kanban.repository.UserRepository;
+import com.example.kanban.security.BoardAccessService;
+import com.example.kanban.security.CustomUserDetails;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
@@ -154,8 +154,8 @@ public class TaskService {
         // Assignee Requirement Rule:
         // If unassigning, and the task is in a stage other than the starting column, block it.
         if (newAssignee == null) {
-            com.valeo.kanban.model.entity.Column startingColumn = task.getBoard().getColumns().stream()
-                    .min(java.util.Comparator.comparingDouble(com.valeo.kanban.model.entity.Column::getPosition))
+            com.example.kanban.model.entity.Column startingColumn = task.getBoard().getColumns().stream()
+                    .min(java.util.Comparator.comparingDouble(com.example.kanban.model.entity.Column::getPosition))
                     .orElse(task.getColumn());
             if (!task.getColumn().getId().equals(startingColumn.getId())) {
                 throw new IllegalArgumentException("A task must remain assigned while in a stage other than To-Do.");

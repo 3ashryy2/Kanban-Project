@@ -1,14 +1,14 @@
-package com.valeo.kanban.security.evaluator;
+package com.example.kanban.security.evaluator;
 
-import com.valeo.kanban.dto.request.TaskAssigneeRequest;
-import com.valeo.kanban.model.entity.Column;
-import com.valeo.kanban.model.entity.Task;
-import com.valeo.kanban.model.enums.TaskStatus;
-import com.valeo.kanban.model.enums.WorkspaceRole;
-import com.valeo.kanban.repository.ColumnRepository;
-import com.valeo.kanban.repository.TaskRepository;
-import com.valeo.kanban.security.BoardAccessService;
-import com.valeo.kanban.security.CustomUserDetails;
+import com.example.kanban.dto.request.TaskAssigneeRequest;
+import com.example.kanban.model.entity.Column;
+import com.example.kanban.model.entity.Task;
+import com.example.kanban.model.enums.TaskStatus;
+import com.example.kanban.model.enums.WorkspaceRole;
+import com.example.kanban.repository.ColumnRepository;
+import com.example.kanban.repository.TaskRepository;
+import com.example.kanban.security.BoardAccessService;
+import com.example.kanban.security.CustomUserDetails;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

@@ -1,11 +1,11 @@
-package com.valeo.kanban.controller;
+package com.example.kanban.controller;
 
-import com.valeo.kanban.dto.response.AuthResponse;
-import com.valeo.kanban.dto.response.UserSummaryDto;
-import com.valeo.kanban.service.UserService;
-import com.valeo.kanban.service.WorkspaceService;
-import com.valeo.kanban.dto.response.WorkspaceResponseDto;
-import com.valeo.kanban.security.CustomUserDetails;
+import com.example.kanban.dto.response.AuthResponse;
+import com.example.kanban.dto.response.UserSummaryDto;
+import com.example.kanban.service.UserService;
+import com.example.kanban.service.WorkspaceService;
+import com.example.kanban.dto.response.WorkspaceResponseDto;
+import com.example.kanban.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

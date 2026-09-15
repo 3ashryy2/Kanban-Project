@@ -1,6 +1,6 @@
-package com.valeo.kanban.model.entity;
+package com.example.kanban.model.entity;
 
-import com.valeo.kanban.model.enums.WorkspaceRole;
+import com.example.kanban.model.enums.WorkspaceRole;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.Instant;

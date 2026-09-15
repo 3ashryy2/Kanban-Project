@@ -1,13 +1,13 @@
-package com.valeo.kanban.controller;
+package com.example.kanban.controller;
 
-import com.valeo.kanban.dto.request.*;
-import com.valeo.kanban.dto.response.AuditLogResponseDto;
-import com.valeo.kanban.dto.response.TaskDto;
-import com.valeo.kanban.security.CustomUserDetails;
-import com.valeo.kanban.service.AuditLogService;
-import com.valeo.kanban.service.TaskService;
-import com.valeo.kanban.service.workflow.ApprovalGateService;
-import com.valeo.kanban.service.workflow.TaskWorkflowService;
+import com.example.kanban.dto.request.*;
+import com.example.kanban.dto.response.AuditLogResponseDto;
+import com.example.kanban.dto.response.TaskDto;
+import com.example.kanban.security.CustomUserDetails;
+import com.example.kanban.service.AuditLogService;
+import com.example.kanban.service.TaskService;
+import com.example.kanban.service.workflow.ApprovalGateService;
+import com.example.kanban.service.workflow.TaskWorkflowService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

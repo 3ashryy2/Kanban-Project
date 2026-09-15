@@ -5,7 +5,7 @@ test.describe('F4, F9, F12: Task Operations, Filtering, and Activity Streams', (
   test('should support task search and filtering without server round-trip', async ({ page }) => {
     // Login as Dev
     await page.goto('/auth/login');
-    await page.fill('#email', 'dev@valeo.com');
+    await page.fill('#email', 'dev@example.com');
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
@@ -51,7 +51,7 @@ test.describe('F4, F9, F12: Task Operations, Filtering, and Activity Streams', (
   test('should support task assignment in details dialog', async ({ page }) => {
     // Login as Dev
     await page.goto('/auth/login');
-    await page.fill('#email', 'dev@valeo.com');
+    await page.fill('#email', 'dev@example.com');
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
@@ -76,9 +76,9 @@ test.describe('F4, F9, F12: Task Operations, Filtering, and Activity Streams', (
     await expect(assigneeSelect).toBeVisible();
     await assigneeSelect.click();
 
-    // Select "dev@valeo.com" from the dropdown options
+    // Select "dev@example.com" from the dropdown options
     // PrimeNG uses .p-select-option class for each list element
-    const option = page.locator('.p-select-option', { hasText: 'dev@valeo.com' });
+    const option = page.locator('.p-select-option', { hasText: 'dev@example.com' });
     await expect(option).toBeVisible({ timeout: 5000 });
     await option.click();
 
@@ -99,7 +99,7 @@ test.describe('F4, F9, F12: Task Operations, Filtering, and Activity Streams', (
   test('should show Board Activity Stream sidebar', async ({ page }) => {
     // Login as Dev
     await page.goto('/auth/login');
-    await page.fill('#email', 'dev@valeo.com');
+    await page.fill('#email', 'dev@example.com');
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 

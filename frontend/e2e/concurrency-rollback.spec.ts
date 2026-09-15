@@ -22,7 +22,7 @@ test.describe('F5, F14: Drag-and-Drop, Optimistic Sync and Transactional Rollbac
   test('should successfully drag and drop card through allowed transition path', async ({ page }) => {
     // Login as Dev
     await page.goto('/auth/login');
-    await page.fill('#email', 'dev@valeo.com');
+    await page.fill('#email', 'dev@example.com');
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
@@ -42,7 +42,7 @@ test.describe('F5, F14: Drag-and-Drop, Optimistic Sync and Transactional Rollbac
     // Assign task first to satisfy backend assignee validation rule
     await taskCard.click();
     await page.click('#edit-assignee');
-    await page.click('.p-select-option:has-text("dev@valeo.com")');
+    await page.click('.p-select-option:has-text("dev@example.com")');
     await page.click('button:has-text("Save Changes")');
 
     // Wait for save & board reload to complete
@@ -70,7 +70,7 @@ test.describe('F5, F14: Drag-and-Drop, Optimistic Sync and Transactional Rollbac
   test('should optimistically move card, show error toast, and rollback on invalid transition path', async ({ page }) => {
     // Login as Dev
     await page.goto('/auth/login');
-    await page.fill('#email', 'dev@valeo.com');
+    await page.fill('#email', 'dev@example.com');
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
@@ -90,7 +90,7 @@ test.describe('F5, F14: Drag-and-Drop, Optimistic Sync and Transactional Rollbac
     // Assign task first to satisfy backend assignee validation rule
     await taskCard.click();
     await page.click('#edit-assignee');
-    await page.click('.p-select-option:has-text("dev@valeo.com")');
+    await page.click('.p-select-option:has-text("dev@example.com")');
     await page.click('button:has-text("Save Changes")');
 
     // Wait for save & board reload to complete

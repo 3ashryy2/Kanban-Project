@@ -1,6 +1,6 @@
-package com.valeo.kanban.repository;
+package com.example.kanban.repository;
 
-import com.valeo.kanban.model.entity.AuditLog;
+import com.example.kanban.model.entity.AuditLog;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

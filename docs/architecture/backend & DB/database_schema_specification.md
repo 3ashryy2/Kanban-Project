@@ -240,15 +240,15 @@ To facilitate local demonstration and instant execution, the database is initial
 ```sql
 -- 1. Seed Users (Bcrypt hashed password: 'password123')
 INSERT INTO users (id, email, password_hash, first_name, last_name) VALUES
-(1, 'admin@valeo.com', '$2a$10$wN1QeY9rVzG6G3bI6G3bIeX3aO6wN1QeY9rVzG6G3bI6G3bIeX3aO', 'Admin', 'User'),
-(2, 'pm@valeo.com', '$2a$10$wN1QeY9rVzG6G3bI6G3bIeX3aO6wN1QeY9rVzG6G3bI6G3bIeX3aO', 'Project', 'Manager'),
-(3, 'dev@valeo.com', '$2a$10$wN1QeY9rVzG6G3bI6G3bIeX3aO6wN1QeY9rVzG6G3bI6G3bIeX3aO', 'Mohanad', 'Emad'),
-(4, 'qa@valeo.com', '$2a$10$wN1QeY9rVzG6G3bI6G3bIeX3aO6wN1QeY9rVzG6G3bI6G3bIeX3aO', 'Sarah', 'Tester'),
-(5, 'viewer@valeo.com', '$2a$10$wN1QeY9rVzG6G3bI6G3bIeX3aO6wN1QeY9rVzG6G3bI6G3bIeX3aO', 'Guest', 'Viewer');
+(1, 'admin@example.com', '$2a$10$wN1QeY9rVzG6G3bI6G3bIeX3aO6wN1QeY9rVzG6G3bI6G3bIeX3aO', 'Admin', 'User'),
+(2, 'pm@example.com', '$2a$10$wN1QeY9rVzG6G3bI6G3bIeX3aO6wN1QeY9rVzG6G3bI6G3bIeX3aO', 'Project', 'Manager'),
+(3, 'dev@example.com', '$2a$10$wN1QeY9rVzG6G3bI6G3bIeX3aO6wN1QeY9rVzG6G3bI6G3bIeX3aO', 'Mohanad', 'Emad'),
+(4, 'qa@example.com', '$2a$10$wN1QeY9rVzG6G3bI6G3bIeX3aO6wN1QeY9rVzG6G3bI6G3bIeX3aO', 'Sarah', 'Tester'),
+(5, 'viewer@example.com', '$2a$10$wN1QeY9rVzG6G3bI6G3bIeX3aO6wN1QeY9rVzG6G3bI6G3bIeX3aO', 'Guest', 'Viewer');
 
 -- 2. Seed Workspace & Member Roles
 INSERT INTO workspaces (id, name, slug, description, created_by_id) VALUES
-(1, 'Driving Assistance Research', 'valeo-dar', 'ADAS & Autonomous Vision Platforms', 1);
+(1, 'Driving Assistance Research', 'example-dar', 'ADAS & Autonomous Vision Platforms', 1);
 
 INSERT INTO workspace_members (workspace_id, user_id, role) VALUES
 (1, 1, 'ROLE_ADMIN'),

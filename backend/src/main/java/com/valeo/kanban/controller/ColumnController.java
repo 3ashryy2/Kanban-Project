@@ -1,8 +1,8 @@
-package com.valeo.kanban.controller;
+package com.example.kanban.controller;
 
-import com.valeo.kanban.dto.request.ColumnUpdateRequest;
-import com.valeo.kanban.dto.response.ColumnDto;
-import com.valeo.kanban.service.ColumnService;
+import com.example.kanban.dto.request.ColumnUpdateRequest;
+import com.example.kanban.dto.response.ColumnDto;
+import com.example.kanban.service.ColumnService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

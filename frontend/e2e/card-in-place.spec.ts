@@ -30,7 +30,7 @@ test.describe('Editing a card in place', () => {
   });
 
   test('a PM changes the assignee and priority on the card itself', async ({ page }) => {
-    await signIn(page, 'pm@valeo.com');
+    await signIn(page, 'pm@example.com');
     const title = `In-place ${Date.now()}`;
     const card = await createCard(page, title);
 
@@ -62,13 +62,13 @@ test.describe('Editing a card in place', () => {
   });
 
   test('the assignee can be picked while creating a card', async ({ page }) => {
-    await signIn(page, 'pm@valeo.com');
+    await signIn(page, 'pm@example.com');
     const title = `Born assigned ${Date.now()}`;
 
     await page.locator('.kanban-column').nth(0).locator('.col-add-btn').click();
     await page.fill('#new-title', title);
     await page.locator('p-select#new-assignee').click();
-    await page.locator('.p-select-option', { hasText: 'dev@valeo.com' }).click();
+    await page.locator('.p-select-option', { hasText: 'dev@example.com' }).click();
     await page.click('button:has-text("Add Task")');
 
     const card = page.locator('.task-card', { hasText: title });
@@ -80,7 +80,7 @@ test.describe('Editing a card in place', () => {
   });
 
   test('a developer is offered only themselves, and can hand the card back', async ({ page }) => {
-    await signIn(page, 'dev@valeo.com');
+    await signIn(page, 'dev@example.com');
     const title = `Take it ${Date.now()}`;
     const card = await createCard(page, title);
 
@@ -108,7 +108,7 @@ test.describe('Editing a card in place', () => {
   });
 
   test('a panel works from the keyboard alone', async ({ page }) => {
-    await signIn(page, 'pm@valeo.com');
+    await signIn(page, 'pm@example.com');
     const title = `Keys ${Date.now()}`;
     const card = await createCard(page, title);
     const tag = card.locator('button.priority-tag');

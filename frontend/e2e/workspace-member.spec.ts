@@ -5,7 +5,7 @@ test.describe('F15: Workspace Membership & Role Provisioning', () => {
   test('should allow Admin to view and manage roles on workspace members page', async ({ page }) => {
     // Login as Admin
     await page.goto('/auth/login');
-    await page.fill('#email', 'admin@valeo.com');
+    await page.fill('#email', 'admin@example.com');
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
@@ -27,11 +27,11 @@ test.describe('F15: Workspace Membership & Role Provisioning', () => {
     await expect(addMemberBtn).toBeVisible();
 
     // Verify roster listing of default seeded users
-    const userRowDev = page.locator('.roster-row', { hasText: 'dev@valeo.com' });
+    const userRowDev = page.locator('.roster-row', { hasText: 'dev@example.com' });
     await expect(userRowDev).toBeVisible();
     await expect(userRowDev.locator('.role-badge')).toContainText('DEVELOPER');
 
-    const userRowPM = page.locator('.roster-row', { hasText: 'pm@valeo.com' });
+    const userRowPM = page.locator('.roster-row', { hasText: 'pm@example.com' });
     await expect(userRowPM).toBeVisible();
     await expect(userRowPM.locator('.role-badge')).toContainText('PROJECT_MANAGER');
   });
@@ -39,7 +39,7 @@ test.describe('F15: Workspace Membership & Role Provisioning', () => {
   test('should restrict role management for Developer role', async ({ page }) => {
     // Login as Developer
     await page.goto('/auth/login');
-    await page.fill('#email', 'dev@valeo.com');
+    await page.fill('#email', 'dev@example.com');
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 

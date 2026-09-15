@@ -1,8 +1,8 @@
-package com.valeo.kanban.dto.mapper;
+package com.example.kanban.dto.mapper;
 
-import com.valeo.kanban.model.entity.Column;
-import com.valeo.kanban.dto.response.ColumnDto;
-import com.valeo.kanban.dto.response.TaskDto;
+import com.example.kanban.model.entity.Column;
+import com.example.kanban.dto.response.ColumnDto;
+import com.example.kanban.dto.response.TaskDto;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;

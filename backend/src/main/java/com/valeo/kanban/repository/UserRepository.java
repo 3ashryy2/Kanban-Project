@@ -1,6 +1,6 @@
-package com.valeo.kanban.repository;
+package com.example.kanban.repository;
 
-import com.valeo.kanban.model.entity.User;
+import com.example.kanban.model.entity.User;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

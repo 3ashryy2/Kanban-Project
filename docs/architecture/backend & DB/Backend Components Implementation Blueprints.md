@@ -38,7 +38,7 @@ The backend employs a **Decoupled Layered Architecture with Event-Driven Auditin
 ## 2. Package & Class Structure
 
 ```
-com.valeo.kanban
+com.example.kanban
 ├── config
 │   ├── SecurityConfig.java (SecurityFilterChain, Stateless JWT, CORS)
 │   ├── AsyncConfig.java (ThreadPoolTaskExecutor for Audit Logging)

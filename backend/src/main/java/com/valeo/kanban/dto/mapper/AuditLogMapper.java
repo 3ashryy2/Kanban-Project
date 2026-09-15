@@ -1,7 +1,7 @@
-package com.valeo.kanban.dto.mapper;
+package com.example.kanban.dto.mapper;
 
-import com.valeo.kanban.model.entity.AuditLog;
-import com.valeo.kanban.dto.response.AuditLogResponseDto;
+import com.example.kanban.model.entity.AuditLog;
+import com.example.kanban.dto.response.AuditLogResponseDto;
 
 public class AuditLogMapper {
 

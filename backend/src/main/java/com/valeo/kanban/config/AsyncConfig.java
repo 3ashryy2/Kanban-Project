@@ -1,4 +1,4 @@
-package com.valeo.kanban.config;
+package com.example.kanban.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

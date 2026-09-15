@@ -1,4 +1,4 @@
-package com.valeo.kanban.model.entity;
+package com.example.kanban.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

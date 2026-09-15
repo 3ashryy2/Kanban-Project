@@ -1,4 +1,4 @@
-package com.valeo.kanban.security;
+package com.example.kanban.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;

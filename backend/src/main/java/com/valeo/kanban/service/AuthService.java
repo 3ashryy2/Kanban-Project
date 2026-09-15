@@ -1,13 +1,13 @@
-package com.valeo.kanban.service;
+package com.example.kanban.service;
 
-import com.valeo.kanban.dto.request.LoginRequest;
-import com.valeo.kanban.dto.request.RegisterRequest;
-import com.valeo.kanban.dto.response.AuthResponse;
-import com.valeo.kanban.exception.custom.ConflictException;
-import com.valeo.kanban.model.entity.User;
-import com.valeo.kanban.repository.UserRepository;
-import com.valeo.kanban.security.CustomUserDetails;
-import com.valeo.kanban.security.JwtTokenProvider;
+import com.example.kanban.dto.request.LoginRequest;
+import com.example.kanban.dto.request.RegisterRequest;
+import com.example.kanban.dto.response.AuthResponse;
+import com.example.kanban.exception.custom.ConflictException;
+import com.example.kanban.model.entity.User;
+import com.example.kanban.repository.UserRepository;
+import com.example.kanban.security.CustomUserDetails;
+import com.example.kanban.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

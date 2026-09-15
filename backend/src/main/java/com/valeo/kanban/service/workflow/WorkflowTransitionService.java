@@ -1,13 +1,13 @@
-package com.valeo.kanban.service.workflow;
+package com.example.kanban.service.workflow;
 
-import com.valeo.kanban.dto.request.WorkflowTransitionUpdateRequest;
-import com.valeo.kanban.exception.custom.InvalidStateTransitionException;
-import com.valeo.kanban.model.entity.Board;
-import com.valeo.kanban.model.entity.Column;
-import com.valeo.kanban.model.entity.WorkflowTransition;
-import com.valeo.kanban.repository.BoardRepository;
-import com.valeo.kanban.repository.ColumnRepository;
-import com.valeo.kanban.repository.WorkflowTransitionRepository;
+import com.example.kanban.dto.request.WorkflowTransitionUpdateRequest;
+import com.example.kanban.exception.custom.InvalidStateTransitionException;
+import com.example.kanban.model.entity.Board;
+import com.example.kanban.model.entity.Column;
+import com.example.kanban.model.entity.WorkflowTransition;
+import com.example.kanban.repository.BoardRepository;
+import com.example.kanban.repository.ColumnRepository;
+import com.example.kanban.repository.WorkflowTransitionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

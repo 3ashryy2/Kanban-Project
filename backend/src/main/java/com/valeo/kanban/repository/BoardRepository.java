@@ -1,7 +1,7 @@
-package com.valeo.kanban.repository;
+package com.example.kanban.repository;
 
-import com.valeo.kanban.model.entity.Board;
-import com.valeo.kanban.dto.response.WorkspaceCountProjection;
+import com.example.kanban.model.entity.Board;
+import com.example.kanban.dto.response.WorkspaceCountProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

@@ -1,8 +1,8 @@
-package com.valeo.kanban.service;
+package com.example.kanban.service;
 
-import com.valeo.kanban.dto.response.AuditLogResponseDto;
-import com.valeo.kanban.dto.mapper.AuditLogMapper;
-import com.valeo.kanban.repository.AuditLogRepository;
+import com.example.kanban.dto.response.AuditLogResponseDto;
+import com.example.kanban.dto.mapper.AuditLogMapper;
+import com.example.kanban.repository.AuditLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

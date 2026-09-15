@@ -1,9 +1,9 @@
-package com.valeo.kanban.security.evaluator;
+package com.example.kanban.security.evaluator;
 
-import com.valeo.kanban.model.entity.WorkspaceMember;
-import com.valeo.kanban.model.enums.WorkspaceRole;
-import com.valeo.kanban.repository.WorkspaceMemberRepository;
-import com.valeo.kanban.security.CustomUserDetails;
+import com.example.kanban.model.entity.WorkspaceMember;
+import com.example.kanban.model.enums.WorkspaceRole;
+import com.example.kanban.repository.WorkspaceMemberRepository;
+import com.example.kanban.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import java.util.Arrays;

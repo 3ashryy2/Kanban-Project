@@ -42,7 +42,7 @@ test.describe('Paging through user lists', () => {
 
   test('User Onboarding shows ten people a page, and picks survive paging', async ({ page }) => {
     await page.route('**/api/admin/users/unassigned', route => route.fulfill({ json: waiting }));
-    await signIn(page, 'admin@valeo.com');
+    await signIn(page, 'admin@example.com');
     await page.goto('/admin/users');
 
     const rows = page.locator('.user-row');
@@ -74,7 +74,7 @@ test.describe('Paging through user lists', () => {
     // Only the roster's GET is made up; anything else about members goes to the real server
     await page.route('**/api/workspaces/*/members', route =>
       route.request().method() === 'GET' ? route.fulfill({ json: roster }) : route.continue());
-    await signIn(page, 'pm@valeo.com');
+    await signIn(page, 'pm@example.com');
     const workspaceId = page.url().match(/\/w\/(\d+)/)![1];
     await page.goto(`/w/${workspaceId}/members`);
 

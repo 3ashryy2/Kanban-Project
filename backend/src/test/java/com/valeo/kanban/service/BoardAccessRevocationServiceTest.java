@@ -1,10 +1,10 @@
-package com.valeo.kanban.service;
+package com.example.kanban.service;
 
-import com.valeo.kanban.event.model.TaskGenericAuditEvent;
-import com.valeo.kanban.model.entity.Board;
-import com.valeo.kanban.model.entity.Task;
-import com.valeo.kanban.model.entity.User;
-import com.valeo.kanban.repository.TaskRepository;
+import com.example.kanban.event.model.TaskGenericAuditEvent;
+import com.example.kanban.model.entity.Board;
+import com.example.kanban.model.entity.Task;
+import com.example.kanban.model.entity.User;
+import com.example.kanban.repository.TaskRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -30,7 +30,7 @@ class BoardAccessRevocationServiceTest {
 
     @Test
     void unassignsEveryTaskOnTheLostBoardsAndAuditsEachOne() {
-        User dev = User.builder().id(3L).email("dev@valeo.com").firstName("Mohanad").lastName("Emad").passwordHash("hash").build();
+        User dev = User.builder().id(3L).email("dev@example.com").firstName("Mohanad").lastName("Emad").passwordHash("hash").build();
         Task first = Task.builder().id(21L).board(Board.builder().id(10L).build()).assignee(dev).build();
         Task second = Task.builder().id(22L).board(Board.builder().id(11L).build()).assignee(dev).build();
         List<Long> lostBoards = List.of(10L, 11L);
@@ -47,7 +47,7 @@ class BoardAccessRevocationServiceTest {
         verify(eventPublisher, times(2)).publishEvent(events.capture());
         assertThat(events.getAllValues()).extracting(TaskGenericAuditEvent::getActionType).containsOnly("TASK_AUTO_UNASSIGNED");
         assertThat(events.getAllValues()).extracting(TaskGenericAuditEvent::getActorId).containsOnly(2L);
-        assertThat(events.getAllValues().get(0).getDetails()).contains("dev@valeo.com");
+        assertThat(events.getAllValues().get(0).getDetails()).contains("dev@example.com");
     }
 
     @Test

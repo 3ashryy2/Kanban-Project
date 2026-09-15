@@ -1,4 +1,4 @@
-package com.valeo.kanban.model.enums;
+package com.example.kanban.model.enums;
 
 public enum AuditActionType {
     CARD_MOVED,

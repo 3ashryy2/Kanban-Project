@@ -1,6 +1,6 @@
-package com.valeo.kanban.config;
+package com.example.kanban.config;
 
-import com.valeo.kanban.security.JwtAuthenticationFilter;
+import com.example.kanban.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

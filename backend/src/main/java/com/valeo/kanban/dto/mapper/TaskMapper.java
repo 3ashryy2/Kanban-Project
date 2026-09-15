@@ -1,7 +1,7 @@
-package com.valeo.kanban.dto.mapper;
+package com.example.kanban.dto.mapper;
 
-import com.valeo.kanban.model.entity.Task;
-import com.valeo.kanban.dto.response.TaskDto;
+import com.example.kanban.model.entity.Task;
+import com.example.kanban.dto.response.TaskDto;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;

@@ -5,7 +5,7 @@
 ## 1. Backend Package Tree Overview
 
 ```
-com.valeo.kanban
+com.example.kanban
 ├── config
 │   ├── SecurityConfig.java
 │   ├── AsyncConfig.java
@@ -97,7 +97,7 @@ com.valeo.kanban
 
 ---
 
-## 2. Configuration Package (`com.valeo.kanban.config`)
+## 2. Configuration Package (`com.example.kanban.config`)
 
 ### **`SecurityConfig.java`**
 
@@ -128,7 +128,7 @@ com.valeo.kanban
 
 ---
 
-## 3. Security Package (`com.valeo.kanban.security`)
+## 3. Security Package (`com.example.kanban.security`)
 
 ### **`JwtTokenProvider.java`**
 
@@ -186,7 +186,7 @@ com.valeo.kanban
 
 ---
 
-## 4. Security Evaluators Package (`com.valeo.kanban.security.evaluator`)
+## 4. Security Evaluators Package (`com.example.kanban.security.evaluator`)
 
 ### **`TaskSecurityEvaluator.java` (`@taskSecurity`)**
 
@@ -253,7 +253,7 @@ com.valeo.kanban
 
 ---
 
-## 5. Model Package (`com.valeo.kanban.model`)
+## 5. Model Package (`com.example.kanban.model`)
 
 ### **Entities (`model.entity`)**
 
@@ -299,7 +299,7 @@ com.valeo.kanban
 
 ---
 
-## 6. Repository Package (`com.valeo.kanban.repository`)
+## 6. Repository Package (`com.example.kanban.repository`)
 
 ### **`TaskRepository.java`**
 
@@ -375,7 +375,7 @@ com.valeo.kanban
 
 ---
 
-## 7. Service Layer (`com.valeo.kanban.service`)
+## 7. Service Layer (`com.example.kanban.service`)
 
 ### **`TaskWorkflowService.java` (`service.workflow`)**
 
@@ -498,7 +498,7 @@ com.valeo.kanban
 
 ---
 
-## 8. Event & Asynchronous Audit Layer (`com.valeo.kanban.event`)
+## 8. Event & Asynchronous Audit Layer (`com.example.kanban.event`)
 
 ### **Event Models (`event.model`)**
 
@@ -536,7 +536,7 @@ com.valeo.kanban
 
 ---
 
-## 9. Controller Layer (`com.valeo.kanban.controller`)
+## 9. Controller Layer (`com.example.kanban.controller`)
 
 | Controller File | Base Path | Endpoints & Operations | Method Security (`@PreAuthorize`) |
 | --- | --- | --- | --- |
@@ -550,7 +550,7 @@ com.valeo.kanban
 
 ---
 
-## 10. Exception Handling (`com.valeo.kanban.exception`)
+## 10. Exception Handling (`com.example.kanban.exception`)
 
 ### **`GlobalExceptionHandler.java` (`@RestControllerAdvice`)**
 

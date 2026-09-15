@@ -1,4 +1,4 @@
-package com.valeo.kanban.event.model;
+package com.example.kanban.event.model;
 
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;

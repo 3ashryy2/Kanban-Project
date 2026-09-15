@@ -1,15 +1,15 @@
 -- 1. Seed Users (Bcrypt hashed password: 'password123')
 INSERT INTO users (id, email, password_hash, first_name, last_name, is_admin) VALUES
-(1, 'admin@valeo.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Admin', 'User', true),
-(2, 'pm@valeo.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Project', 'Manager', false),
-(3, 'dev@valeo.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Mohanad', 'Emad', false),
-(4, 'qa@valeo.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Sarah', 'Tester', false),
-(5, 'viewer@valeo.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Guest', 'Viewer', false)
+(1, 'admin@example.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Admin', 'User', true),
+(2, 'pm@example.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Project', 'Manager', false),
+(3, 'dev@example.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Mohanad', 'Emad', false),
+(4, 'qa@example.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Sarah', 'Tester', false),
+(5, 'viewer@example.com', '$2a$10$/Abmx5sENPk3KlSUviWVwOkiaAYrLf8dclai6wD4wyBCehRLpVRg.', 'Guest', 'Viewer', false)
 ON CONFLICT (id) DO NOTHING;
 
 -- 2. Seed Workspace & Member Roles (the global admin needs no membership: it can access every workspace)
 INSERT INTO workspaces (id, name, slug, description, created_by_id) VALUES
-(1, 'Driving Assistance Research', 'valeo-dar', 'ADAS & Autonomous Vision Platforms', 1)
+(1, 'Driving Assistance Research', 'example-dar', 'ADAS & Autonomous Vision Platforms', 1)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO workspace_members (workspace_id, user_id, role) VALUES

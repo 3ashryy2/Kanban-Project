@@ -1,7 +1,7 @@
-package com.valeo.kanban.config;
+package com.example.kanban.config;
 
-import com.valeo.kanban.model.entity.User;
-import com.valeo.kanban.repository.UserRepository;
+import com.example.kanban.model.entity.User;
+import com.example.kanban.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
@@ -18,7 +18,7 @@ public class AdminSeeder implements ApplicationRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${app.seed.admin-emails:admin@valeo.com}")
+    @Value("${app.seed.admin-emails:admin@example.com}")
     private List<String> adminEmails;
 
     @Value("${app.seed.admin-default-password:password123}")

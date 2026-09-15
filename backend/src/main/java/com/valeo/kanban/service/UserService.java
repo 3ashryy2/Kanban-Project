@@ -1,11 +1,11 @@
-package com.valeo.kanban.service;
+package com.example.kanban.service;
 
-import com.valeo.kanban.dto.mapper.UserMapper;
-import com.valeo.kanban.dto.response.AuthResponse;
-import com.valeo.kanban.dto.response.UserSummaryDto;
-import com.valeo.kanban.model.entity.User;
-import com.valeo.kanban.repository.UserRepository;
-import com.valeo.kanban.security.CustomUserDetails;
+import com.example.kanban.dto.mapper.UserMapper;
+import com.example.kanban.dto.response.AuthResponse;
+import com.example.kanban.dto.response.UserSummaryDto;
+import com.example.kanban.model.entity.User;
+import com.example.kanban.repository.UserRepository;
+import com.example.kanban.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

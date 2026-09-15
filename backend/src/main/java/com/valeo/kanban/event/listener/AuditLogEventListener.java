@@ -1,13 +1,13 @@
-package com.valeo.kanban.event.listener;
+package com.example.kanban.event.listener;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.valeo.kanban.event.model.CardMovedEvent;
-import com.valeo.kanban.event.model.GateApprovedEvent;
-import com.valeo.kanban.event.model.GateRejectedEvent;
-import com.valeo.kanban.model.entity.AuditLog;
-import com.valeo.kanban.model.entity.User;
-import com.valeo.kanban.repository.AuditLogRepository;
-import com.valeo.kanban.repository.UserRepository;
+import com.example.kanban.event.model.CardMovedEvent;
+import com.example.kanban.event.model.GateApprovedEvent;
+import com.example.kanban.event.model.GateRejectedEvent;
+import com.example.kanban.model.entity.AuditLog;
+import com.example.kanban.model.entity.User;
+import com.example.kanban.repository.AuditLogRepository;
+import com.example.kanban.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -119,7 +119,7 @@ public class AuditLogEventListener {
 
     @Async("auditExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleTaskGenericAuditEvent(com.valeo.kanban.event.model.TaskGenericAuditEvent event) {
+    public void handleTaskGenericAuditEvent(com.example.kanban.event.model.TaskGenericAuditEvent event) {
         try {
             log.info("Processing async TaskGenericAuditEvent action {} for task {}", event.getActionType(), event.getTaskId());
             User actor = userRepository.getReferenceById(event.getActorId());

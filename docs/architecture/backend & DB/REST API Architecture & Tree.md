@@ -75,7 +75,7 @@
 
 ```json
 {
-  "email": "dev@valeo.com",
+  "email": "dev@example.com",
   "password": "password123"
 }
 
@@ -90,7 +90,7 @@
   "expiresIn": 86400,
   "user": {
     "id": 3,
-    "email": "dev@valeo.com",
+    "email": "dev@example.com",
     "firstName": "Mohanad",
     "lastName": "Emad"
   }
@@ -111,7 +111,7 @@
 ```json
 {
   "name": "Autonomous Driving Systems",
-  "slug": "valeo-ads",
+  "slug": "example-ads",
   "description": "Perception & Trajectory Planning"
 }
 
@@ -129,7 +129,7 @@
   {
     "id": 1,
     "name": "Driving Assistance Research",
-    "slug": "valeo-dar",
+    "slug": "example-dar",
     "currentUserRole": "ROLE_DEVELOPER"
   }
 ]
@@ -146,7 +146,7 @@
 {
   "id": 1,
   "name": "Driving Assistance Research",
-  "slug": "valeo-dar",
+  "slug": "example-dar",
   "description": "ADAS & Autonomous Vision Platforms",
   "boardCount": 3,
   "memberCount": 12
@@ -194,7 +194,7 @@
     "membershipId": 3,
     "workspaceId": 1,
     "userId": 3,
-    "email": "dev@valeo.com",
+    "email": "dev@example.com",
     "firstName": "Mohanad",
     "lastName": "Emad",
     "role": "ROLE_DEVELOPER",
@@ -294,7 +294,7 @@
 
 * **Access Level:** `isAuthenticated()`
 
-* **Response (HTTP 200 OK):** `{ "id": 3, "email": "dev@valeo.com", "firstName": "Mohanad", "lastName": "Emad", "isAdmin": false }`
+* **Response (HTTP 200 OK):** `{ "id": 3, "email": "dev@example.com", "firstName": "Mohanad", "lastName": "Emad", "isAdmin": false }`
 
 ### `GET /api/users/me/workspaces`
 

@@ -1,9 +1,9 @@
-package com.valeo.kanban.service;
+package com.example.kanban.service;
 
-import com.valeo.kanban.event.model.TaskGenericAuditEvent;
-import com.valeo.kanban.model.entity.Task;
-import com.valeo.kanban.model.enums.AuditActionType;
-import com.valeo.kanban.repository.TaskRepository;
+import com.example.kanban.event.model.TaskGenericAuditEvent;
+import com.example.kanban.model.entity.Task;
+import com.example.kanban.model.enums.AuditActionType;
+import com.example.kanban.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;

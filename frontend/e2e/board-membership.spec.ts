@@ -20,7 +20,7 @@ test.describe('Board membership', () => {
     // 1. The PM creates a board and lands on its URL
     const pmContext = await browser.newContext();
     const pm = await pmContext.newPage();
-    await signIn(pm, 'pm@valeo.com');
+    await signIn(pm, 'pm@example.com');
     await pm.click('button:has-text("New Board")');
     await pm.fill('#board-title', title);
     await pm.click('p-dialog button:has-text("Create Board")');
@@ -30,7 +30,7 @@ test.describe('Board membership', () => {
     // 2. The developer doesn't see it, and a direct link is refused with an explanation
     const devContext = await browser.newContext();
     const dev = await devContext.newPage();
-    await signIn(dev, 'dev@valeo.com');
+    await signIn(dev, 'dev@example.com');
     await expect(dev.locator('.nav-list span', { hasText: 'Core Platform Roadmap' })).toBeVisible();
     await expect(dev.locator('.nav-list span', { hasText: title })).toHaveCount(0);
 
@@ -41,7 +41,7 @@ test.describe('Board membership', () => {
     // 3. The PM adds the developer to the board from the members page
     await pm.click('span:has-text("Workspace Members")');
     await expect(pm).toHaveURL(/\/w\/\d+\/members/, { timeout: 5000 });
-    const devRow = pm.locator('.roster-row', { hasText: 'dev@valeo.com' });
+    const devRow = pm.locator('.roster-row', { hasText: 'dev@example.com' });
     // The title sits on PrimeNG's <p-button> host element; click the real <button> inside it
     await devRow.locator('p-button[title="Manage boards"] button').click();
     // Open with the arrow: a click on the field's center would land on an existing board chip's remove icon

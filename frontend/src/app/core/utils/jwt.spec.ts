@@ -12,7 +12,7 @@ describe('jwt helpers', () => {
   it('returns null for tokens it cannot read', () => {
     expect(readTokenExpiry('not-a-jwt')).toBeNull();
     expect(readTokenExpiry('a.%%%.c')).toBeNull();
-    expect(readTokenExpiry(tokenWith({ sub: 'dev@valeo.com' }))).toBeNull();
+    expect(readTokenExpiry(tokenWith({ sub: 'dev@example.com' }))).toBeNull();
   });
 
   it('treats a passed expiry as expired and a future one as live', () => {

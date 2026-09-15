@@ -1,7 +1,7 @@
-package com.valeo.kanban.controller;
+package com.example.kanban.controller;
 
-import com.valeo.kanban.dto.response.AuditLogResponseDto;
-import com.valeo.kanban.service.AuditLogService;
+import com.example.kanban.dto.response.AuditLogResponseDto;
+import com.example.kanban.service.AuditLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

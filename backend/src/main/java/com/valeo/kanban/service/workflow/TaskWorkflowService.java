@@ -1,21 +1,21 @@
-package com.valeo.kanban.service.workflow;
+package com.example.kanban.service.workflow;
 
-import com.valeo.kanban.dto.request.TaskMoveRequest;
-import com.valeo.kanban.dto.response.TaskDto;
-import com.valeo.kanban.dto.mapper.TaskMapper;
-import com.valeo.kanban.event.model.CardMovedEvent;
-import com.valeo.kanban.event.model.TaskGenericAuditEvent;
-import com.valeo.kanban.exception.custom.InvalidStateTransitionException;
-import com.valeo.kanban.exception.custom.TaskLockedException;
-import com.valeo.kanban.model.entity.Task;
-import com.valeo.kanban.model.entity.WorkflowTransition;
-import com.valeo.kanban.model.enums.TaskStatus;
-import com.valeo.kanban.model.enums.WorkspaceRole;
-import com.valeo.kanban.repository.ColumnRepository;
-import com.valeo.kanban.repository.TaskRepository;
-import com.valeo.kanban.repository.WorkflowTransitionRepository;
-import com.valeo.kanban.repository.WorkspaceMemberRepository;
-import com.valeo.kanban.security.CustomUserDetails;
+import com.example.kanban.dto.request.TaskMoveRequest;
+import com.example.kanban.dto.response.TaskDto;
+import com.example.kanban.dto.mapper.TaskMapper;
+import com.example.kanban.event.model.CardMovedEvent;
+import com.example.kanban.event.model.TaskGenericAuditEvent;
+import com.example.kanban.exception.custom.InvalidStateTransitionException;
+import com.example.kanban.exception.custom.TaskLockedException;
+import com.example.kanban.model.entity.Task;
+import com.example.kanban.model.entity.WorkflowTransition;
+import com.example.kanban.model.enums.TaskStatus;
+import com.example.kanban.model.enums.WorkspaceRole;
+import com.example.kanban.repository.ColumnRepository;
+import com.example.kanban.repository.TaskRepository;
+import com.example.kanban.repository.WorkflowTransitionRepository;
+import com.example.kanban.repository.WorkspaceMemberRepository;
+import com.example.kanban.security.CustomUserDetails;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +53,7 @@ public class TaskWorkflowService {
 
         WorkspaceRole actorRole = workspaceMemberRepository
                 .findByWorkspaceIdAndUserId(task.getBoard().getWorkspace().getId(), currentUser.getId())
-                .map(com.valeo.kanban.model.entity.WorkspaceMember::getRole)
+                .map(com.example.kanban.model.entity.WorkspaceMember::getRole)
                 .orElse(WorkspaceRole.ROLE_VIEWER);
         boolean isWorkspaceAdminOrPM = currentUser.isAdmin() || actorRole == WorkspaceRole.ROLE_PROJECT_MANAGER;
         boolean isAdminOverride = currentUser.isAdmin();
@@ -65,8 +65,8 @@ public class TaskWorkflowService {
 
         // 3. Assignee Requirement Rule
         if (!sourceColumnId.equals(targetColumnId)) {
-            com.valeo.kanban.model.entity.Column startingColumn = task.getBoard().getColumns().stream()
-                    .min(java.util.Comparator.comparingDouble(com.valeo.kanban.model.entity.Column::getPosition))
+            com.example.kanban.model.entity.Column startingColumn = task.getBoard().getColumns().stream()
+                    .min(java.util.Comparator.comparingDouble(com.example.kanban.model.entity.Column::getPosition))
                     .orElse(task.getColumn());
 
             if (!targetColumnId.equals(startingColumn.getId()) && task.getAssignee() == null) {

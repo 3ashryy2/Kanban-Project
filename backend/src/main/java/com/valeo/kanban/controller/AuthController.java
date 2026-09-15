@@ -1,9 +1,9 @@
-package com.valeo.kanban.controller;
+package com.example.kanban.controller;
 
-import com.valeo.kanban.dto.request.LoginRequest;
-import com.valeo.kanban.dto.request.RegisterRequest;
-import com.valeo.kanban.dto.response.AuthResponse;
-import com.valeo.kanban.service.AuthService;
+import com.example.kanban.dto.request.LoginRequest;
+import com.example.kanban.dto.request.RegisterRequest;
+import com.example.kanban.dto.response.AuthResponse;
+import com.example.kanban.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

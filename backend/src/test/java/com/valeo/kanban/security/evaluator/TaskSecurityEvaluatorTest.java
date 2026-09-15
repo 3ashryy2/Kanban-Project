@@ -1,15 +1,15 @@
-package com.valeo.kanban.security.evaluator;
+package com.example.kanban.security.evaluator;
 
-import com.valeo.kanban.dto.request.TaskAssigneeRequest;
-import com.valeo.kanban.model.entity.Board;
-import com.valeo.kanban.model.entity.Task;
-import com.valeo.kanban.model.entity.User;
-import com.valeo.kanban.model.enums.TaskStatus;
-import com.valeo.kanban.model.enums.WorkspaceRole;
-import com.valeo.kanban.repository.ColumnRepository;
-import com.valeo.kanban.repository.TaskRepository;
-import com.valeo.kanban.security.BoardAccessService;
-import com.valeo.kanban.security.CustomUserDetails;
+import com.example.kanban.dto.request.TaskAssigneeRequest;
+import com.example.kanban.model.entity.Board;
+import com.example.kanban.model.entity.Task;
+import com.example.kanban.model.entity.User;
+import com.example.kanban.model.enums.TaskStatus;
+import com.example.kanban.model.enums.WorkspaceRole;
+import com.example.kanban.repository.ColumnRepository;
+import com.example.kanban.repository.TaskRepository;
+import com.example.kanban.security.BoardAccessService;
+import com.example.kanban.security.CustomUserDetails;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,9 +31,9 @@ class TaskSecurityEvaluatorTest {
     @InjectMocks private TaskSecurityEvaluator taskSecurity;
 
     private final CustomUserDetails developer =
-            new CustomUserDetails(3L, "dev@valeo.com", "hash", "Mohanad", "Emad", false, List.of());
+            new CustomUserDetails(3L, "dev@example.com", "hash", "Mohanad", "Emad", false, List.of());
     private final CustomUserDetails projectManager =
-            new CustomUserDetails(2L, "pm@valeo.com", "hash", "Project", "Manager", false, List.of());
+            new CustomUserDetails(2L, "pm@example.com", "hash", "Project", "Manager", false, List.of());
 
     @Test
     void theCreatorAndAssigneeLosesEveryRightOnceTheyCannotOpenTheBoard() {
@@ -69,7 +69,7 @@ class TaskSecurityEvaluatorTest {
     }
 
     private static Task taskOwnedByDeveloper() {
-        User dev = User.builder().id(3L).email("dev@valeo.com").firstName("Mohanad").lastName("Emad").passwordHash("hash").build();
+        User dev = User.builder().id(3L).email("dev@example.com").firstName("Mohanad").lastName("Emad").passwordHash("hash").build();
         return Task.builder()
                 .id(7L)
                 .board(Board.builder().id(10L).build())

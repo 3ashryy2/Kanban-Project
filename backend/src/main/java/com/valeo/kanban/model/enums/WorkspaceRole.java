@@ -1,4 +1,4 @@
-package com.valeo.kanban.model.enums;
+package com.example.kanban.model.enums;
 
 public enum WorkspaceRole {
     ROLE_PROJECT_MANAGER,

@@ -1,7 +1,7 @@
-package com.valeo.kanban.security;
+package com.example.kanban.security;
 
-import com.valeo.kanban.model.entity.User;
-import com.valeo.kanban.repository.UserRepository;
+import com.example.kanban.model.entity.User;
+import com.example.kanban.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

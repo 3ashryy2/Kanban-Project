@@ -1,7 +1,7 @@
-package com.valeo.kanban.controller;
+package com.example.kanban.controller;
 
-import com.valeo.kanban.dto.request.WorkflowTransitionUpdateRequest;
-import com.valeo.kanban.service.workflow.WorkflowTransitionService;
+import com.example.kanban.dto.request.WorkflowTransitionUpdateRequest;
+import com.example.kanban.service.workflow.WorkflowTransitionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

@@ -5,7 +5,7 @@ test.describe('F1: Workspace & Board Administration', () => {
   test('should allow Project Manager to create a new board', async ({ page }) => {
     // Login as PM
     await page.goto('/auth/login');
-    await page.fill('#email', 'pm@valeo.com');
+    await page.fill('#email', 'pm@example.com');
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
@@ -45,7 +45,7 @@ test.describe('F1: Workspace & Board Administration', () => {
   test('should disable board creation for Developer role', async ({ page }) => {
     // Login as Developer
     await page.goto('/auth/login');
-    await page.fill('#email', 'dev@valeo.com');
+    await page.fill('#email', 'dev@example.com');
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 

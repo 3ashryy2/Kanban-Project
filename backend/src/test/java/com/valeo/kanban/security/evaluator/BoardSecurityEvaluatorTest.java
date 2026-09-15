@@ -1,13 +1,13 @@
-package com.valeo.kanban.security.evaluator;
+package com.example.kanban.security.evaluator;
 
-import com.valeo.kanban.model.entity.Column;
-import com.valeo.kanban.model.enums.WorkspaceRole;
-import com.valeo.kanban.repository.BoardRepository;
-import com.valeo.kanban.repository.ColumnRepository;
-import com.valeo.kanban.repository.TaskRepository;
-import com.valeo.kanban.repository.WorkspaceMemberRepository;
-import com.valeo.kanban.security.BoardAccessService;
-import com.valeo.kanban.security.CustomUserDetails;
+import com.example.kanban.model.entity.Column;
+import com.example.kanban.model.enums.WorkspaceRole;
+import com.example.kanban.repository.BoardRepository;
+import com.example.kanban.repository.ColumnRepository;
+import com.example.kanban.repository.TaskRepository;
+import com.example.kanban.repository.WorkspaceMemberRepository;
+import com.example.kanban.security.BoardAccessService;
+import com.example.kanban.security.CustomUserDetails;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,9 +32,9 @@ class BoardSecurityEvaluatorTest {
 
     @InjectMocks private BoardSecurityEvaluator boardSecurity;
 
-    private final CustomUserDetails developer = user(3L, "dev@valeo.com");
-    private final CustomUserDetails projectManager = user(2L, "pm@valeo.com");
-    private final CustomUserDetails viewer = user(5L, "viewer@valeo.com");
+    private final CustomUserDetails developer = user(3L, "dev@example.com");
+    private final CustomUserDetails projectManager = user(2L, "pm@example.com");
+    private final CustomUserDetails viewer = user(5L, "viewer@example.com");
 
     @Test
     void developersCreateCardsOnlyInTheFirstColumn() {
@@ -74,12 +74,12 @@ class BoardSecurityEvaluatorTest {
 
     @Test
     void canApproveTask_QAGate_PM_Admin_QATester_Allowed() {
-        com.valeo.kanban.model.entity.Task mockTask = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.Task.class);
-        com.valeo.kanban.model.entity.Board mockBoard = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.Board.class);
-        com.valeo.kanban.model.entity.Workspace mockWorkspace = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.Workspace.class);
-        com.valeo.kanban.model.entity.Column mockColumn = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.Column.class);
-        com.valeo.kanban.model.entity.WorkspaceMember mockMemberQA = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.WorkspaceMember.class);
-        com.valeo.kanban.model.entity.WorkspaceMember mockMemberPM = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.WorkspaceMember.class);
+        com.example.kanban.model.entity.Task mockTask = org.mockito.Mockito.mock(com.example.kanban.model.entity.Task.class);
+        com.example.kanban.model.entity.Board mockBoard = org.mockito.Mockito.mock(com.example.kanban.model.entity.Board.class);
+        com.example.kanban.model.entity.Workspace mockWorkspace = org.mockito.Mockito.mock(com.example.kanban.model.entity.Workspace.class);
+        com.example.kanban.model.entity.Column mockColumn = org.mockito.Mockito.mock(com.example.kanban.model.entity.Column.class);
+        com.example.kanban.model.entity.WorkspaceMember mockMemberQA = org.mockito.Mockito.mock(com.example.kanban.model.entity.WorkspaceMember.class);
+        com.example.kanban.model.entity.WorkspaceMember mockMemberPM = org.mockito.Mockito.mock(com.example.kanban.model.entity.WorkspaceMember.class);
 
         when(mockTask.getColumn()).thenReturn(mockColumn);
         when(mockTask.getBoard()).thenReturn(mockBoard);
@@ -89,14 +89,14 @@ class BoardSecurityEvaluatorTest {
 
         when(taskRepository.findByIdWithHierarchy(1L)).thenReturn(Optional.of(mockTask));
 
-        CustomUserDetails qaTester = user(4L, "qa@valeo.com");
+        CustomUserDetails qaTester = user(4L, "qa@example.com");
         when(mockMemberQA.getRole()).thenReturn(WorkspaceRole.ROLE_QA_TESTER);
         when(workspaceMemberRepository.findByWorkspaceIdAndUserId(100L, 4L)).thenReturn(Optional.of(mockMemberQA));
 
         when(mockMemberPM.getRole()).thenReturn(WorkspaceRole.ROLE_PROJECT_MANAGER);
         when(workspaceMemberRepository.findByWorkspaceIdAndUserId(100L, projectManager.getId())).thenReturn(Optional.of(mockMemberPM));
 
-        CustomUserDetails admin = new CustomUserDetails(99L, "admin@valeo.com", "hash", "Admin", "User", true, List.of());
+        CustomUserDetails admin = new CustomUserDetails(99L, "admin@example.com", "hash", "Admin", "User", true, List.of());
 
         assertThat(boardSecurity.canApproveTask(1L, qaTester)).isTrue();
         assertThat(boardSecurity.canApproveTask(1L, projectManager)).isTrue();
@@ -108,12 +108,12 @@ class BoardSecurityEvaluatorTest {
 
     @Test
     void canApproveTask_DoneGate_OnlyPM_Admin_Allowed() {
-        com.valeo.kanban.model.entity.Task mockTask = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.Task.class);
-        com.valeo.kanban.model.entity.Board mockBoard = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.Board.class);
-        com.valeo.kanban.model.entity.Workspace mockWorkspace = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.Workspace.class);
-        com.valeo.kanban.model.entity.Column mockColumn = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.Column.class);
-        com.valeo.kanban.model.entity.WorkspaceMember mockMemberQA = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.WorkspaceMember.class);
-        com.valeo.kanban.model.entity.WorkspaceMember mockMemberPM = org.mockito.Mockito.mock(com.valeo.kanban.model.entity.WorkspaceMember.class);
+        com.example.kanban.model.entity.Task mockTask = org.mockito.Mockito.mock(com.example.kanban.model.entity.Task.class);
+        com.example.kanban.model.entity.Board mockBoard = org.mockito.Mockito.mock(com.example.kanban.model.entity.Board.class);
+        com.example.kanban.model.entity.Workspace mockWorkspace = org.mockito.Mockito.mock(com.example.kanban.model.entity.Workspace.class);
+        com.example.kanban.model.entity.Column mockColumn = org.mockito.Mockito.mock(com.example.kanban.model.entity.Column.class);
+        com.example.kanban.model.entity.WorkspaceMember mockMemberQA = org.mockito.Mockito.mock(com.example.kanban.model.entity.WorkspaceMember.class);
+        com.example.kanban.model.entity.WorkspaceMember mockMemberPM = org.mockito.Mockito.mock(com.example.kanban.model.entity.WorkspaceMember.class);
 
         when(mockTask.getColumn()).thenReturn(mockColumn);
         when(mockTask.getBoard()).thenReturn(mockBoard);
@@ -123,14 +123,14 @@ class BoardSecurityEvaluatorTest {
 
         when(taskRepository.findByIdWithHierarchy(1L)).thenReturn(Optional.of(mockTask));
 
-        CustomUserDetails qaTester = user(4L, "qa@valeo.com");
+        CustomUserDetails qaTester = user(4L, "qa@example.com");
         when(mockMemberQA.getRole()).thenReturn(WorkspaceRole.ROLE_QA_TESTER);
         when(workspaceMemberRepository.findByWorkspaceIdAndUserId(100L, 4L)).thenReturn(Optional.of(mockMemberQA));
 
         when(mockMemberPM.getRole()).thenReturn(WorkspaceRole.ROLE_PROJECT_MANAGER);
         when(workspaceMemberRepository.findByWorkspaceIdAndUserId(100L, projectManager.getId())).thenReturn(Optional.of(mockMemberPM));
 
-        CustomUserDetails admin = new CustomUserDetails(99L, "admin@valeo.com", "hash", "Admin", "User", true, List.of());
+        CustomUserDetails admin = new CustomUserDetails(99L, "admin@example.com", "hash", "Admin", "User", true, List.of());
 
         assertThat(boardSecurity.canApproveTask(1L, qaTester)).isFalse();
         assertThat(boardSecurity.canApproveTask(1L, projectManager)).isTrue();

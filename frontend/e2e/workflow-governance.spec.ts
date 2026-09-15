@@ -22,7 +22,7 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
   test('should allow PM to view and configure workflow transitions', async ({ page }) => {
     // Login as PM
     await page.goto('/auth/login');
-    await page.fill('#email', 'pm@valeo.com');
+    await page.fill('#email', 'pm@example.com');
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
@@ -52,7 +52,7 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
 
   test('should add a transition from two dropdowns, and discard it when closed without saving', async ({ page }) => {
     await page.goto('/auth/login');
-    await page.fill('#email', 'pm@valeo.com');
+    await page.fill('#email', 'pm@example.com');
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
     await expect(page).toHaveURL(/\/w\/\d+\/boards\/\d+/, { timeout: 10000 });
@@ -87,7 +87,7 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
   test('should enforce gating, lock task, restrict developer edits, and allow PM to approve', async ({ page }) => {
     // 1. Login as Dev
     await page.goto('/auth/login');
-    await page.fill('#email', 'dev@valeo.com');
+    await page.fill('#email', 'dev@example.com');
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 
@@ -116,7 +116,7 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
     // Assign task first to satisfy backend assignee validation rule
     await taskCard.click();
     await page.click('#edit-assignee');
-    await page.click('.p-select-option:has-text("dev@valeo.com")');
+    await page.click('.p-select-option:has-text("dev@example.com")');
     await page.click('button:has-text("Save Changes")');
 
     // Wait for save & board reload to complete
@@ -174,7 +174,7 @@ test.describe('F2, F6, F7, F13: Workflow Governance & Approval Gates', () => {
 
     // 3. Login as PM to Approve
     await page.goto('/auth/login');
-    await page.fill('#email', 'pm@valeo.com');
+    await page.fill('#email', 'pm@example.com');
     await page.fill('#password input', 'password123');
     await page.click('button[type="submit"]');
 

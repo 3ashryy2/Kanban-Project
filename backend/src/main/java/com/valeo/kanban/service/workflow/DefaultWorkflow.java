@@ -1,4 +1,4 @@
-package com.valeo.kanban.service.workflow;
+package com.example.kanban.service.workflow;
 
 import java.util.List;
 

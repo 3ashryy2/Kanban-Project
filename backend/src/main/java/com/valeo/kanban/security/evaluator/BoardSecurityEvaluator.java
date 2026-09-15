@@ -1,12 +1,12 @@
-package com.valeo.kanban.security.evaluator;
+package com.example.kanban.security.evaluator;
 
-import com.valeo.kanban.model.enums.WorkspaceRole;
-import com.valeo.kanban.repository.BoardRepository;
-import com.valeo.kanban.repository.ColumnRepository;
-import com.valeo.kanban.repository.TaskRepository;
-import com.valeo.kanban.repository.WorkspaceMemberRepository;
-import com.valeo.kanban.security.BoardAccessService;
-import com.valeo.kanban.security.CustomUserDetails;
+import com.example.kanban.model.enums.WorkspaceRole;
+import com.example.kanban.repository.BoardRepository;
+import com.example.kanban.repository.ColumnRepository;
+import com.example.kanban.repository.TaskRepository;
+import com.example.kanban.repository.WorkspaceMemberRepository;
+import com.example.kanban.security.BoardAccessService;
+import com.example.kanban.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import java.util.Optional;
@@ -29,7 +29,7 @@ public class BoardSecurityEvaluator {
                 .map(b -> {
                     WorkspaceRole role = workspaceMemberRepository
                             .findByWorkspaceIdAndUserId(b.getWorkspace().getId(), currentUser.getId())
-                            .map(com.valeo.kanban.model.entity.WorkspaceMember::getRole)
+                            .map(com.example.kanban.model.entity.WorkspaceMember::getRole)
                             .orElse(null);
                     return role == WorkspaceRole.ROLE_PROJECT_MANAGER;
                 })

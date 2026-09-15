@@ -1,7 +1,7 @@
-package com.valeo.kanban.dto.mapper;
+package com.example.kanban.dto.mapper;
 
-import com.valeo.kanban.model.entity.Workspace;
-import com.valeo.kanban.dto.response.WorkspaceResponseDto;
+import com.example.kanban.model.entity.Workspace;
+import com.example.kanban.dto.response.WorkspaceResponseDto;
 
 public class WorkspaceMapper {
 

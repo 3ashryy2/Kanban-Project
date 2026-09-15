@@ -22,7 +22,7 @@ test.describe('Board members and deleting boards and workspaces', () => {
 
   test('a PM takes a developer off a board, then deletes the board', async ({ page }) => {
     test.setTimeout(60_000);
-    await signIn(page, 'pm@valeo.com');
+    await signIn(page, 'pm@example.com');
 
     // A throwaway board, so the seeded board and its members stay as they are
     const title = `Temp Board ${Date.now()}`;
@@ -37,7 +37,7 @@ test.describe('Board members and deleting boards and workspaces', () => {
     const token = await page.evaluate(() => localStorage.getItem('jwt_token'));
     const headers = { Authorization: `Bearer ${token}` };
     const members = await (await page.request.get(`/api/workspaces/${workspaceId}/members`, { headers })).json();
-    const dev = members.find((m: { email: string }) => m.email === 'dev@valeo.com');
+    const dev = members.find((m: { email: string }) => m.email === 'dev@example.com');
     const boardIds = [...dev.boards.map((b: { id: number }) => b.id), boardId];
     const granted = await page.request.put(`/api/workspaces/${workspaceId}/members/${dev.userId}/boards`, { headers, data: { boardIds } });
     expect(granted.ok()).toBeTruthy();
@@ -48,10 +48,10 @@ test.describe('Board members and deleting boards and workspaces', () => {
 
     await page.locator('.bar-right button', { hasText: 'Members' }).click();
     const membersDialog = page.locator('.p-dialog', { hasText: 'Board Members' });
-    const devRow = membersDialog.locator('.person-row', { hasText: 'dev@valeo.com' });
+    const devRow = membersDialog.locator('.person-row', { hasText: 'dev@example.com' });
     await expect(devRow).toBeVisible({ timeout: 5000 });
     // PMs open every board by role, so there is nothing to take them off
-    await expect(membersDialog.locator('.person-row', { hasText: 'pm@valeo.com' }).locator('button')).toHaveCount(0);
+    await expect(membersDialog.locator('.person-row', { hasText: 'pm@example.com' }).locator('button')).toHaveCount(0);
 
     await devRow.locator('button', { hasText: 'Remove' }).click();
     await page.locator('.p-dialog button', { hasText: 'Remove from board' }).click();
@@ -70,7 +70,7 @@ test.describe('Board members and deleting boards and workspaces', () => {
 
   test('the admin deletes a workspace after typing its name', async ({ page }) => {
     test.setTimeout(60_000);
-    await signIn(page, 'admin@valeo.com');
+    await signIn(page, 'admin@example.com');
 
     const name = `Temp Workspace ${Date.now()}`;
     await page.click('button:has-text("New Workspace")');

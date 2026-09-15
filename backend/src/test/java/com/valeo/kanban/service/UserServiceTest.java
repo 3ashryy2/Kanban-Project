@@ -1,8 +1,8 @@
-package com.valeo.kanban.service;
+package com.example.kanban.service;
 
-import com.valeo.kanban.dto.response.UserSummaryDto;
-import com.valeo.kanban.model.entity.User;
-import com.valeo.kanban.repository.UserRepository;
+import com.example.kanban.dto.response.UserSummaryDto;
+import com.example.kanban.model.entity.User;
+import com.example.kanban.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -42,13 +42,13 @@ class UserServiceTest {
 
     @Test
     void excludesExistingMembersWhenAWorkspaceIsGiven() {
-        User dev = User.builder().id(3L).email("dev@valeo.com").firstName("Mohanad").lastName("Emad").passwordHash("hash").build();
+        User dev = User.builder().id(3L).email("dev@example.com").firstName("Mohanad").lastName("Emad").passwordHash("hash").build();
         when(userRepository.searchByNameOrEmailExcludingWorkspace(eq("%dev%"), eq(1L), any(Pageable.class)))
                 .thenReturn(List.of(dev));
 
         List<UserSummaryDto> result = userService.searchUsers("Dev", 1L);
 
-        assertThat(result).extracting(UserSummaryDto::getEmail).containsExactly("dev@valeo.com");
+        assertThat(result).extracting(UserSummaryDto::getEmail).containsExactly("dev@example.com");
         verify(userRepository, never()).searchByNameOrEmail(any(), any());
     }
 }

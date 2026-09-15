@@ -1,6 +1,6 @@
-package com.valeo.kanban.security;
+package com.example.kanban.security;
 
-import com.valeo.kanban.model.entity.User;
+import com.example.kanban.model.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

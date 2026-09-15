@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "75317765-ccfe-4c6c-9be2-595ff9e6e44b",
     "name": "Kanban Board API - PM-tool",
-    "description": "A comprehensive Postman Collection to test all endpoints of the Valeo Kanban application, structured into logical role-based workflows (Admin, PM, Developer, QA) to test endpoints sequentially with proper permissions, dynamic variable capture, and status assertion tests.",
+    "description": "A comprehensive Postman Collection to test all endpoints of the example Kanban application, structured into logical role-based workflows (Admin, PM, Developer, QA) to test endpoints sequentially with proper permissions, dynamic variable capture, and status assertion tests.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -37,7 +37,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@valeo.com\",\n  \"password\": \"password123\"\n}",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"password123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -82,7 +82,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"firstName\": \"Testing\",\n  \"lastName\": \"User\",\n  \"email\": \"testing_user@valeo.com\",\n  \"password\": \"password123\"\n}",
+              "raw": "{\n  \"firstName\": \"Testing\",\n  \"lastName\": \"User\",\n  \"email\": \"testing_user@example.com\",\n  \"password\": \"password123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -623,7 +623,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"pm@valeo.com\",\n  \"password\": \"password123\"\n}",
+              "raw": "{\n  \"email\": \"pm@example.com\",\n  \"password\": \"password123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -930,7 +930,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"dev@valeo.com\",\n  \"password\": \"password123\"\n}",
+              "raw": "{\n  \"email\": \"dev@example.com\",\n  \"password\": \"password123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1419,7 +1419,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"qa@valeo.com\",\n  \"password\": \"password123\"\n}",
+              "raw": "{\n  \"email\": \"qa@example.com\",\n  \"password\": \"password123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1505,7 +1505,7 @@
                   "    header: {'Content-Type': 'application/json'},",
                   "    body: {",
                   "        mode: 'raw',",
-                  "        raw: JSON.stringify({ email: 'dev@valeo.com', password: 'password123' })",
+                  "        raw: JSON.stringify({ email: 'dev@example.com', password: 'password123' })",
                   "    }",
                   "}, function (err, res) {",
                   "    if (res && res.json().token) {",
@@ -1657,7 +1657,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@valeo.com\",\n  \"password\": \"password123\"\n}",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"password123\"\n}",
               "options": {
                 "raw": {
                   "language": "json"

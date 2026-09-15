@@ -1,17 +1,17 @@
-package com.valeo.kanban.service;
+package com.example.kanban.service;
 
-import com.valeo.kanban.dto.response.MembershipChangeResponseDto;
-import com.valeo.kanban.model.entity.Board;
-import com.valeo.kanban.model.entity.BoardMember;
-import com.valeo.kanban.model.entity.User;
-import com.valeo.kanban.model.entity.Workspace;
-import com.valeo.kanban.model.entity.WorkspaceMember;
-import com.valeo.kanban.model.enums.WorkspaceRole;
-import com.valeo.kanban.repository.BoardMemberRepository;
-import com.valeo.kanban.repository.BoardRepository;
-import com.valeo.kanban.repository.UserRepository;
-import com.valeo.kanban.repository.WorkspaceMemberRepository;
-import com.valeo.kanban.security.CustomUserDetails;
+import com.example.kanban.dto.response.MembershipChangeResponseDto;
+import com.example.kanban.model.entity.Board;
+import com.example.kanban.model.entity.BoardMember;
+import com.example.kanban.model.entity.User;
+import com.example.kanban.model.entity.Workspace;
+import com.example.kanban.model.entity.WorkspaceMember;
+import com.example.kanban.model.enums.WorkspaceRole;
+import com.example.kanban.repository.BoardMemberRepository;
+import com.example.kanban.repository.BoardRepository;
+import com.example.kanban.repository.UserRepository;
+import com.example.kanban.repository.WorkspaceMemberRepository;
+import com.example.kanban.security.CustomUserDetails;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -39,7 +39,7 @@ class BoardMembershipServiceTest {
 
     @InjectMocks private BoardMembershipService boardMembershipService;
 
-    private final CustomUserDetails admin = new CustomUserDetails(1L, "admin@valeo.com", "hash", "Admin", "User", true, List.of());
+    private final CustomUserDetails admin = new CustomUserDetails(1L, "admin@example.com", "hash", "Admin", "User", true, List.of());
 
     @Test
     void projectManagersCannotBeGivenExplicitBoards() {
@@ -114,7 +114,7 @@ class BoardMembershipServiceTest {
     }
 
     private static WorkspaceMember member(long userId, WorkspaceRole role) {
-        User user = User.builder().id(userId).email("user" + userId + "@valeo.com").firstName("First").lastName("Last").passwordHash("hash").build();
+        User user = User.builder().id(userId).email("user" + userId + "@example.com").firstName("First").lastName("Last").passwordHash("hash").build();
         return WorkspaceMember.builder()
                 .workspace(Workspace.builder().id(1L).name("Alpha").slug("alpha").build())
                 .user(user)

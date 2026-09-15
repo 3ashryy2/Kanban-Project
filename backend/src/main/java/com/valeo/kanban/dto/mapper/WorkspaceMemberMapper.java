@@ -1,9 +1,9 @@
-package com.valeo.kanban.dto.mapper;
+package com.example.kanban.dto.mapper;
 
-import com.valeo.kanban.dto.response.BoardRefDto;
-import com.valeo.kanban.model.entity.WorkspaceMember;
-import com.valeo.kanban.model.enums.WorkspaceRole;
-import com.valeo.kanban.dto.response.WorkspaceMemberResponseDto;
+import com.example.kanban.dto.response.BoardRefDto;
+import com.example.kanban.model.entity.WorkspaceMember;
+import com.example.kanban.model.enums.WorkspaceRole;
+import com.example.kanban.dto.response.WorkspaceMemberResponseDto;
 import java.util.List;
 
 public class WorkspaceMemberMapper {

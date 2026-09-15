@@ -1,12 +1,12 @@
-package com.valeo.kanban.security;
+package com.example.kanban.security;
 
-import com.valeo.kanban.model.entity.User;
-import com.valeo.kanban.model.entity.WorkspaceMember;
-import com.valeo.kanban.model.enums.WorkspaceRole;
-import com.valeo.kanban.repository.BoardMemberRepository;
-import com.valeo.kanban.repository.BoardRepository;
-import com.valeo.kanban.repository.UserRepository;
-import com.valeo.kanban.repository.WorkspaceMemberRepository;
+import com.example.kanban.model.entity.User;
+import com.example.kanban.model.entity.WorkspaceMember;
+import com.example.kanban.model.enums.WorkspaceRole;
+import com.example.kanban.repository.BoardMemberRepository;
+import com.example.kanban.repository.BoardRepository;
+import com.example.kanban.repository.UserRepository;
+import com.example.kanban.repository.WorkspaceMemberRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -89,7 +89,7 @@ class BoardAccessServiceTest {
 
     @Test
     void aProposedAssigneeIsCheckedWithTheirOwnAdminFlag() {
-        User admin = User.builder().id(1L).email("admin@valeo.com").firstName("A").lastName("B").passwordHash("h").isAdmin(true).build();
+        User admin = User.builder().id(1L).email("admin@example.com").firstName("A").lastName("B").passwordHash("h").isAdmin(true).build();
         when(userRepository.findById(1L)).thenReturn(Optional.of(admin));
 
         assertThat(boardAccess.userCanAccessBoard(1L, BOARD)).isTrue();
@@ -100,6 +100,6 @@ class BoardAccessServiceTest {
     }
 
     private static CustomUserDetails principal(long id, boolean admin) {
-        return new CustomUserDetails(id, "user" + id + "@valeo.com", "hash", "First", "Last", admin, List.of());
+        return new CustomUserDetails(id, "user" + id + "@example.com", "hash", "First", "Last", admin, List.of());
     }
 }

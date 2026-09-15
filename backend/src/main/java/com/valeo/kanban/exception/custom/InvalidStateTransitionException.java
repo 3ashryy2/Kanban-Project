@@ -1,4 +1,4 @@
-package com.valeo.kanban.exception.custom;
+package com.example.kanban.exception.custom;
 
 public class InvalidStateTransitionException extends RuntimeException {
     public InvalidStateTransitionException(String message) {

@@ -1,7 +1,7 @@
-package com.valeo.kanban.model.entity;
+package com.example.kanban.model.entity;
 
-import com.valeo.kanban.model.enums.TaskPriority;
-import com.valeo.kanban.model.enums.TaskStatus;
+import com.example.kanban.model.enums.TaskPriority;
+import com.example.kanban.model.enums.TaskStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.Instant;
