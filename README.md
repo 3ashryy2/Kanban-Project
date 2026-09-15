@@ -73,18 +73,6 @@ End-to-end tests register users and create boards in your database; that data st
 
 ---
 
-## 🔑 Seeded Accounts
-
-All passwords are `password123`.
-
-| Account | Access |
-|---|---|
-| `admin@valeo.com` | Global admin: every workspace and board, user onboarding, global audit log |
-| `pm@valeo.com` | Project Manager of *Driving Assistance Research*: every board in it, manages members, boards and workflow |
-| `dev@valeo.com` | Developer on the *Core Platform Roadmap* board |
-| `qa@valeo.com` | QA tester on the *Core Platform Roadmap* board |
-| `viewer@valeo.com` | Read-only viewer on the *Core Platform Roadmap* board |
-
 ## 🧭 Main Pages
 
 | Address | Page |
