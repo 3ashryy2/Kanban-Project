@@ -1,4 +1,4 @@
-# Kanban Project Management Tool
+# Project Management Tool (e.g. Kanban)
 
 A multi-tenant Kanban project management tool for driving-assistance perception and platform engineering teams. The **Spring Boot 3 (Java 21)** backend has decoupled, event-driven audit logging, a workflow state machine with approval gates, and a layered access model. The **Angular 21** standalone frontend (PrimeNG) syncs board changes optimistically and rolls them back if the server rejects them.
 
